@@ -1,7 +1,7 @@
 apply plugin : 'java' 
 apply plugin : 'application'
 
-mainClassName = 'com.jme3.steamaudio.SteamAudioTest'
+mainClassName = 'test.SteamPlayerTest'
 
 def jmerepo='com.github.jmonkeyengine.jMonkeyEngine'
 def jmeversion='v3.2.0-stable'
