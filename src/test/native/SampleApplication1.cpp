@@ -21,7 +21,7 @@ void save_output_audio(const std::string filename, std::vector<float> outputaudi
 }
 
 int main(int argc, char **argv) {
-    auto inputaudio = load_input_audio("resources/inputaudio.raw");
+    auto inputaudio = load_input_audio("inputaudio.raw");
     IPLhandle context{nullptr};
     iplCreateContext(nullptr, nullptr, nullptr, &context);
     auto const samplingrate = 44100;
@@ -54,6 +54,6 @@ int main(int argc, char **argv) {
     iplDestroyBinauralRenderer(&renderer);
     iplDestroyContext(&context);
     iplCleanup();
-    save_output_audio("resources/outputaudio.raw", outputaudio);
+    save_output_audio("outputaudio.raw", outputaudio);
     return 0;
 }

@@ -8,3 +8,6 @@ build/
 .vscode/
 .settings
 .gradle/
+src/test/resources/inputaudio.raw
+*.so
+*.ddl

@@ -15,12 +15,5 @@ dependencies {
     compile jmerepo + ':jme3-core:' + jmeversion
     compile jmerepo + ':jme3-desktop:' + jmeversion
     compile jmerepo + ':jme3-lwjgl:' + jmeversion
-}
-
-sourceSets {
-    main {
-        java {
-            srcDir 'src/main/java'
-        }
-    }
+    compile jmerepo + ':jme3-jogg:' + jmeversion
 }

@@ -140,7 +140,7 @@ function clean {
 function buildTests {
     # rm -Rvf build/tests
     mkdir -p build/tests
-    cp -Rf src/tests/resources build/tests/
+    cp -Rf src/tests/resources/* build/tests/
     cp -Rf src/steamaudio/lib/Linux/x64/* build/tests/
     
     cd build/tests/resources/
@@ -148,7 +148,7 @@ function buildTests {
     ffmpeg -i 399354__romariogrande__eastandw_mono.ogg -f f32be -acodec pcm_f32le inputaudio.raw
     cd ../../..
     
-    build "g++"  "Linux" "x64" "--std=c++11 -obuild/tests/SampleApplication1.64" src/tests/SampleApplication1.cpp
+    build "g++"  "Linux" "x64" "--std=c++11 -obuild/test/SampleApplication1.64" src/test/native/SampleApplication1.cpp
     
     #build "g++"  "Linux" "x64" "--std=c++11 -obuild/tests/SampleApplication2.64" src/tests/SampleApplication2.cpp
 
