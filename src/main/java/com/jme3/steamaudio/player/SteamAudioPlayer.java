@@ -22,7 +22,7 @@ public class SteamAudioPlayer {
         this.size = size;
         this.frameSize = frameSize;
 
-        final AudioFormat audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, sampleRate, sampleSize, channels, frameSize, frameRate, false);
+        final AudioFormat audioFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, sampleRate, sampleSize, channels, frameSize, frameRate, true);
 
         try {
             dataLine = AudioSystem.getSourceDataLine(audioFormat);
