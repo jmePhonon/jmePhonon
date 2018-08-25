@@ -1,0 +1,10 @@
+.classpath
+tmp/
+.project
+src/steamaudio
+src/tests/resources/inputaudio.raw
+bin/
+build/
+.vscode/
+.settings
+.gradle/

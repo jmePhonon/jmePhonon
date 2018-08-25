@@ -1,0 +1,15 @@
+apply plugin : 'cpp' 
+apply plugin : 'java' 
+
+
+dependencies {
+
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
