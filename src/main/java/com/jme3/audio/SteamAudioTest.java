@@ -10,6 +10,6 @@ public class SteamAudioTest extends SimpleApplication {
 
     @Override
     public void simpleInitApp() {
-
     }
+
 }

@@ -1,12 +1,20 @@
-apply plugin : 'cpp' 
 apply plugin : 'java' 
+apply plugin : 'application'
+
+mainClassName = 'com.jme3.audio.SteamAudioTest'
+
+def jmerepo='com.github.jmonkeyengine.jMonkeyEngine'
+def jmeversion='v3.2.0-stable'
 
 repositories {
+    mavenCentral()
     maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-    compile 'com.github.jmonkeyengine.jMonkeyEngine:jme3-core:v3.2.0-stable'
+    compile jmerepo + ':jme3-core:' + jmeversion
+    compile jmerepo + ':jme3-desktop:' + jmeversion
+    compile jmerepo + ':jme3-lwjgl:' + jmeversion
 }
 
 sourceSets {
