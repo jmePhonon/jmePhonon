@@ -1,4 +1,4 @@
-package com.jme3.audio.sa;
+package com.jme3.steamaudio;
 
 import java.nio.ByteBuffer;
 

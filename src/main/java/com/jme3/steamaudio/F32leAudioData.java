@@ -1,4 +1,4 @@
-package com.jme3.audio.sa;
+package com.jme3.steamaudio;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import com.jme3.util.BufferUtils;
  * Audio data ready to be processed by steam audio
  */
 public class F32leAudioData {
-    public int channels,sampleRate;
+    private int channels,sampleRate;
     private ByteBuffer data;
 
     public F32leAudioData() {
