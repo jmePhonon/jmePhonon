@@ -25,16 +25,8 @@ public class SteamPlayerTest extends SimpleApplication {
 
         ByteBuffer testBuffer = convertedTestAudioData.getData();
 
-        int frameSize = ((16 + 7) / 8) * testAudioData.getChannels();
 
-        SteamAudioPlayer player = new SteamAudioPlayer(testBuffer, 
-            testBuffer.capacity() / frameSize, // size
-            convertedTestAudioData.getSampleRate(), // sampleRate
-            16, // sampleSize
-            frameSize, // frameSize
-            convertedTestAudioData.getChannels(), // channels
-            60 // frameRate
-        );
+        SteamAudioPlayer player = new SteamAudioPlayer(convertedTestAudioData, 16, 60);
         player.play();
     }
 
