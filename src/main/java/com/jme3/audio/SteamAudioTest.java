@@ -1,4 +1,4 @@
-package com.jme3.audio;
+package com.jme3.steamaudio;
 
 import com.jme3.app.SimpleApplication;
 
