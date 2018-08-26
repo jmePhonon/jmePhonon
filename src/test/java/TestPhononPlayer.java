@@ -1,6 +1,8 @@
 
 import java.nio.ByteBuffer;
 
+import javax.sound.sampled.AudioFormat;
+
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
 import com.jme3.phonon.F32leAudioData;
@@ -22,10 +24,7 @@ public class TestPhononPlayer extends SimpleApplication {
         AudioData testAudioData = assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg");
         F32leAudioData convertedTestAudioData = new F32leAudioData(testAudioData);
 
-        ByteBuffer testBuffer = convertedTestAudioData.getData();
-
-
-        PhononPlayer player = new PhononPlayer(convertedTestAudioData, 16, 60);
+        PhononPlayer player = new PhononPlayer(convertedTestAudioData, 16, 60, 1);
         player.play();
     }
 
