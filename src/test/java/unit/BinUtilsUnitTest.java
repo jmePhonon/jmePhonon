@@ -5,9 +5,7 @@ import java.util.function.BiConsumer;
 
 import com.jme3.phonon.BinUtils;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 
 
 import junit.framework.TestCase;
@@ -88,19 +86,19 @@ public class BinUtilsUnitTest extends TestCase {
     }
 
     @Test
-    public void i8ConversionTest() {
+    public void testI8Conversion() {
         int maxValue = Byte.MAX_VALUE;
         runRandomTestFor("i8 Conversion Test",1000, maxValue, 1, BinUtils::nextI8le, BinUtils::cnvI8leToF32le, BinUtils::cnvF32leToI8le);
     }
 
     @Test
-    public void i16ConversionTest() {
+    public void testI16Conversion() {
         int maxValue = Short.MAX_VALUE;
         runRandomTestFor("i16 Conversion Test",1000, maxValue, 2, BinUtils::nextI16le, BinUtils::cnvI16leToF32le, BinUtils::cnvF32leToI16le);
     }
 
     @Test
-    public void i24ConversionTest() {
+    public void testI24Conversion() {
         int maxValue = 8388607;
         runRandomTestFor("i24 Conversion Test",1000, maxValue, 3, BinUtils::nextI24le, BinUtils::cnvI24leToF32le, BinUtils::cnvF32leToI24le);
     }
