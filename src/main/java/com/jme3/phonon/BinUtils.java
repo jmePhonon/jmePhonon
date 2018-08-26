@@ -25,11 +25,6 @@ public class BinUtils {
     }
     
 
-
-
-
-
-
     // Converters F LE to I LE
     /**
     * Convert little endian float32 to little endian int24
@@ -93,11 +88,8 @@ public class BinUtils {
     public static void cnvI16leToF32le(byte in_le[],byte out_le[]) {
         short sbe =(short)((in_le[1]&0xFF) << 8 | (in_le[0]&0xFF)); // bigendian short
         float fbe = (float) sbe / Short.MAX_VALUE; // bigendian float
-        // System.out.println(fbe);
         int fbe_int=Float.floatToRawIntBits(fbe);//bigendian int32 representing float32
-
         bEfloat_intToleBytes(fbe_int, out_le);
-
     }
     
     
@@ -108,13 +100,7 @@ public class BinUtils {
     public static void cnvI8leToF32le(byte in_le[],byte out_le[]) {
         byte n =   in_le[0];
         float fbe = (float) n / Byte.MAX_VALUE; // bigendian float
-        int fbe_int = Float.floatToRawIntBits(fbe); //bigendian int32 representing float32
-
-        // out_le[0] = (byte)(fbe_int & 0xFF);
-        // out_le[1] = (byte)((fbe_int >> 8) & 0xFF);
-        // out_le[2] = (byte)((fbe_int >> 16) & 0xFF);
-        // out_le[3] = (byte) ((fbe_int >> 24) & 0xFF);
-        
+        int fbe_int = Float.floatToRawIntBits(fbe); //bigendian int32 representing float32        
         bEfloat_intToleBytes(fbe_int, out_le);
     }
    
