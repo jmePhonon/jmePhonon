@@ -1,4 +1,4 @@
-package com.jme3.steamaudio;
+package com.jme3.phonon;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -19,7 +19,7 @@ import com.jme3.util.BufferUtils;
 /**
  * F32leAudioData
  * 
- * Audio data ready to be processed by steam audio
+ * Audio data ready to be processed by phonon
  */
 public class F32leAudioData {
     private int channels,sampleRate;

@@ -10,8 +10,8 @@ import java.nio.FloatBuffer;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioNode;
-import com.jme3.steamaudio.BinUtils;
-import com.jme3.steamaudio.F32leAudioData;
+import com.jme3.phonon.BinUtils;
+import com.jme3.phonon.F32leAudioData;
 import com.jme3.system.AppSettings;
 
 public class F32leAudioDataTest extends SimpleApplication {

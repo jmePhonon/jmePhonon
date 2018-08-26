@@ -3,7 +3,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.function.BiConsumer;
 
-import com.jme3.steamaudio.BinUtils;
+import com.jme3.phonon.BinUtils;
 
 import org.junit.Rule;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package com.jme3.steamaudio.player;
+package com.jme3.phonon.player;
 
 import java.nio.ByteBuffer;
 
@@ -7,7 +7,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-public class SteamAudioPlayer {
+public class PhononPlayer {
     // public final static int FRAME_SIZE = 8, CACHE_SIZE = 128;
 
     public final ByteBuffer audioBuffer;
@@ -16,7 +16,7 @@ public class SteamAudioPlayer {
 
     private SourceDataLine dataLine;
 
-    public SteamAudioPlayer(ByteBuffer audioBuffer, long size, 
+    public PhononPlayer(ByteBuffer audioBuffer, long size, 
             int sampleRate, int sampleSize, int frameSize, int channels, int frameRate) {
         this.audioBuffer = audioBuffer;
         this.size = size;
