@@ -1,6 +1,8 @@
 package com.jme3.steamaudio;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,7 +24,7 @@ import com.jme3.util.BufferUtils;
 public class F32leAudioData {
     private int channels,sampleRate;
     private ByteBuffer data;
-
+    
     public F32leAudioData() {
     }
 
@@ -32,28 +34,45 @@ public class F32leAudioData {
             channels = ab.getChannels();
             sampleRate = ab.getSampleRate();
             int bitsPerSample = ab.getBitsPerSample();
-            ByteBuffer inputData = ab.getData().order(ByteOrder.LITTLE_ENDIAN);
+
+            // Little endian input buffer
+            ByteBuffer inputData = ab.getData();
         
-            data = BufferUtils.createByteBuffer((inputData.limit() / (bitsPerSample / 8)) * 4)
-                    .order(ByteOrder.LITTLE_ENDIAN);
+            data = BufferUtils.createByteBuffer((inputData.limit() / (bitsPerSample / 8)) * 4);
+                    inputData.rewind();
+    
+            byte float_le[] = new byte[4];
             switch (bitsPerSample) {
             case 8: {
+                byte sm_le[] = new byte[1];
                 for (int i = 0; i < inputData.limit(); i++) {
-                    float v = (float) inputData.get(i) / Byte.MAX_VALUE;
-                    data.putFloat(v);
+                    BinUtils.nextI8le(inputData, sm_le);
+                    BinUtils.cnvI8leToF32le(sm_le,float_le);
+                    data.put(float_le);
                 }
                 break;
             }
             case 16: {
-                ShortBuffer inputSb = inputData.asShortBuffer();
-                for (int i = 0; i < inputSb.limit(); i++) {
-                    float v = (float) inputSb.get(i) / Short.MAX_VALUE;
-                    data.putFloat(v);
+                byte sm_le[] = new byte[2];
+                System.out.println("Read from 16 bit");
+                for (int i = 0; i < inputData.limit(); i += 2) {
+                    BinUtils.nextI16le(inputData, sm_le);
+                    BinUtils.cnvI16leToF32le(sm_le,float_le);
+                    data.put(float_le);
                 }
                 break;
             }
-            // case 24?
+            case 24: {
+                byte sm_le[] = new byte[3];
+                for (int i = 0; i < inputData.limit(); i += 3) {
+                    BinUtils.nextI24le(inputData, sm_le);
+                    BinUtils.cnvI24leToF32le(sm_le,float_le);
+                    data.put(float_le);                    
+                }
+                break;
             }
+            }
+            inputData.rewind();
             data.rewind();
         } else if (ad instanceof AudioStream) { // Handle audio stream
             throw new UnsupportedOperationException("Can't handle audio stream right now");
@@ -74,6 +93,11 @@ public class F32leAudioData {
     public int getChannels() {
         return channels;
     }
+
+    public int getBitsPerSample() {
+        return 32;
+    }
+
 
     public int getSampleRate() {
         return sampleRate;
@@ -97,8 +121,7 @@ public class F32leAudioData {
         while ((read = is.read(part)) != -1) {
             bos.write(part, 0, read);
         }
-        data = BufferUtils.createByteBuffer(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);
-        
+        data = BufferUtils.createByteBuffer(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);        
         return this;
     }
 }

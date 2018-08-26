@@ -9,6 +9,7 @@ def jmeversion='v3.2.0-stable'
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io' }
+    
 }
 
 dependencies {
@@ -16,4 +17,6 @@ dependencies {
     compile jmerepo + ':jme3-desktop:' + jmeversion
     compile jmerepo + ':jme3-lwjgl:' + jmeversion
     compile jmerepo + ':jme3-jogg:' + jmeversion
+    testCompile 'junit:junit:4.11'
+
 }
