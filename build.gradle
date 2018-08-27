@@ -33,5 +33,10 @@ task buildNatives(type :Exec){
     commandLine 'bash','premake.sh',"buildNatives"
 }
 
+task updateJNIHeaders(type:Exec) {
+    def classpath = configurations.compile.join(":")+ ":build/classes/java/main";
+    commandLine 'bash','premake.sh',"updateJNIHeaders",classpath,"build/classes/java/main","src/main/natives/include"
+    dependsOn classes
+}
 
 build.dependsOn(premake)

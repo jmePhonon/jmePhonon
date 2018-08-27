@@ -161,4 +161,33 @@ function buildNativeTests {
 # buildTests
 
 ## build natives
+function genJNI {
+    classpath=$1
+    rootDir=$2
+    output=$3
+    file=$4
+    file="${file#$rootDir/}"
+    file="${file//\//.}"
+    file="${file%.class}"
+    echo "Gen JNI header for $file in $output" 
+    mkdir -p "$output"
+    javah -jni -d "$output" -classpath "$classpath" "$file"
+    jnih="$output/${file//./_}.h"
+    if ! grep -q "JNIEXPORT" "$jnih" ;
+    then
+        echo "rm Empty binding $jnih"
+        rm "$jnih"
+    fi  
+}
+export -f genJNI
+
+function updateJNIHeaders {
+    echo "Update JNI headers..."
+    classpath=$1
+    rootDir=$2
+    output=$3
+    echo "Search $rootDir for class files"
+    find "$rootDir" -name "*.class" -exec bash -c "genJNI \"$classpath\" \"$rootDir\" \"$output\" {} " \;
+}
+
 $@
