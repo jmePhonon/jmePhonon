@@ -44,7 +44,7 @@ public class PhononPlayer {
 
     public void play(boolean loop) {
         
-        ByteBuffer tempBuffer = ByteBuffer.allocate(dataLine.getBufferSize());
+        // ByteBuffer tempBuffer = ByteBuffer.allocate(dataLine.getBufferSize());
 
         byte[] inputBuffer = new byte[4 * channels];
         byte[] outputBuffer = new byte[(audioFormat.getSampleSizeInBits() / 8) * channels];
@@ -55,10 +55,12 @@ public class PhononPlayer {
             audioBuffer.rewind();
 
             while (audioBuffer.hasRemaining()) { // Keep going until there is no more data available
+                ByteBuffer tempBuffer = ByteBuffer.allocate(dataLine.available());
+
                 // Fill a temp buffer to reduce the writes to the audio device
                 // Ensure that you stop if the audioBuffer limit is reached while filling the temp buffer
-                /*while (tempBuffer.hasRemaining() && audioBuffer.hasRemaining()) {
-                    // Read a little endian float
+                while (tempBuffer.hasRemaining() && audioBuffer.hasRemaining()) {
+                    // Read a little endian float for every channel
                     BitUtils.nextF32le(audioBuffer, inputBuffer, channels);
 
                     convertFloats(inputBuffer, outputBuffer, channels);
@@ -80,13 +82,12 @@ public class PhononPlayer {
                 dataLine.write(tempBufferB, 0, tempBufferB.length);
 
                 // The temp buffer is fully writen, so we reset his position to 0
-                tempBuffer.rewind();*/
+                tempBuffer.rewind();
 
-                // Read a little endian float
-                BitUtils.nextF32le(audioBuffer, inputBuffer, channels);
+                /*BitUtils.nextF32le(audioBuffer, inputBuffer, channels);
 
                 convertFloats(inputBuffer, outputBuffer, channels);
-                dataLine.write(outputBuffer, 0, outputBuffer.length);
+                dataLine.write(outputBuffer, 0, outputBuffer.length);*/
 
                 // Start the dataLine if it is not playing yet. 
                 // We do this here to be sure there is some data already available to be played
