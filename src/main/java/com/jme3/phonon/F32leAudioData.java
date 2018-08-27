@@ -24,9 +24,11 @@ import com.jme3.util.BufferUtils;
 public class F32leAudioData {
     private int channels,sampleRate;
     private ByteBuffer data;
-    
+
     public F32leAudioData() {
     }
+
+  
 
     public F32leAudioData(AudioData ad) {
         if (ad instanceof AudioBuffer) {
@@ -40,7 +42,7 @@ public class F32leAudioData {
         
             data = BufferUtils.createByteBuffer((inputData.limit() / (bitsPerSample / 8)) * 4);
                     inputData.rewind();
-    
+
             byte float_le[] = new byte[4];
             switch (bitsPerSample) {
             case 8: {
@@ -55,7 +57,7 @@ public class F32leAudioData {
             case 16: {
                 byte sm_le[] = new byte[2];
                 for (int i = 0; i < inputData.limit(); i += 2) {
-                    BitUtils.nextI16le(inputData, sm_le);
+                    BitUtils.nextI16le(inputData, sm_le,1);
                     BitUtils.cnvI16leToF32le(sm_le,float_le);
                     data.put(float_le);
                 }
@@ -64,7 +66,7 @@ public class F32leAudioData {
             case 24: {
                 byte sm_le[] = new byte[3];
                 for (int i = 0; i < inputData.limit(); i += 3) {
-                    BitUtils.nextI24le(inputData, sm_le);
+                    BitUtils.nextI24le(inputData, sm_le,1);
                     BitUtils.cnvI24leToF32le(sm_le,float_le);
                     data.put(float_le);                    
                 }

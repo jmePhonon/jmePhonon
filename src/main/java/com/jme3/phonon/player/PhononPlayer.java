@@ -56,7 +56,7 @@ public class PhononPlayer {
                 // Ensure that you stop if the audioBuffer limit is reached while filling the temp buffer
                 while (tempBuffer.hasRemaining() && audioBuffer.hasRemaining()) {
                     // Read a little endian float
-                    BitUtils.nextF32le(audioBuffer, inputBuffer);
+                    BitUtils.nextF32le(audioBuffer, inputBuffer,1);
 
                     // Convert to the proper output format for this source line
                     if (audioFormat.getSampleSizeInBits() == 8) {

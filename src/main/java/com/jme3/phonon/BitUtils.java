@@ -109,12 +109,56 @@ public class BitUtils {
     // Readers I/F LE    
     /**
      * Read little endian float32 from little endian buffer
+     * @param le_bbf Little endian input buffer
+     * @param le_out Little endian output array
+     * @param n How many items to read.
+     */
+    public static void nextF32le(ByteBuffer le_bbf, byte[] le_out, int n) {
+        le_bbf.get(le_out, 0, 4*n);
+        
+        // le_out[0] = le_bbf.get();
+        // le_out[1] = le_bbf.get();
+        // le_out[2] = le_bbf.get();
+        // le_out[3]=le_bbf.get();
+    }
+
+
+    /**
+     * Read little endian int24 from little endian buffer
+     */
+    public static void nextI24le(ByteBuffer le_bbf, byte[] le_out,int n) {
+        le_bbf.get(le_out, 0, 3*n);
+
+        // le_out[0] = le_bbf.get();
+        // le_out[1] = le_bbf.get();
+        // le_out[2]=le_bbf.get();
+    }
+
+
+    /**
+     * Read little endian int16 from little endian buffer
+     */
+    public static void nextI16le(ByteBuffer le_bbf, byte[] le_out,int n) {
+        le_bbf.get(le_out, 0, 2*n);
+
+        // le_out[0] = le_bbf.get();
+        // le_out[1]=le_bbf.get();
+    }
+
+
+    /**
+     * Read  int8 from  buffer
+     */
+    public static void nextI8le(ByteBuffer le_bbf, byte[] le_out) {
+        le_out[0] = le_bbf.get();
+    }
+    
+
+   /**
+     * Read little endian float32 from little endian buffer
      */
     public static void nextF32le(ByteBuffer le_bbf, byte[] le_out) {
-        le_out[0] = le_bbf.get();
-        le_out[1] = le_bbf.get();
-        le_out[2] = le_bbf.get();
-        le_out[3]=le_bbf.get();
+        nextF32le(le_bbf, le_out, 1);
     }
 
 
@@ -122,26 +166,16 @@ public class BitUtils {
      * Read little endian int24 from little endian buffer
      */
     public static void nextI24le(ByteBuffer le_bbf, byte[] le_out) {
-        le_out[0] = le_bbf.get();
-        le_out[1] = le_bbf.get();
-        le_out[2]=le_bbf.get();
+        nextI24le(le_bbf, le_out, 1);
+
     }
 
 
     /**
      * Read little endian int16 from little endian buffer
      */
-    public static void nextI16le(ByteBuffer le_bbf,byte []le_out){
-        le_out[0] = le_bbf.get();
-        le_out[1]=le_bbf.get();
-    }
-
-
-    /**
-     * Read  int8 from  buffer
-     */
-    public static void nextI8le(ByteBuffer le_bbf,byte []le_out){
-        le_out[0]=le_bbf.get();
+    public static void nextI16le(ByteBuffer le_bbf, byte[] le_out) {
+        nextI16le(le_bbf, le_out, 1);
     }
 
     
