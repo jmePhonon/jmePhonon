@@ -1,4 +1,5 @@
 #/bin/sh
+echo "Premake $PWD"
 mkdir -p tmp/tools
 mkdir -p tmp/cache
 # if [ ! -f jnaerator/target/jnaerator-*-shaded.jar ];
@@ -137,7 +138,7 @@ function clean {
     rm -Rf src/steamaudio
 }
 
-function buildTests {
+function buildNativeTests {
     # rm -Rvf build/tests
     mkdir -p build/tests
     cp -Rf src/tests/resources/* build/tests/
@@ -157,4 +158,7 @@ function buildTests {
 #ffmpeg -i 399354__romariogrande__eastandw_mono.ogg -f f32be -acodec pcm_f32le inputaudio.raw
 
 
+# buildTests
+
+## build natives
 $@

@@ -10,7 +10,7 @@ import java.nio.FloatBuffer;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioNode;
-import com.jme3.phonon.BinUtils;
+import com.jme3.phonon.BitUtils;
 import com.jme3.phonon.F32leAudioData;
 import com.jme3.system.AppSettings;
 
@@ -51,11 +51,11 @@ public class F32leAudioDataTest extends SimpleApplication {
             while (bbf.hasRemaining()) {
                 bbf.get(f);
                 if (bytes.length == 2) {
-                    BinUtils.cnvF32leToI16le(f, bytes);
+                    BitUtils.cnvF32leToI16le(f, bytes);
                 } else if (bytes.length == 3) {
-                    BinUtils.cnvF32leToI24le(f, bytes);
+                    BitUtils.cnvF32leToI24le(f, bytes);
                 } else {
-                    BinUtils.cnvF32leToI8le(f, bytes);
+                    BitUtils.cnvF32leToI8le(f, bytes);
                 }
                 fo.write(bytes);            
             }

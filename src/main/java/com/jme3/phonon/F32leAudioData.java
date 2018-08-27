@@ -46,18 +46,17 @@ public class F32leAudioData {
             case 8: {
                 byte sm_le[] = new byte[1];
                 for (int i = 0; i < inputData.limit(); i++) {
-                    BinUtils.nextI8le(inputData, sm_le);
-                    BinUtils.cnvI8leToF32le(sm_le,float_le);
+                    BitUtils.nextI8le(inputData, sm_le);
+                    BitUtils.cnvI8leToF32le(sm_le,float_le);
                     data.put(float_le);
                 }
                 break;
             }
             case 16: {
                 byte sm_le[] = new byte[2];
-                System.out.println("Read from 16 bit");
                 for (int i = 0; i < inputData.limit(); i += 2) {
-                    BinUtils.nextI16le(inputData, sm_le);
-                    BinUtils.cnvI16leToF32le(sm_le,float_le);
+                    BitUtils.nextI16le(inputData, sm_le);
+                    BitUtils.cnvI16leToF32le(sm_le,float_le);
                     data.put(float_le);
                 }
                 break;
@@ -65,8 +64,8 @@ public class F32leAudioData {
             case 24: {
                 byte sm_le[] = new byte[3];
                 for (int i = 0; i < inputData.limit(); i += 3) {
-                    BinUtils.nextI24le(inputData, sm_le);
-                    BinUtils.cnvI24leToF32le(sm_le,float_le);
+                    BitUtils.nextI24le(inputData, sm_le);
+                    BitUtils.cnvI24leToF32le(sm_le,float_le);
                     data.put(float_le);                    
                 }
                 break;

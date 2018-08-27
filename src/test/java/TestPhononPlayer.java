@@ -2,6 +2,7 @@
 import java.nio.ByteBuffer;
 
 import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.LineUnavailableException;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
@@ -21,12 +22,18 @@ public class TestPhononPlayer extends SimpleApplication {
         /*int bufferSize = 256;
         ByteBuffer testBuffer = randomDataBuffer(bufferSize);*/
 
-        AudioData testAudioData = assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg");
+        AudioData testAudioData = assetManager.loadAudio("awesomeness.wav");
         F32leAudioData convertedTestAudioData = new F32leAudioData(testAudioData);
 
-        PhononPlayer player = new PhononPlayer(convertedTestAudioData, 16, 60, 1);
-        player.play();
-    }
+		try {
+            PhononPlayer player = new PhononPlayer(convertedTestAudioData, 24,  10);
+            player.play(true);
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    } 
 
     ByteBuffer randomDataBuffer(int bufferSize) {
         byte[] testData = new byte[bufferSize];

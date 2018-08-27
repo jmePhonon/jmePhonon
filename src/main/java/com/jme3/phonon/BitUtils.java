@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 /**
  * BinUtils
  */
-public class BinUtils {
+public class BitUtils {
 
     /**
      * Convert little endian bytes to int32 representing a float

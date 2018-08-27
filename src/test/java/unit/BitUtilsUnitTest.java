@@ -3,7 +3,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.function.BiConsumer;
 
-import com.jme3.phonon.BinUtils;
+import com.jme3.phonon.BitUtils;
 
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ import junit.framework.TestCase;
 /**
  * BinUtilsUnitTest
  */
-public class BinUtilsUnitTest extends TestCase {
+public class BitUtilsUnitTest extends TestCase {
    
     private static int leBytesToBEfloat_int(byte bytes[]) {
         return (int) ((bytes[3] & 0xFF) << 24 | (bytes[2] & 0xFF) << 16 | (bytes[1] & 0xFF) << 8 | (bytes[0] & 0xFF)); // bigendian int32 (contains encoded float)
@@ -23,10 +23,10 @@ public class BinUtilsUnitTest extends TestCase {
         return Float.intBitsToFloat(leBytesToBEfloat_int(bytes));
     }
 
-    private void compareData(byte data[], byte data2[]) {
+    private void compareData(String name ,int r,byte data[], byte data2[]) {
         for (int i = 0; i < data2.length; i++) {
-            System.out.println(data2[i] + " readed, " + data[i] + " expected");
-            assertEquals("Error: "+data2[i]+" readed, but "+data[i]+" was expected",data[i], data2[i]);
+            // System.out.println(data2[i] + " readed, " + data[i] + " expected");
+            assertEquals("Error in test "+name+" n"+r+","+data2[i]+" readed, but "+data[i]+" was expected",data[i], data2[i]);
         }
     }
 
@@ -37,8 +37,8 @@ public class BinUtilsUnitTest extends TestCase {
         int r = 0;
         for (Object[] inputo : inputs) {
             long inputValue = (long) inputo[0];
-            System.out.println("Run TestN" + (r++) + " " + name + " with inputValue=" + inputValue
-                    + " maxValue=" + maxValue + " dataSize=" + dataSize);
+            // System.out.println("Run TestN" + (r++) + " " + name + " with inputValue=" + inputValue
+            //         + " maxValue=" + maxValue + " dataSize=" + dataSize);
             ByteBuffer inputBuffer = (ByteBuffer) inputo[1];
 
             byte data[] = new byte[dataSize];
@@ -50,11 +50,11 @@ public class BinUtilsUnitTest extends TestCase {
 
             float expectedFloat = (float) inputValue / maxValue;
             float convertedFloat = bytesLEToFloatBE(float_data);
-            System.out.println("Expected float: " + expectedFloat + " Converted float: " + convertedFloat);
-            assertEquals(expectedFloat, convertedFloat);
+            // System.out.println("Expected float: " + expectedFloat + " Converted float: " + convertedFloat);
+            assertEquals("Error in test "+name+" n"+r+", Expected float: " + expectedFloat + " but converted float is: " + convertedFloat,expectedFloat, convertedFloat);
 
             converter2.accept(float_data, data2);
-            compareData(data, data2);
+            compareData(name,r,data, data2);
         }
     }
 
@@ -88,19 +88,19 @@ public class BinUtilsUnitTest extends TestCase {
     @Test
     public void testI8Conversion() {
         int maxValue = Byte.MAX_VALUE;
-        runRandomTestFor("i8 Conversion Test",1000, maxValue, 1, BinUtils::nextI8le, BinUtils::cnvI8leToF32le, BinUtils::cnvF32leToI8le);
+        runRandomTestFor("i8 Conversion Test",1000, maxValue, 1, BitUtils::nextI8le, BitUtils::cnvI8leToF32le, BitUtils::cnvF32leToI8le);
     }
 
     @Test
     public void testI16Conversion() {
         int maxValue = Short.MAX_VALUE;
-        runRandomTestFor("i16 Conversion Test",1000, maxValue, 2, BinUtils::nextI16le, BinUtils::cnvI16leToF32le, BinUtils::cnvF32leToI16le);
+        runRandomTestFor("i16 Conversion Test",1000, maxValue, 2, BitUtils::nextI16le, BitUtils::cnvI16leToF32le, BitUtils::cnvF32leToI16le);
     }
 
     @Test
     public void testI24Conversion() {
         int maxValue = 8388607;
-        runRandomTestFor("i24 Conversion Test",1000, maxValue, 3, BinUtils::nextI24le, BinUtils::cnvI24leToF32le, BinUtils::cnvF32leToI24le);
+        runRandomTestFor("i24 Conversion Test",1000, maxValue, 3, BitUtils::nextI24le, BitUtils::cnvI24leToF32le, BitUtils::cnvF32leToI24le);
     }
 
 }

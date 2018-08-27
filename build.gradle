@@ -18,3 +18,20 @@ dependencies {
     testCompile 'junit:junit:4.11'
 
 }
+
+
+
+task buildNativeTests(type :Exec){
+    commandLine 'bash','premake.sh',"buildNativeTests"
+}
+
+task premake(type :Exec){
+    commandLine 'bash','premake.sh'
+}
+
+task buildNatives(type :Exec){
+    commandLine 'bash','premake.sh',"buildNatives"
+}
+
+
+build.dependsOn(premake)
