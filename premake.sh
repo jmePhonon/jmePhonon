@@ -159,6 +159,14 @@ function buildNativeTests {
 
 
 # buildTests
+function removeEmptyJNIh {
+    file=$1
+    if ! grep -q "JNIEXPORT" "$file" ;
+    then 
+        rm "$file"
+    fi 
+}
+export -f removeEmptyJNIh
 
 ## build natives
 function genJNI {
@@ -172,17 +180,22 @@ function genJNI {
     echo "Gen JNI header for $file in $output" 
     mkdir -p "$output"
     javah -jni -d "$output" -classpath "$classpath" "$file"
-    jnih="$output/${file//./_}.h"
-    if ! grep -q "JNIEXPORT" "$jnih" ;
-    then
-        echo "rm Empty binding $jnih"
-        rm "$jnih"
-    fi  
+    # jnih="${file//./_}"
+    # jnih="$output/${jnih//\$/_}.h"
+    # echo "Check $jnih"
+    find "$output" -name "*.h" -exec   bash -c "removeEmptyJNIh {}" \;
+
+    # if ! grep -q "JNIEXPORT" "$jnih" ;
+    # then
+    #     echo "rm Empty binding $jnih"
+    #     rm "$jnih"
+    # fi  
 }
 export -f genJNI
 
 function updateJNIHeaders {
     echo "Update JNI headers..."
+    rm -Rf src/main/natives/include
     classpath=$1
     rootDir=$2
     output=$3
