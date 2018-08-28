@@ -22,11 +22,11 @@ public class TestPhononPlayer extends SimpleApplication {
         /*int bufferSize = 256;
         ByteBuffer testBuffer = randomDataBuffer(bufferSize);*/
 
-        AudioData testAudioData = assetManager.loadAudio("awesomeness.wav");
+        AudioData testAudioData = assetManager.loadAudio("Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav");
         F32leAudioData convertedTestAudioData = new F32leAudioData(testAudioData);
 
 		try {
-            PhononPlayer player = new PhononPlayer(convertedTestAudioData, 24,  10);
+            PhononPlayer player = new PhononPlayer(convertedTestAudioData, 16,  2048);
             player.play(true);
 
 		} catch (Exception e) {

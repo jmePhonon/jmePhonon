@@ -44,50 +44,36 @@ public class PhononPlayer {
 
     public void play(boolean loop) {
         
-        // ByteBuffer tempBuffer = ByteBuffer.allocate(dataLine.getBufferSize());
-
-        byte[] inputBuffer = new byte[4 * channels];
-        byte[] outputBuffer = new byte[(audioFormat.getSampleSizeInBits() / 8) * channels];
+        int samplesBytes=(audioFormat.getSampleSizeInBits() / 8);
+        byte floatBuffer[]=new byte[dataLine.getBufferSize()*4*channels];
+        byte intBuffer[] = new byte[dataLine.getBufferSize()*samplesBytes * channels];
 
        
-        dataLine.start();
         while (loop) { // Rewind and loop
             audioBuffer.rewind();
 
             while (audioBuffer.hasRemaining()) { // Keep going until there is no more data available
-                ByteBuffer tempBuffer = ByteBuffer.allocate(dataLine.available());
 
-                // Fill a temp buffer to reduce the writes to the audio device
-                // Ensure that you stop if the audioBuffer limit is reached while filling the temp buffer
-                while (tempBuffer.hasRemaining() && audioBuffer.hasRemaining()) {
-                    // Read a little endian float for every channel
-                    BitUtils.nextF32le(audioBuffer, inputBuffer, channels);
+                int writableBytes = dataLine.available();
+                int writableSamples = writableBytes / samplesBytes;
+                int remainingBytes = audioBuffer.remaining();
+                int remainingSamples = remainingBytes / 4;//audioBuffer is always float
 
-                    convertFloats(inputBuffer, outputBuffer, channels);
-                    tempBuffer.put(outputBuffer);
-                }
+                // How many samples before the sound line buffer is filled or audioBuffer is over.
+                int samplesToRead = remainingSamples < writableSamples ? remainingSamples : writableSamples;
+                
+                BitUtils.nextF32le(audioBuffer,floatBuffer,samplesToRead);
 
-                // Temp buffer is ready to be written, reset the position to 0
-                tempBuffer.rewind();
-
-                // The source line may not have enough bytes left to store the entire tempBuffer, this should be avoided.
-                int writable= dataLine.available();
-                if (tempBuffer.limit() > writable) {
-                    System.err.println("FIX ME: " + tempBuffer.limit()
-                            + " bytes ready to be written but the source buffer has only " + writable
+                // Convert to proper encoding
+                convertFloats(floatBuffer, intBuffer, channels);
+                int available = dataLine.available();
+                if (samplesToRead >  available) {
+                    System.err.println("FIX ME: " + samplesToRead
+                            + " bytes ready to be written but the source buffer has only " +available
                             + " left. This will cause the thread to stop and wait until more bytes are available");
                 }
-                // Extract a plain byte array from the temp buffer
-                byte[] tempBufferB = tempBuffer.array(); 
-                dataLine.write(tempBufferB, 0, tempBufferB.length);
-
-                // The temp buffer is fully writen, so we reset his position to 0
-                tempBuffer.rewind();
-
-                /*BitUtils.nextF32le(audioBuffer, inputBuffer, channels);
-
-                convertFloats(inputBuffer, outputBuffer, channels);
-                dataLine.write(outputBuffer, 0, outputBuffer.length);*/
+                
+                dataLine.write(intBuffer, 0,samplesToRead*samplesBytes);
 
                 // Start the dataLine if it is not playing yet. 
                 // We do this here to be sure there is some data already available to be played
@@ -109,14 +95,15 @@ public class PhononPlayer {
         }
     }
     
-    private void convertFloats(byte[] inputBuffer, byte[] outputBuffer, int n) {
+    private void convertFloats(byte[] inb, byte[] outb, int n) {
         byte[] partInputBuffer = new byte[4];
         byte[] partOutputBuffer = new byte[audioFormat.getSampleSizeInBits() / 8];
 
-        for(int i = 0; i < n; ++i) {
-            for(int j = 0; j < partInputBuffer.length; ++j)
-                partInputBuffer[j] = inputBuffer[i * partInputBuffer.length + j]; 
-
+        for (int i = 0; i < inb.length; i+=4) {
+            partInputBuffer[0] = inb[i];
+            partInputBuffer[1] = inb[i+1];
+            partInputBuffer[2] = inb[i + 2];
+            partInputBuffer[3] = inb[i+3];
             if (audioFormat.getSampleSizeInBits() == 8) {
                 BitUtils.cnvF32leToI8le(partInputBuffer, partOutputBuffer);
             } else if (audioFormat.getSampleSizeInBits() == 16) {
@@ -124,9 +111,8 @@ public class PhononPlayer {
             } else {
                 BitUtils.cnvF32leToI24le(partInputBuffer, partOutputBuffer);
             }
-
             for(int j = 0; j < partOutputBuffer.length; ++j)
-                outputBuffer[i * partOutputBuffer.length + j] = partOutputBuffer[j];
+                outb[(i/4) * partOutputBuffer.length + j] = partOutputBuffer[j];
         }
     }
 }
