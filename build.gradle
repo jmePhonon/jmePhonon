@@ -19,6 +19,21 @@ dependencies {
 
 }
 
+sourceSets{
+main {   
+    resources {
+        srcDir 'build/natives/'
+    }
+}
+
+
+test {   
+    resources {
+        srcDir 'build/natives/'
+    }
+}
+
+}
 
 
 task buildNativeTests(type :Exec){
@@ -29,9 +44,18 @@ task premake(type :Exec){
     commandLine 'bash','premake.sh'
 }
 
+// task premakeClean(type :Exec){
+//     commandLine 'bash','premake.sh','clean'
+// }
+// clean.dependsOn(premakeClean)
+
+
+
 task buildNatives(type :Exec){
     commandLine 'bash','premake.sh',"buildNatives"
 }
+// buildNatives.dependsOn(clean)
+buildNatives.finalizedBy(build)
 
 task updateJNIHeaders(type:Exec) {
     def classpath = configurations.compile.join(":")+ ":build/classes/java/main";

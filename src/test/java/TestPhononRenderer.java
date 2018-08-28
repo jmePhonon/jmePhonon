@@ -1,4 +1,3 @@
-
 import java.nio.ByteBuffer;
 
 import javax.sound.sampled.AudioFormat;
@@ -7,40 +6,42 @@ import javax.sound.sampled.LineUnavailableException;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
 import com.jme3.phonon.F32leAudioData;
+import com.jme3.phonon.PhononOutputChannel;
+import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.util.BufferUtils;
 
-public class TestPhononPlayer extends SimpleApplication {
+public class TestPhononRenderer extends SimpleApplication {
     public static void main(String[] args) {
-        TestPhononPlayer app = new TestPhononPlayer();
+        TestPhononRenderer app = new TestPhononRenderer();
         app.setShowSettings(false);
         app.start();
     }
 
     @Override
     public void simpleInitApp() {
-        /*int bufferSize = 256;
-        ByteBuffer testBuffer = randomDataBuffer(bufferSize);*/
+         System.out.println("Input file 399354__romariogrande__eastandw_mono.ogg");
+        AudioData ad = assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg");
+        F32leAudioData f32le = new F32leAudioData(ad);
+     
+        PhononRenderer renderer = new PhononRenderer();
+        renderer.initialize();
 
-        AudioData testAudioData = assetManager.loadAudio("Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav");
-        F32leAudioData convertedTestAudioData = new F32leAudioData(testAudioData);
-
+        renderer.wire(f32le,  0);
         
+        PhononOutputChannel chan = renderer.getChannel(0);
+
         int bufferSize = 2048; 
-        // bufferSize= convertedTestAudioData.getSampleRate(); 1 second
-        // bufferSize = convertedTestAudioData.getSampleRate() * 60;
+          
         
-        float s = bufferSize / convertedTestAudioData.getSampleRate();
-        
-        System.out.println("Use bufferSize " + bufferSize+ " = "+s+" seconds");
 		try {
-            // PhononPlayer player = new PhononPlayer(convertedTestAudioData, 16,  bufferSize);
-            // player.play(true);
+            PhononPlayer player = new PhononPlayer(chan,2, 16);
+            player.play(false);
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} 
     } 
 
     ByteBuffer randomDataBuffer(int bufferSize) {

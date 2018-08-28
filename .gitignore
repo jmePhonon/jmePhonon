@@ -11,3 +11,5 @@ build/
 src/test/resources/inputaudio.raw
 *.so
 *.ddl
+.Trash/
+*.log
