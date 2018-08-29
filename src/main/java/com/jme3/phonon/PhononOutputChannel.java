@@ -105,6 +105,9 @@ public class PhononOutputChannel {
     }
     
     
+    public int getConnectedSourceLength(){
+        return         buffer.getInt(8);
+    }
     
     public long getConnectedSourceBuffer() {
         return buffer.getLong(0);
@@ -155,7 +158,7 @@ public class PhononOutputChannel {
     public ChannelStatus readNextFrameForPlayer(byte le_out[]) {
         int rawIndex = getLastPlayedFrameId();
         int phononIndex = getLastProcessedFrameId();
-        
+        System.out.println("Raw index "+rawIndex+ " phononINdex "+phononIndex);
         if(rawIndex>phononIndex){
             System.err.println("Error... no data is ready to be read");
             return ChannelStatus.NODATA;

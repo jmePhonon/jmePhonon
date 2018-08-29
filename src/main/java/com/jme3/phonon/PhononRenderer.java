@@ -79,7 +79,8 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 		long sleeptime = 1000 / (44100 / _OUTPUT_FRAME_SIZE);
 		long lastUpdate = 0;
 		while (true) {
-			lastUpdate=System.currentTimeMillis();
+			lastUpdate = System.currentTimeMillis();
+		
 			updateNative();
 			long delay=(System.currentTimeMillis()-lastUpdate);
 			delay=sleeptime-delay;
@@ -116,9 +117,14 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 		System.out.println("Connect source [" + audioData.getAddress() + "] of size " + audioData.getSizeInSamples()
 				+ " samples, to channel " + channelId);
 
-		channels[channelId].connectSourceBuffer(audioData.getAddress(),audioData.getSizeInSamples());
+		channels[channelId].connectSourceBuffer(audioData.getAddress(), audioData.getSizeInSamples());
+		connectSource(channelId, audioData.getAddress());
 		return this;
 	}
+	
+	private native void connectSource(int channelId, long sourceAddr);
+	private native void disconnectSource(int channelId);
+	
 	
 	@Override
 	public void setListener(Listener listener) {
