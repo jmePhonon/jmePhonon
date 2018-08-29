@@ -36,7 +36,7 @@ public class TestPhononRenderer extends SimpleApplication {
         
 		try {
             PhononPlayer player = new PhononPlayer(chan,2, 16);
-            player.play(false);
+            player.play();
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

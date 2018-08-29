@@ -38,7 +38,7 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
 	}
 
-	final int _OUTPUT_FRAME_SIZE = 12;
+	final int _OUTPUT_FRAME_SIZE = 1024;
 	final int _OUTPUT_BUFFER_SIZE = 100;
 
 	public PhononOutputChannel getChannel(int i) {
@@ -86,7 +86,8 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 			if (delay < 0) {
 				System.err.println("FIXME: Phonon is taking too long");
 			}else{
-				try{
+				try {
+					// System.out.println("Delay " + delay);
 					Thread.sleep(delay);
 				} catch (Exception e) {
 					e.printStackTrace();

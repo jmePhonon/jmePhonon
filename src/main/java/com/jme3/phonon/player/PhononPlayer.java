@@ -46,12 +46,12 @@ public class PhononPlayer {
         dataLine.open(audioFormat, chan.getBufferSize() * audioFormat.getFrameSize());
 
     }
-    public void play(boolean loop) {
+    public void play() {
         int samplesBytes = (audioFormat.getSampleSizeInBits() / 8);
-        byte floatFrame[]=new byte[phononChannel.getFrameSize()];
-        byte intBuffer[] = new byte[(floatFrame.length/4) * samplesBytes];
+        byte floatFrame[]=new byte[phononChannel.getFrameSize()*4];
+        byte intBuffer[] = new byte[phononChannel.getFrameSize()* samplesBytes];
 
-        while (loop) { // Rewind and loop
+        // while (loop) { // Rewind and loop
             
             while (true) { // Keep going until there is no more data available              
                 ChannelStatus stat = phononChannel.readNextFrameForPlayer(floatFrame);
@@ -63,6 +63,7 @@ public class PhononPlayer {
                     System.out.println("Audio data is over");
                     break;
                 case READY:
+                // System.out.println("Playing");
                 }
                 // Convert to proper encoding
                 convertFloats(floatFrame, intBuffer);
@@ -80,7 +81,7 @@ public class PhononPlayer {
                     dataLine.start();
 
             }
-        }
+        // }
     }
 
     private void convertFloat(byte[] inputBuffer, byte[] outputBuffer) {

@@ -167,7 +167,8 @@ public class PhononOutputChannel {
         int frameSize = getFrameSize();
 
         // Move buffer cursor to the correct position
-        buffer.position(_HEADER_SIZE + readindex * frameSize *_SAMPLE_SIZE);
+        buffer.position(_HEADER_SIZE + readindex * frameSize * _SAMPLE_SIZE);
+        // System.out.println("Read from position " + buffer.position()+" buffer length "+buffer.limit()+" frame size "+frameSize);
 
         // Read next frame at once
         BitUtils.nextF32le(buffer, le_out, frameSize);
