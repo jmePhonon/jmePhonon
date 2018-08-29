@@ -154,7 +154,7 @@ function build {
     $compiler -mtune=generic  
     -fmessage-length=0 
     -fpermissive 
-    -O2 -fno-rtti -shared
+    -O0 -fno-rtti -shared
     -fPIC  
     -Wall 
     -Lsrc/steamaudio/lib/$platform/$arch
