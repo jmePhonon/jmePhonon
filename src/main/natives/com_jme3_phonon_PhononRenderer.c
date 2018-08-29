@@ -6,7 +6,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define _BUFFER_HEADER 8+4+4 +4 // connected input addr + source size + write index + read index
+#define _BUFFER_HEADER_32bit 2+1+1 +1 // connected input addr + source size + write index + read index
 #define _MAX_CHANNELS 1
 
 #define bool int
@@ -15,7 +15,6 @@
 
 struct OutputChannel {
     void *outputBuffer;
-    int bufferCapacity;
     int frameSize;
     int bufferSize;
     float *lastReadFrame;
@@ -29,11 +28,11 @@ struct OutputChannel {
 bool chHasConnectedSourceBuffer(struct OutputChannel *chan){
     
     // 
-    if(chan->lastReadFrame==NULL){
-        printf("Phonon: channel not initialized\n");
-    }else{
-        printf("Phonon: source address %ld \n",((long*)chan->outputBuffer)[0]);
-    }
+    // if(chan->lastReadFrame==NULL){
+    //     printf("Phonon: channel not initialized\n");
+    // }else{
+    //     // printf("Phonon: source address %ld \n",((long*)chan->outputBuffer)[0]);
+    // }
     return chan->lastReadFrame!=NULL&&((long*)chan->outputBuffer)[0]!=-1;
 
 }
@@ -55,7 +54,7 @@ int chGetSourceSizeInSamples(struct OutputChannel *chan) {
 
 
 void chSetLastProcessedFrameId(struct OutputChannel *chan,int v) {
-    printf("Phonon: set last processed frame id to %d\n",v);
+    // printf("Phonon: set last processed frame id to %d\n",v);
     ((int *)chan->outputBuffer)[2+1 /*8bytes + 4*/] = v;
 }
 
@@ -101,7 +100,8 @@ float* chReadFrame(struct OutputChannel *chan,int frameIndex) {
         } else {
             v = chGetConnectedSourceBuffer(chan)[sampleIndex];
         }
-        chan->lastReadFrame[i] = v;
+   
+        // chan->lastReadFrame[i] = 0;
     }
     return chan->lastReadFrame;
 }
@@ -112,7 +112,7 @@ float* chReadFrame(struct OutputChannel *chan,int frameIndex) {
 void chWriteFrame(struct OutputChannel *chan,int frameIndex, float* frame) {
     int frameSize = chan->frameSize;
     for(int i=0;i<frameSize;i++){
-        ((float *)chan->outputBuffer)[_BUFFER_HEADER+frameSize * frameIndex+i]=frame[i];
+        ((float *)chan->outputBuffer)[_BUFFER_HEADER_32bit+frameSize * frameIndex+i]=frame[i];
     }
 }
 
@@ -133,7 +133,6 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative
 JNIEXPORT void JNICALL
 Java_com_jme3_phonon_PhononRenderer_loadChannel(JNIEnv *env, jobject obj,jint channelId, jlong outputBufferAddr, jint frameSize, jint bufferSize) {
     CHANNELS[channelId].outputBuffer = (void *)outputBufferAddr;
-    CHANNELS[channelId].bufferCapacity = _BUFFER_HEADER + frameSize * bufferSize;
     CHANNELS[channelId].frameSize = frameSize;
     CHANNELS[channelId].bufferSize = bufferSize;
     if(CHANNELS[channelId].lastReadFrame!=NULL)
@@ -162,13 +161,18 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 continue;
             }
         }
-        printf("Phonon: Read frame %d [%d] of %d for channel %d, call: %d\n", frameIndex,frameToRead,sourceFrames,i,callN);
+        // printf("Phonon: Read frame %d [%d] of %d for channel %d, call: %d\n", frameIndex,frameToRead,sourceFrames,i,callN);
+        // 
+        // float frame[channel->frameSize]; 
+        // for(int j=0;j<channel->frameSize;j++){
+        //     frame[j] = (float)(rand() / RAND_MAX);
+        // }
         float *frame=chReadFrame(channel, frameToRead);
         // processing
         // ....
         // ....
         // -----------
-        chWriteFrame(channel,frameIndex%channel->bufferSize,frame);
+        chWriteFrame(channel, frameIndex%channel->bufferSize, frame);
         chSetLastProcessedFrameId(channel,++frameIndex);
     }
 }
