@@ -80,8 +80,5 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         // -----------
         chWriteFrame(channel, frameIndex%channelBufferSize, frame);
         chSetLastProcessedFrameId(channel,++frameIndex);
-
-        if(i == 1)
-            printf("processing frame %d in channel %d\n", frameIndex, i);
     }
 }

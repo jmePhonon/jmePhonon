@@ -17,7 +17,7 @@ import com.jme3.phonon.PhononOutputChannel.ChannelStatus;
 import org.lwjgl.BufferUtils;
 
 public class PhononPlayer {
-    // public final static int FRAME_SIZE = 8, CACHE_SIZE = 128;
+    public final static int FRAMES_IN_BUFFER = 2;
 
     public final PhononOutputChannel phononChannel;
     // public final long totalFrames;
@@ -28,7 +28,7 @@ public class PhononPlayer {
     public final int channels;
 
     private boolean inPlayback = false;
-    private int samplesBytes, remainingBytes;
+    private int samplesBytes, remainingBytes, bufferFrameSize, bufferIndex;
     private byte[] floatFrame, intBuffer;
 
     /**
@@ -53,12 +53,17 @@ public class PhononPlayer {
 
     public void startPlayback() {
         samplesBytes = (audioFormat.getSampleSizeInBits() / 8);
+        bufferFrameSize = phononChannel.getFrameSize() * samplesBytes;
         floatFrame = new byte[phononChannel.getFrameSize() * 4];
-        intBuffer = new byte[phononChannel.getFrameSize() * samplesBytes];
+        intBuffer = new byte[bufferFrameSize * FRAMES_IN_BUFFER];
 
         inPlayback = true;
 
-        remainingBytes = 0;         
+        remainingBytes = 0;   
+        
+        for(int i = 0; i < FRAMES_IN_BUFFER; ++i) {
+            loadNextFrame();
+        }
     }
 
     public void continuePlayback() {
@@ -72,7 +77,7 @@ public class PhononPlayer {
                         + " left. This will cause the thread to stop and wait until more bytes are available");
             }
 
-            dataLine.write(intBuffer, intBuffer.length - remainingBytes, writable);
+            dataLine.write(intBuffer, (bufferIndex * bufferFrameSize) + bufferFrameSize - remainingBytes, writable);
             remainingBytes -= writable;
 
             // Start the dataLine if it is not playing yet. 
@@ -82,22 +87,27 @@ public class PhononPlayer {
         }
 
         if(remainingBytes == 0) {        
-            ChannelStatus stat = phononChannel.readNextFrameForPlayer(floatFrame);
-            switch (stat) {
-                case NODATA:
-                    System.err.println("No data to read. Phonon is lagging behind");
-                    break;
-                case OVER:
-                    inPlayback = false;
-                    System.out.println("Audio data is over");
-                    break;
-                case READY:
-                    // System.out.println("Playing");
-                    // Convert to proper encoding
-                    convertFloats(floatFrame, intBuffer);
-                    remainingBytes = intBuffer.length;
-            }
+            loadNextFrame();
         }    
+    }
+
+    private void loadNextFrame() {
+        ChannelStatus stat = phononChannel.readNextFrameForPlayer(floatFrame);
+        switch (stat) {
+            case NODATA:
+                System.err.println("No data to read. Phonon is lagging behind");
+                break;
+            case OVER:
+                inPlayback = false;
+                System.out.println("Audio data is over");
+                break;
+            case READY:
+                // System.out.println("Playing");
+                // Convert to proper encoding
+                convertFloats(floatFrame, intBuffer, bufferIndex * bufferFrameSize);
+                bufferIndex = (bufferIndex + 1) % FRAMES_IN_BUFFER;
+                remainingBytes = bufferFrameSize;
+        }
     }
 
     public boolean isInPlayback() {
@@ -115,7 +125,7 @@ public class PhononPlayer {
         }
     }
     
-    private void convertFloats(byte[] inb, byte[] outb) {
+    private void convertFloats(byte[] inb, byte[] outb, int offset) {
         byte[] partInputBuffer = new byte[4];
         byte[] partOutputBuffer = new byte[audioFormat.getSampleSizeInBits() / 8];
 
@@ -128,7 +138,7 @@ public class PhononPlayer {
             convertFloat(partInputBuffer, partOutputBuffer);
 
             for(int j = 0; j < partOutputBuffer.length; ++j)
-                outb[(i/4) * partOutputBuffer.length + j] = partOutputBuffer[j];
+                outb[offset + (i/4) * partOutputBuffer.length + j] = partOutputBuffer[j];
         }
     }
 }
