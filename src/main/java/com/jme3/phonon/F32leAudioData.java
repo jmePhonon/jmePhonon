@@ -24,12 +24,25 @@ import com.jme3.util.BufferUtils;
 public class F32leAudioData {
     private int channels,sampleRate;
     private ByteBuffer data;
-
+    private long dataAddress;
     public F32leAudioData() {
     }
 
-  
 
+    /**
+     * Get native address
+     */
+    public long getAddress() {
+        return dataAddress;
+    }
+
+    /**
+     * Get size in samples
+     */
+    public int getSizeInSamples() {
+        return data.limit()/4;
+    }
+ 
     public F32leAudioData(AudioData ad) {
         if (ad instanceof AudioBuffer) {
             AudioBuffer ab = (AudioBuffer) ad;
@@ -41,7 +54,8 @@ public class F32leAudioData {
             ByteBuffer inputData = ab.getData();
         
             data = BufferUtils.createByteBuffer((inputData.limit() / (bitsPerSample / 8)) * 4);
-                    inputData.rewind();
+            inputData.rewind();
+            dataAddress = DirectBufferUtils.getAddr(data);
 
             byte float_le[] = new byte[4];
             switch (bitsPerSample) {

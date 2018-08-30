@@ -25,9 +25,17 @@ public class TestPhononPlayer extends SimpleApplication {
         AudioData testAudioData = assetManager.loadAudio("Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav");
         F32leAudioData convertedTestAudioData = new F32leAudioData(testAudioData);
 
+        
+        int bufferSize = 2048; 
+        // bufferSize= convertedTestAudioData.getSampleRate(); 1 second
+        // bufferSize = convertedTestAudioData.getSampleRate() * 60;
+        
+        float s = bufferSize / convertedTestAudioData.getSampleRate();
+        
+        System.out.println("Use bufferSize " + bufferSize+ " = "+s+" seconds");
 		try {
-            PhononPlayer player = new PhononPlayer(convertedTestAudioData, 16,  2048);
-            player.play(true);
+            // PhononPlayer player = new PhononPlayer(convertedTestAudioData, 16,  bufferSize);
+            // player.play(true);
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
