@@ -24,17 +24,17 @@ public class TestPhononRenderer extends SimpleApplication {
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
 
-        songAudioData = new F32leAudioData(assetManager.loadAudio("Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav"));
+        songAudioData = new F32leAudioData(assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg"));
         ambientAudioData = new F32leAudioData(assetManager.loadAudio("433016__derjuli__ocean.wav"));
 
-        PhononRenderer renderer = new PhononRenderer(1024, 32);
+        PhononRenderer renderer = new PhononRenderer(44100,1,1,1024, 32);
         renderer.initialize();    
         renderer.connectSource(songAudioData, 0);
 
         try {
 
 
-            PhononPlayer songPlayer = new PhononPlayer(renderer.getChannel(0),44100,2,16);
+            PhononPlayer songPlayer = new PhononPlayer(renderer.getLine(0),44100,1,16);
             renderer.attachPlayer(songPlayer);
         } catch (Exception e) {
             // TODO Auto-generated catch block

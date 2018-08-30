@@ -27,25 +27,35 @@ import com.jme3.system.Platform;
  * PhononRenderer
  */
 public class PhononRenderer implements AudioRenderer {
-	int CHANNEL_LIMIT = 16;
 
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
-	private final PhononChannel[] channels = new PhononChannel[CHANNEL_LIMIT];
 	// private final List<PhononPlayer> enqueuedPlayers = new LinkedList<>();
 	private final LinkedList<PhononPlayer> players = new LinkedList<>();
 
-	static{
-		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux32, "linux-x86/libphonon.so");
-		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux64, "linux-x86-64/libphonon.so");
-		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux32, "linux-x86/libjmephonon.so");
-		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux64, "linux-x86-64/libjmephonon.so");
+	static {
+		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux32,
+				"linux-x86/libphonon.so");
+		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux64,
+				"linux-x86-64/libphonon.so");
+		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux32,
+				"linux-x86/libjmephonon.so");
+		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux64,
+				"linux-x86-64/libjmephonon.so");
 		// TODO: Windows
 		// TODO: OSX
 		// MAYBE TODO: Android
 	}
-	final int _OUTPUT_FRAME_SIZE;
-	final int _OUTPUT_BUFFER_SIZE ;
-
+	
+	// Mixer lines
+	private final PhononChannel[] OUTPUT_LINES;
+	// Output channels, 1=mono, 2=stereo ..
+	private final int OUTPUT_CHANNELS_NUM;
+	// How many samples per frame
+	private final int FRAME_SIZE;
+	// How many frames per buffer
+	private final int BUFFER_SIZE;
+	// Samplerate (eg 44100)
+	private final int SAMPLE_RATE;
 
 
 	volatile boolean attachingPlayers = false;
@@ -56,29 +66,32 @@ public class PhononRenderer implements AudioRenderer {
 	boolean useNativeThreads;
 	double DELTA_S;
 
-	public PhononRenderer(int frameSize, int bufferSize) {
-		_OUTPUT_FRAME_SIZE = frameSize;
-		_OUTPUT_BUFFER_SIZE = bufferSize;
+	public PhononRenderer(int sampleRate, int nOutputLines, int nOutputChannels, int frameSize,
+			int bufferSize) {
+		OUTPUT_LINES = new PhononChannel[nOutputLines];
+		OUTPUT_CHANNELS_NUM = nOutputChannels;
+		SAMPLE_RATE = sampleRate;
+		FRAME_SIZE = frameSize;
+		BUFFER_SIZE = bufferSize;
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
 	}
 
 	
-	public PhononChannel getChannel(int i) {
-		return channels[i];
+	public PhononChannel getLine(int i) {
+		return OUTPUT_LINES[i];
 	}
 
 	void preInit() {
-		DELTA_S=  1./(44100 / _OUTPUT_FRAME_SIZE) ;
+		DELTA_S=  1./(44100 / FRAME_SIZE) ;
 		useNativeThreads=CLOCK==Clock.NATIVE||WAIT_MODE==Sleeper.NATIVE;
-		initNative(DELTA_S, useNativeThreads,CLOCK==Clock.NATIVE);
-		for (int i = 0; i < channels.length; i++) {
-			channels[i] = new PhononChannel(_OUTPUT_FRAME_SIZE*2, _OUTPUT_BUFFER_SIZE);
-			loadChannelNative(i, channels[i].getAddress(), channels[i].getFrameSize(), channels[i].getBufferSize());
+		initNative(SAMPLE_RATE,OUTPUT_LINES.length,OUTPUT_CHANNELS_NUM,FRAME_SIZE,BUFFER_SIZE, DELTA_S, useNativeThreads,CLOCK==Clock.NATIVE);
+		for (int i = 0; i < OUTPUT_LINES.length; i++) {
+			OUTPUT_LINES[i] = new PhononChannel(FRAME_SIZE*OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
+			loadChannelNative(i, OUTPUT_LINES[i].getAddress());
 		}
 	}
 
-	Thread playeThread;
 	@Override
 	public void initialize() {
 
@@ -104,39 +117,39 @@ public class PhononRenderer implements AudioRenderer {
 		destroyNative();
 	}
 
-	native void initNative(double updateRate,boolean nativeThread,boolean nativeClock);
+	native void initNative(int sampleRate,int nOutputLines,int nOutputChannels,int frameSize,int bufferSize,double updateRate,boolean nativeThread,boolean nativeClock);
 	native void updateNative();
 	native void destroyNative();
-	native void connectSourceNative(int channelId, int length, long sourceAddr);
-	native void disconnectSourceNative(int channelId);
+	native void connectSourceNative(int lineID, int length, long sourceAddr);
+	native void disconnectSourceNative(int lineID);
 	
 	/**
 	 * @param addr Output buffer address
 	 * @param frameSize samples per frame
 	 * @param bufferSize total number of frames in this buffer
 	 */
-	native void loadChannelNative(int id,long addr,int frameSize,int bufferSize);
+	native void loadChannelNative(int id,long addr);
 
 
-	public void connectSource(F32leAudioData audioData, int channelId) {
+	public void connectSource(F32leAudioData audioData, int lineID) {
 		System.out.println("Connect source [" + audioData.getAddress() + "] of size " + audioData.getSizeInSamples()
-				+ " samples, to channel " + channelId);
+				+ " samples, to channel " + lineID);
 		int length = audioData.getSizeInSamples();
 		long addr = audioData.getAddress();
 
-		channels[channelId].reset();
-		connectSourceNative(channelId, length,addr);
+		OUTPUT_LINES[lineID].reset();
+		connectSourceNative(lineID, length,addr);
 	}
 
 	
-	public void connectSourceRaw(int channelId, int length, ByteBuffer source) {
+	public void connectSourceRaw(int lineID, int length, ByteBuffer source) {
 		long addr = DirectBufferUtils.getAddr(source);
-		connectSourceNative(channelId, length, addr);
-		channels[channelId].reset();
+		connectSourceNative(lineID, length, addr);
+		OUTPUT_LINES[lineID].reset();
 	}
 
-	public void disconnectSourceRaw(int channelId) {
-		disconnectSourceNative(channelId);
+	public void disconnectSourceRaw(int lineID) {
+		disconnectSourceNative(lineID);
 	}
 
 	public void attachPlayer(PhononPlayer player) {

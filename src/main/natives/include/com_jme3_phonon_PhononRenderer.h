@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    initNative
- * Signature: (DZZ)V
+ * Signature: (IIIIIDZZ)V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
-  (JNIEnv *, jobject, jdouble, jboolean, jboolean);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jdouble, jboolean, jboolean);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
@@ -50,10 +50,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNativ
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    loadChannelNative
- * Signature: (IJII)V
+ * Signature: (IJ)V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_loadChannelNative
-  (JNIEnv *, jobject, jint, jlong, jint, jint);
+  (JNIEnv *, jobject, jint, jlong);
 
 #ifdef __cplusplus
 }

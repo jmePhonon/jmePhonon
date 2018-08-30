@@ -4,34 +4,32 @@
 
 
 
-
-void chPreInit(struct ChOutput *chan){
-    chan->lastReadFrame = NULL;
+void chPreInit(struct GlobalSettings *settings,struct ChOutput *chan){
+    // chan->lastReadFrame = NULL;
     chan->sourceBuffer = NULL;
     chan->sourceBufferNumSamples = 0;
 }
 
-void chInit(struct ChOutput *chan,jfloat *outputBuffer,jint outputBufferSize,jint frameSize){
+void chInit(struct GlobalSettings *settings,struct ChOutput *chan,jfloat *outputBuffer){
     chan->outputBuffer = outputBuffer;
-    chan->outputBufferSize = outputBufferSize;
-    chan->frameSize = frameSize;
-    if (chan->lastReadFrame != NULL)
-        free(chan->lastReadFrame);
-    chan->lastReadFrame = (jfloat*)malloc(4 * frameSize);
-
+    // if (chan->lastReadFrame != NULL)
+    //     free(chan->lastReadFrame);
+    // chan->lastReadFrame = (jfloat*)malloc(4 * settings->inputFrameSize);
+    // chan->lastWrittenFrame=(jfloat*)malloc(settings->nOutputChannels* 4 * settings->frameSize);
 }
 
-void chDestroy(struct ChOutput *chan){
-
+void chDestroy(struct GlobalSettings *settings,struct ChOutput *chan){
+    // if (chan->lastReadFrame != NULL)
+    //     free(chan->lastReadFrame);
 }
 
 
-void chConnectSource(struct ChOutput *chan,jfloat *sourceBuffer,jint sourceSamples){
+void chConnectSource(struct GlobalSettings *settings,struct ChOutput *chan,jfloat *sourceBuffer,jint sourceSamples){
     chan->sourceBuffer =sourceBuffer;
     chan->sourceBufferNumSamples =sourceSamples;
 }
 
-void chDisconnectSource(struct ChOutput *chan){
+void chDisconnectSource(struct GlobalSettings *settings,struct ChOutput *chan){
     chan->sourceBuffer = NULL;
     chan->sourceBufferNumSamples = 0;
 }
@@ -40,14 +38,14 @@ void chDisconnectSource(struct ChOutput *chan){
 /**
  * Get float buffer of the connected source or NULL if there is no source connected
  */
-jfloat *chGetConnectedSourceBuffer(struct ChOutput *chan) {
+jfloat *chGetConnectedSourceBuffer(struct GlobalSettings *settings,struct ChOutput *chan) {
     return chan->sourceBuffer;
 }
 
 /**
  * Get num of samples in connected source
  */
-jint chGetConnectedSourceSamples(struct ChOutput *chan) {
+jint chGetConnectedSourceSamples(struct GlobalSettings *settings,struct ChOutput *chan) {
     return chan->sourceBufferNumSamples;
 }
 
@@ -55,44 +53,30 @@ jint chGetConnectedSourceSamples(struct ChOutput *chan) {
 /**
  * Return the float buffer of the output channel
  */
-jfloat *chGetOutputBuffer(struct ChOutput *chan) {
+jfloat *chGetOutputBuffer(struct GlobalSettings *settings,struct ChOutput *chan) {
     return chan->outputBuffer;
 }
 
-/**
- * Get num of frames in output buffer
- */
-jint chGetOutputBufferSize(struct ChOutput *chan) {
-    return chan->outputBufferSize;
-}
-
-
-/**
- * Get num of sample in one output buffer frame
- */
-jint chGetFrameSize(struct ChOutput *chan) {
-    return chan->frameSize;
-}
 
 /**
  * Return true if any audio source is connected to the channel
  */
-jboolean chHasConnectedSourceBuffer(struct ChOutput *chan) {
-    return chan->lastReadFrame != NULL && chGetConnectedSourceBuffer(chan) != NULL;
+jboolean chHasConnectedSourceBuffer(struct GlobalSettings *settings,struct ChOutput *chan) {
+    return /*chan->lastReadFrame != NULL &&*/ chGetConnectedSourceBuffer(settings,chan) != NULL;
 }
 
 
 /**
  * Store index of the lastest processed frame in the output buffer.
  */
-void chSetLastProcessedFrameId(struct ChOutput *chan, jint v) {
+void chSetLastProcessedFrameId(struct GlobalSettings *settings,struct ChOutput *chan, jint v) {
     ((jint *)chan->outputBuffer)[chHeader(LAST_PROCESSED_FRAME)] = v;
 }
 
 /**
  * Retrieve the index of the latest processed frame from the output buffer
  */
-jint chGetLastProcessedFrameId(struct ChOutput *chan) {
+jint chGetLastProcessedFrameId(struct GlobalSettings *settings,struct ChOutput *chan) {
     jint n = ((jint *)chan->outputBuffer)[chHeader(LAST_PROCESSED_FRAME)];
     if (n < 0)
         n = -n;
@@ -102,7 +86,7 @@ jint chGetLastProcessedFrameId(struct ChOutput *chan) {
 /**
  * Check if processing is completed (ie the last source frame has been processed)
  */
-jboolean chIsProcessingCompleted(struct ChOutput *chan) {
+jboolean chIsProcessingCompleted(struct GlobalSettings *settings,struct ChOutput *chan) {
     jint n = ((jint *)chan->outputBuffer)[chHeader(LAST_PROCESSED_FRAME)];
     return n < 0;
 }
@@ -112,14 +96,14 @@ jboolean chIsProcessingCompleted(struct ChOutput *chan) {
  * Notify that the processing is completed by increasing the last processed frame 
  * index by 1 and making it negative.
  */
-void chSetProcessingCompleted(struct ChOutput *chan) {
+void chSetProcessingCompleted(struct GlobalSettings *settings,struct ChOutput *chan) {
     ((jint *)chan->outputBuffer)[chHeader(LAST_PROCESSED_FRAME)] = -(((jint *)chan->outputBuffer)[chHeader(LAST_PROCESSED_FRAME)] + 1);
 }
 
 /**
  * Retrieve the index of the latest played frame from the output buffer
  */
-jint chGetLastPlayedFrameId(struct ChOutput *chan) {
+jint chGetLastPlayedFrameId(struct GlobalSettings *settings,struct ChOutput *chan) {
     return ((jint *)chan->outputBuffer)[chHeader(LAST_PLAYED_FRAME)];
 }
 
@@ -127,8 +111,8 @@ jint chGetLastPlayedFrameId(struct ChOutput *chan) {
 /**
  * Read one frame from the audio source
  */
-jfloat *chReadFrame(struct ChOutput *chan, jint frameIndex) {
-    jint frameSize = chan->frameSize;
+jfloat *chReadFrame(struct GlobalSettings *settings,struct ChOutput *chan, jint frameIndex,jfloat *store) {
+    jint frameSize = settings->inputFrameSize;
     jint sourceSamples = chan->sourceBufferNumSamples;
     jfloat *source = chan->sourceBuffer;
     for (jint i = 0; i < frameSize; i++) {
@@ -140,16 +124,15 @@ jfloat *chReadFrame(struct ChOutput *chan, jint frameIndex) {
         } else {
             v = source[sampleIndex];
         }
-        chan->lastReadFrame[i] = v;
+        store[i] = v;
     }
-    return chan->lastReadFrame;
+    return store;
 }
 
 /**
 *   Write one frame to the output buffer
 */
-void chWriteFrame(struct ChOutput *chan, jint frameIndex, jfloat *frame) {
-    jint frameSize = chan->frameSize;
+void chWriteFrame(struct GlobalSettings *settings,struct ChOutput *chan, jint frameIndex, jfloat *frame,jint frameSize) {
     for (jint i = 0; i < frameSize; i++) {
         chan->outputBuffer[chHeader(BODY)+frameSize * frameIndex + i] = frame[i];
     }

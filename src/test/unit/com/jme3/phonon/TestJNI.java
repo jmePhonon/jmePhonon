@@ -22,12 +22,12 @@ public class TestJNI extends TestCase {
             bbf.putFloat((float) Math.random());
         }
 
-        PhononRenderer renderer = new PhononRenderer(frameSize, bufferSize);
+        PhononRenderer renderer = new PhononRenderer(44100,1,1,frameSize, bufferSize);
         renderer.preInit();        
         renderer.connectSourceRaw(0, bbf.limit()/4, bbf);
 
 
-        PhononChannel chan = renderer.getChannel(0);
+        PhononChannel chan = renderer.getLine(0);
 
         ByteBuffer tmpout_cnv = ByteBuffer.allocateDirect(frameSize*4).order(ByteOrder.LITTLE_ENDIAN);
         byte tmpout[] = new byte[frameSize*4];
