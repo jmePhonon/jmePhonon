@@ -25,14 +25,13 @@ public class TestPhononRenderer extends SimpleApplication {
         AudioData ad = assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg");
         f32le = new F32leAudioData(ad);
      
-        PhononRenderer renderer = new PhononRenderer(1024,100);
+        PhononRenderer renderer = new PhononRenderer(512,100);
         renderer.initialize();
 
         renderer.wire(f32le,  0);
         
         PhononOutputChannel chan = renderer.getChannel(0);
 
-        int bufferSize = 2048; 
           
         
 		try {
@@ -45,11 +44,5 @@ public class TestPhononRenderer extends SimpleApplication {
 		} 
     } 
 
-    ByteBuffer randomDataBuffer(int bufferSize) {
-        byte[] testData = new byte[bufferSize];
-        for(int i = 0; i < bufferSize; ++i) {
-            testData[i] = (byte) (i % 128);
-        }
-        return BufferUtils.createByteBuffer(testData);
-    }
+ 
 }

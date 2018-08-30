@@ -19,6 +19,7 @@ import com.jme3.system.Platform;
  * PhononRenderer
  */
 public class PhononRenderer extends Thread implements AudioRenderer {
+
 	int CHANNEL_LIMIT = 1;
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
 	private final PhononOutputChannel[] channels = new PhononOutputChannel[CHANNEL_LIMIT];
@@ -34,6 +35,9 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 	}
 	final int _OUTPUT_FRAME_SIZE;
 	final int _OUTPUT_BUFFER_SIZE ;
+
+	
+
 
 	public PhononRenderer(int frameSize, int bufferSize) {
 		_OUTPUT_FRAME_SIZE = frameSize;
@@ -122,7 +126,7 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 		System.out.println("Connect source [" + audioData.getAddress() + "] of size " + audioData.getSizeInSamples()
 				+ " samples, to channel " + channelId);
 
-		channels[channelId].connectSourceBuffer(audioData.getAddress(), audioData.getSizeInSamples());
+		channels[channelId].reset();
 		connectSourceNative(channelId, audioData.getSizeInSamples(),audioData.getAddress());
 		return this;
 	}
@@ -131,7 +135,7 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 	public void connectSourceRaw(int channelId, int length, ByteBuffer source) {
 		long addr = DirectBufferUtils.getAddr(source);
 		connectSourceNative(channelId, length, addr);
-		channels[channelId].connectSourceBuffer(addr,length);
+		channels[channelId].reset();
 
 	}
 
