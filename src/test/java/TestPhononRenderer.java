@@ -18,13 +18,14 @@ public class TestPhononRenderer extends SimpleApplication {
         app.start();
     }
 
+    F32leAudioData f32le;
     @Override
     public void simpleInitApp() {
          System.out.println("Input file 399354__romariogrande__eastandw_mono.ogg");
         AudioData ad = assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg");
-        F32leAudioData f32le = new F32leAudioData(ad);
+        f32le = new F32leAudioData(ad);
      
-        PhononRenderer renderer = new PhononRenderer(1,8);
+        PhononRenderer renderer = new PhononRenderer(1024,100);
         renderer.initialize();
 
         renderer.wire(f32le,  0);
@@ -35,8 +36,8 @@ public class TestPhononRenderer extends SimpleApplication {
           
         
 		try {
-            // PhononPlayer player = new PhononPlayer(chan,2, 16);
-            // player.play();
+            PhononPlayer player = new PhononPlayer(chan,2, 16);
+            player.play();
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
