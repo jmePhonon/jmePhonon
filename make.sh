@@ -37,10 +37,10 @@ if [ "$SUDO_USER" != "" ];
 then
     userUID=`id -u $SUDO_USER`
     groupUID=`id -g $SUDO_USER`
-    export RUN_AS="$userUID:$groupUID"
+    export RUN_AS="-u=$userUID:$groupUID"
 else
     export RUN_AS=""
 fi
 
 echo "Launch $USE_IMAGE as $RUN_AS"
-docker run --rm  -it -u=$RUN_AS -eNO_CACHE="$NO_CACHE" -v"$PWD:/workspace" $USE_IMAGE gradle $@
+docker run --rm  -it $RUN_AS -eNO_CACHE="$NO_CACHE" -v"$PWD:/workspace" $USE_IMAGE gradle $@
