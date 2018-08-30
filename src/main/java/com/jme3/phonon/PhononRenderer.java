@@ -12,6 +12,7 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
+import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
 
@@ -22,7 +23,7 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 
 	int CHANNEL_LIMIT = 1;
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
-	private final PhononOutputChannel[] channels = new PhononOutputChannel[CHANNEL_LIMIT];
+	private final PhononChannel[] channels = new PhononChannel[CHANNEL_LIMIT];
 
 	static{
 		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux32, "linux-x86/libphonon.so");
@@ -47,14 +48,14 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 	}
 
 	
-	public PhononOutputChannel getChannel(int i) {
+	public PhononChannel getChannel(int i) {
 		return channels[i];
 	}
 
-	public void preInit() {
+	void preInit() {
 		initNative();
 		for (int i = 0; i < channels.length; i++) {
-			channels[i] = new PhononOutputChannel(_OUTPUT_FRAME_SIZE, _OUTPUT_BUFFER_SIZE);
+			channels[i] = new PhononChannel(_OUTPUT_FRAME_SIZE, _OUTPUT_BUFFER_SIZE);
 			loadChannelNative(i, channels[i].getAddress(), channels[i].getFrameSize(), channels[i].getBufferSize());
 		}
 	}
@@ -71,18 +72,41 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 		destroyNative();
 	}
 
-	public native void initNative();
-	public native void updateNative();
-	public native void destroyNative();
-
+	native void initNative();
+	native void updateNative();
+	native void destroyNative();
+	native void connectSourceNative(int channelId, int length, long sourceAddr);
+	native void disconnectSourceNative(int channelId);
+	
 	/**
 	 * @param addr Output buffer address
 	 * @param frameSize samples per frame
 	 * @param bufferSize total number of frames in this buffer
 	 */
-	public native void loadChannelNative(int id,long addr,int frameSize,int bufferSize);
+	native void loadChannelNative(int id,long addr,int frameSize,int bufferSize);
+
+
+	public void connectSource(F32leAudioData audioData, int channelId) {
+		System.out.println("Connect source [" + audioData.getAddress() + "] of size " + audioData.getSizeInSamples()
+				+ " samples, to channel " + channelId);
+		int length = audioData.getSizeInSamples();
+		long addr = audioData.getAddress();
+
+		channels[channelId].reset();
+		connectSourceNative(channelId, length,addr);
+	}
 
 	
+	public void connectSourceRaw(int channelId, int length, ByteBuffer source) {
+		long addr = DirectBufferUtils.getAddr(source);
+		connectSourceNative(channelId, length, addr);
+		channels[channelId].reset();
+	}
+
+	public void disconnectSourceRaw(int channelId) {
+		disconnectSourceNative(channelId);
+	}
+
 
 	public void run() {
 		long sleeptime = 1000 / (44100 / _OUTPUT_FRAME_SIZE);
@@ -98,7 +122,7 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 			} else {
 				try {
 					// System.out.println("Delay " + delay);
-					// Thread.sleep(delay);
+					Thread.sleep(delay);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -118,30 +142,8 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 	}
 
 
-	public PhononRenderer wire(AudioData audioData, int channelId) {
-		return wire(toF32leData(audioData), channelId);
-	}
 
-	public PhononRenderer wire(F32leAudioData audioData, int channelId) {
-		System.out.println("Connect source [" + audioData.getAddress() + "] of size " + audioData.getSizeInSamples()
-				+ " samples, to channel " + channelId);
 
-		channels[channelId].reset();
-		connectSourceNative(channelId, audioData.getSizeInSamples(),audioData.getAddress());
-		return this;
-	}
-
-	
-	public void connectSourceRaw(int channelId, int length, ByteBuffer source) {
-		long addr = DirectBufferUtils.getAddr(source);
-		connectSourceNative(channelId, length, addr);
-		channels[channelId].reset();
-
-	}
-
-	private native void connectSourceNative(int channelId, int length, long sourceAddr);
-	public native void disconnectSourceNative(int channelId);
-	
 	
 	@Override
 	public void setListener(Listener listener) {

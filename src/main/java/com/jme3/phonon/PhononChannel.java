@@ -3,6 +3,8 @@ package com.jme3.phonon;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import com.jme3.phonon.utils.BitUtils;
+import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 
 /**
@@ -10,7 +12,7 @@ import com.jme3.util.BufferUtils;
  * 
  * This class stores processed data
  */
-public class PhononOutputChannel {
+public class PhononChannel {
     private static final int _SAMPLE_SIZE = 4;//Always 4 byte (float32) sample
 
     private final ByteBuffer buffer;
@@ -38,7 +40,7 @@ public class PhononOutputChannel {
      * @param bufferedFrames How many frames should this queue contain
      * @param samplesPerFrame 
      */
-    public PhononOutputChannel(int frameSize, int bufferSize) {
+    public PhononChannel(int frameSize, int bufferSize) {
         this.bufferSize = bufferSize;
         // this.channels = channels;
         // Allocate direct buffer, the first 8+ 4 + 4 bytes contain the source id and two int indices

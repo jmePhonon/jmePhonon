@@ -4,8 +4,8 @@ mkdir -p tmp/tools
 mkdir -p tmp/cache
 mkdir -p build/natives
 
-source premake.dep/safeRm.sh
-source premake.dep/findJava.sh
+source build.dep/safeRm.sh
+source build.dep/findJava.sh
 
 # Get steam audio
 if [ "$STEAM_AUDIO_URL" = "" ];
@@ -67,40 +67,27 @@ then
     # rm -Rf bin
 
     #apt-get install htmldoc archmage
-    if [ "$CONVERT_DOC" == "true" ];
-    then
-        cd doc
-        archmage -c pdf steamaudio_api.chm steamaudio_api.pdf
-        # archmage -c html steamaudio_api.chm steamaudio_api.html
-        cd ..
-    fi
+    # if [ "$CONVERT_DOC" == "true" ];
+    # then
+    #     cd doc
+    #     archmage -c pdf steamaudio_api.chm steamaudio_api.pdf
+    #     # archmage -c html steamaudio_api.chm steamaudio_api.html
+    #     cd ..
+    # fi
     cd ../../
 fi
 ################
 
 
-function clean {
-    # safeRm build/classes
-    # safeRm build/libs
-    # safeRm build/natives
-    # safeRm build/reports
-    # safeRm build/resources
-    # safeRm build/test-results
-    # safeRm bin
-
+function deepClean {
     safeRm build
     safeRm tmp
     safeRm bin
     safeRm src/steamaudio
-    gradle clean
+    rm -Rf .Trash
 }
 
 
-# function deepClean {
-#     clean
-
-   
-# }
 
 
 #####

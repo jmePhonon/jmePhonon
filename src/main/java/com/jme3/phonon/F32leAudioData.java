@@ -14,6 +14,8 @@ import java.nio.ShortBuffer;
 import com.jme3.audio.AudioBuffer;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioStream;
+import com.jme3.phonon.utils.BitUtils;
+import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 
 /**

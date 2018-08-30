@@ -39,31 +39,29 @@ test {
 }
 
 
+
 task buildNativeTests(type :Exec){
-    commandLine 'bash','premake.sh',"buildNativeTests"
+    commandLine 'bash','prepare.sh',"buildNativeTests"
 }
-
-task premake(type :Exec){
-    commandLine 'bash','premake.sh'
-}
-
-// task premakeClean(type :Exec){
-//     commandLine 'bash','premake.sh','clean'
-// }
-// clean.dependsOn(premakeClean)
-
-
-
-task buildNatives(type :Exec){
-    commandLine 'bash','premake.sh',"buildNatives"
-}
-// buildNatives.dependsOn(clean)
-buildNatives.finalizedBy(build)
 
 task updateJNIHeaders(type:Exec) {
     def classpath = configurations.compile.join(":")+ ":build/classes/java/main";
-    commandLine 'bash','premake.sh',"updateJNIHeaders",classpath,"build/classes/java/main","src/main/natives/include"
-    dependsOn classes
+    commandLine 'bash','prepare.sh',"updateJNIHeaders",classpath,"build/classes/java/main","src/main/natives/include"
 }
+updateJNIHeaders.dependsOn(classes)
 
-build.dependsOn(premake)
+task deepClean(type:Exec){
+    commandLine 'bash','prepare.sh',"deepClean"
+}
+deepClean.dependsOn(clean);
+
+
+task buildNatives(type :Exec){
+    commandLine 'bash','prepare.sh',"buildNatives"
+}
+build.dependsOn(buildNatives)
+task genWorkspace(type:Exec){
+    commandLine 'bash','prepare.sh'    
+}
+genWorkspace.finalizedBy(buildNatives)
+

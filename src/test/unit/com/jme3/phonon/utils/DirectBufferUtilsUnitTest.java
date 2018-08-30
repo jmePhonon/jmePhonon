@@ -1,8 +1,7 @@
-package com.jme3.phonon;
+package com.jme3.phonon.utils;
 
 import java.nio.ByteBuffer;
 
-import com.jme3.phonon.DirectBufferUtils;
 
 import org.junit.Test;
 

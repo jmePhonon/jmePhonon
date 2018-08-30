@@ -6,7 +6,8 @@ import javax.sound.sampled.LineUnavailableException;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
 import com.jme3.phonon.F32leAudioData;
-import com.jme3.phonon.PhononOutputChannel;
+import com.jme3.phonon.PhononChannel;
+import com.jme3.phonon.PhononChannel;
 import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.util.BufferUtils;
@@ -28,8 +29,8 @@ public class TestPhononRenderer extends SimpleApplication {
 
         PhononRenderer renderer = new PhononRenderer(2048, 1024);
         renderer.initialize();
-        renderer.wire(f32le,  0);        
-        PhononOutputChannel chan = renderer.getChannel(0);     
+        renderer.connectSource(f32le,  0);        
+        PhononChannel chan = renderer.getChannel(0);     
         int bufferSize = 2048; 
         try {
             PhononPlayer player = new PhononPlayer(chan, 1, 16);
@@ -52,4 +53,4 @@ public class TestPhononRenderer extends SimpleApplication {
     } 
 
  
-}
+} 

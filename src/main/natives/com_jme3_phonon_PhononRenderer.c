@@ -1,5 +1,5 @@
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    #error Error.
+    #error This implementation runs only on little endian machines
 #endif
 
 #include <jni.h>
