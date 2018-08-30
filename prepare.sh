@@ -15,6 +15,9 @@ fi
 
 export STEAM_AUDIO_URL_HASH="`echo "$STEAM_AUDIO_URL" | sha256sum | cut -d' ' -f1`"
 
+
+function getSteamAudio {
+
 if [  ! -f src/steamaudio/include/phonon.h -o  "$REGEN_BINDINGS" != "" ];
 then
     safeRm tmp/ext_sta
@@ -43,48 +46,19 @@ then
 
     cp -Rf bin/* lib/
     safeRm bin
-
-    # mkdir -p lib/linux-x86
-    # cp lib/Linux/x86/*.so lib/linux-x86/
-
-    # mkdir -p lib/linux-x86-64
-    # cp lib/Linux/x64/*.so lib/linux-x86-64
-
-    # mkdir -p lib/win32-x86
-    # cp bin/Windows/x86/*.dll lib/win32-x86
-
-    # mkdir -p lib/win32-x86-64
-    # cp bin/Windows/x64/*.dll lib/win32-x86-64
-
-    # mkdir -p lib/darwin
-    # cp lib/OSX/*.dylib lib/darwin
-
-    # rm -Rf lib/Android
-    # rm -Rf lib/Linux
-    # rm -Rf lib/OSX
-    # rm -Rf lib/Windows
-
-    # rm -Rf bin
-
-    #apt-get install htmldoc archmage
-    # if [ "$CONVERT_DOC" == "true" ];
-    # then
-    #     cd doc
-    #     archmage -c pdf steamaudio_api.chm steamaudio_api.pdf
-    #     # archmage -c html steamaudio_api.chm steamaudio_api.html
-    #     cd ..
-    # fi
     cd ../../
 fi
 ################
 
+}
 
 function deepClean {
     safeRm build
     safeRm tmp
     safeRm bin
     safeRm src/steamaudio
-    rm -Rf .Trash
+    safeRm .gradle
+    rm -Rf .Trash    
 }
 
 

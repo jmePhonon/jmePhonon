@@ -38,15 +38,19 @@ test {
 
 }
 
-
+task getSteamAudio(type :Exec){
+    commandLine 'bash','prepare.sh',"getSteamAudio"
+}
 
 task buildNativeTests(type :Exec){
     commandLine 'bash','prepare.sh',"buildNativeTests"
 }
+buildNativeTests.dependsOn(getSteamAudio)
 
 task updateJNIHeaders(type:Exec) {
-    def classpath = configurations.compile.join(":")+ ":build/classes/java/main";
-    commandLine 'bash','prepare.sh',"updateJNIHeaders",classpath,"build/classes/java/main","src/main/natives/include"
+    def javapth=project.sourceSets.main.java.outputDir
+    def classpath = configurations.compile.join(":")+ ":"+javapth;
+    commandLine 'bash','prepare.sh',"updateJNIHeaders",classpath,javapth,"src/main/natives/include"
 }
 updateJNIHeaders.dependsOn(classes)
 
@@ -59,9 +63,11 @@ deepClean.dependsOn(clean);
 task buildNatives(type :Exec){
     commandLine 'bash','prepare.sh',"buildNatives"
 }
-build.dependsOn(buildNatives)
+buildNatives.dependsOn(getSteamAudio)
+
 task genWorkspace(type:Exec){
-    commandLine 'bash','prepare.sh'    
+    commandLine 'bash','prepare.sh','getSteamAudio' 
 }
 genWorkspace.finalizedBy(buildNatives)
 
+build.dependsOn(buildNatives)
