@@ -183,6 +183,13 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         }
 
         jint frameIndex = chGetLastProcessedFrameId(channel);
+        jint lastPlayedFrameIndex = chGetLastPlayedFrameId(channel);
+
+        // Processing is too fast, skip.
+        if(frameIndex-lastPlayedFrameIndex>channel->bufferSize/2){ 
+            continue;
+        }
+
         jint frameToRead = frameIndex;
         jint sourceFrames=(jint)ceil( chGetSourceSizeInSamples(channel) / channel->frameSize);
 

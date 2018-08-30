@@ -94,7 +94,7 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 			}else{
 				try {
 					// System.out.println("Delay " + delay);
-					Thread.sleep(delay);
+					// Thread.sleep(delay);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
