@@ -9,23 +9,27 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-import com.jme3.phonon.BitUtils;
+import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.F32leAudioData;
-import com.jme3.phonon.PhononOutputChannel;
-import com.jme3.phonon.PhononOutputChannel.ChannelStatus;
+import com.jme3.phonon.PhononChannel;
+import com.jme3.phonon.PhononChannel.ChannelStatus;
 
 import org.lwjgl.BufferUtils;
 
 public class PhononPlayer {
     // public final static int FRAME_SIZE = 8, CACHE_SIZE = 128;
 
-    public final PhononOutputChannel phononChannel;
+    public final PhononChannel phononChannel;
     // public final long totalFrames;
 
     private final SourceDataLine dataLine;
     private final AudioFormat audioFormat;
 
     public final int channels;
+
+    private boolean inPlayback = false;
+    private int samplesBytes, remainingBytes;
+    private byte[] floatFrame, intBuffer;
 
     /**
      * @param audioData Float encoded audio data
@@ -34,7 +38,7 @@ public class PhononPlayer {
      */
 
 
-    public PhononPlayer(PhononOutputChannel chan,int channels, int sampleSize)
+    public PhononPlayer(PhononChannel chan,int channels, int sampleSize)
             throws LineUnavailableException {
         phononChannel = chan;
         this.channels = channels;
@@ -46,54 +50,58 @@ public class PhononPlayer {
         dataLine.open(audioFormat, chan.getBufferSize() * audioFormat.getFrameSize());
 
     }
-    public void play() {
-        int samplesBytes = (audioFormat.getSampleSizeInBits() / 8);
-        byte floatFrame[]=new byte[phononChannel.getFrameSize() * 4];
-        byte intBuffer[] = new byte[phononChannel.getFrameSize() * samplesBytes];
 
-        boolean play = true;
-        int remainingBytes = 0;
+    public void startPlayback() {
+        samplesBytes = (audioFormat.getSampleSizeInBits() / 8);
+        floatFrame = new byte[phononChannel.getFrameSize() * 4];
+        intBuffer = new byte[phononChannel.getFrameSize() * samplesBytes];
 
-        // while (loop) { // Rewind and loop
-            
-            while (play) { // Keep going until there is no more data available
-                if(remainingBytes > 0) {
-                    int available = dataLine.available();
-                    int writable = remainingBytes > available ? available : remainingBytes;
+        inPlayback = true;
 
-                    if (writable >  available) {
-                        System.err.println("FIX ME: " + writable 
-                                + " bytes ready to be written but the source buffer has only " +available
-                                + " left. This will cause the thread to stop and wait until more bytes are available");
-                    }
+        remainingBytes = 0;         
+    }
 
-                    dataLine.write(intBuffer, intBuffer.length - remainingBytes, writable);
-                    remainingBytes -= writable;
+    public void continuePlayback() {
+        if(remainingBytes > 0) {
+            int available = dataLine.available();
+            int writable = remainingBytes > available ? available : remainingBytes;
 
-                    // Start the dataLine if it is not playing yet. 
-                    // We do this here to be sure there is some data already available to be played
-                    if (!dataLine.isRunning())
-                        dataLine.start();
-                }
-                if(remainingBytes == 0 && phononChannel.getLastProcessedFrameId() > phononChannel.getLastPlayedFrameId() + 100) {        
-                    ChannelStatus stat = phononChannel.readNextFrameForPlayer(floatFrame);
-                    switch (stat) {
-                        case NODATA:
-                            System.err.println("No data to read. Phonon is lagging behind");
-                            break;
-                        case OVER:
-                            play = false;
-                            System.out.println("Audio data is over");
-                            break;
-                        case READY:
-                            // System.out.println("Playing");
-                            // Convert to proper encoding
-                            convertFloats(floatFrame, intBuffer);
-                            remainingBytes = intBuffer.length;
-                    }
-                }     
+            if (writable >  available) {
+                System.err.println("FIX ME: " + writable 
+                        + " bytes ready to be written but the source buffer has only " +available
+                        + " left. This will cause the thread to stop and wait until more bytes are available");
             }
-        // }
+
+            dataLine.write(intBuffer, intBuffer.length - remainingBytes, writable);
+            remainingBytes -= writable;
+
+            // Start the dataLine if it is not playing yet. 
+            // We do this here to be sure there is some data already available to be played
+            if (!dataLine.isRunning())
+                dataLine.start();
+        }
+
+        if(remainingBytes == 0) {        
+            ChannelStatus stat = phononChannel.readNextFrameForPlayer(floatFrame);
+            switch (stat) {
+                case NODATA:
+                    System.err.println("No data to read. Phonon is lagging behind");
+                    break;
+                case OVER:
+                    inPlayback = false;
+                    System.out.println("Audio data is over");
+                    break;
+                case READY:
+                    // System.out.println("Playing");
+                    // Convert to proper encoding
+                    convertFloats(floatFrame, intBuffer);
+                    remainingBytes = intBuffer.length;
+            }
+        }    
+    }
+
+    public boolean isInPlayback() {
+        return inPlayback;
     }
 
     private void convertFloat(byte[] inputBuffer, byte[] outputBuffer) {
