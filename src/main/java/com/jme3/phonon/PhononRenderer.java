@@ -23,7 +23,7 @@ import com.jme3.system.Platform;
 /**
  * PhononRenderer
  */
-public class PhononRenderer extends Thread implements AudioRenderer {
+public class PhononRenderer implements AudioRenderer {
 	int CHANNEL_LIMIT = 2;
 
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
@@ -69,8 +69,13 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 	@Override
 	public void initialize() {
 		preInit();		
-		setDaemon(true);
-		start();
+		Thread decoderThread = new Thread(() -> runDecoder());
+		Thread playeThread = new Thread(() -> runPlayer());
+		decoderThread.setDaemon(true);
+		decoderThread.start();
+		playeThread.setDaemon(true);
+		playeThread.start();
+
 	}
 
 	@Override
@@ -117,7 +122,20 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 		enqueuedPlayers.add(player);
 	}	
 
-	public void run() {
+	public void runPlayer() {
+		while (true) {
+		
+			while(!enqueuedPlayers.isEmpty()) {
+				players.add(enqueuedPlayers.poll());
+			}
+
+			players.forEach(player -> {
+				if(player.isInPlayback())
+					player.continuePlayback();	
+			});
+		}
+	}
+	public void runDecoder() {
 		long sleeptime = 1000 / (44100 / _OUTPUT_FRAME_SIZE);
 		long lastUpdate = 0;
 		while (true) {
@@ -131,20 +149,12 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 			} else {
 				try {
 					// System.out.println("Delay " + delay);
-					// Thread.sleep(delay);
+					Thread.sleep(delay);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 
-			while(!enqueuedPlayers.isEmpty()) {
-				players.add(enqueuedPlayers.poll());
-			}
-
-			players.forEach(player -> {
-				if(player.isInPlayback())
-					player.continuePlayback();	
-			});
 		}
 	}
 
