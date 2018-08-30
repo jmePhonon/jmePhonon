@@ -1,8 +1,11 @@
 package com.jme3.phonon;
 
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioParam;
@@ -12,6 +15,7 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
+import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
 
@@ -19,10 +23,12 @@ import com.jme3.system.Platform;
  * PhononRenderer
  */
 public class PhononRenderer extends Thread implements AudioRenderer {
+	int CHANNEL_LIMIT = 2;
 
-	int CHANNEL_LIMIT = 1;
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
 	private final PhononOutputChannel[] channels = new PhononOutputChannel[CHANNEL_LIMIT];
+	private final ConcurrentLinkedQueue<PhononPlayer> enqueuedPlayers = new ConcurrentLinkedQueue<>();
+	private final LinkedList<PhononPlayer> players = new LinkedList<>();
 
 	static{
 		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux32, "linux-x86/libphonon.so");
@@ -82,7 +88,9 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 	 */
 	public native void loadChannelNative(int id,long addr,int frameSize,int bufferSize);
 
-	
+	public void attachPlayer(PhononPlayer player) {
+		enqueuedPlayers.add(player);
+	}	
 
 	public void run() {
 		long sleeptime = 1000 / (44100 / _OUTPUT_FRAME_SIZE);
@@ -103,7 +111,15 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 					e.printStackTrace();
 				}
 			}
-		
+
+			while(!enqueuedPlayers.isEmpty()) {
+				players.add(enqueuedPlayers.poll());
+			}
+
+			players.forEach(player -> {
+				if(player.isInPlayback())
+					player.continuePlayback();	
+			});
 		}
 	}
 
