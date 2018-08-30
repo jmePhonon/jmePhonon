@@ -24,7 +24,7 @@ public class TestPhononRenderer extends SimpleApplication {
         AudioData ad = assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg");
         F32leAudioData f32le = new F32leAudioData(ad);
      
-        PhononRenderer renderer = new PhononRenderer();
+        PhononRenderer renderer = new PhononRenderer(1,8);
         renderer.initialize();
 
         renderer.wire(f32le,  0);

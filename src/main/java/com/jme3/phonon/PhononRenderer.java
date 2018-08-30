@@ -32,27 +32,32 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 		// TODO: OSX
 		// MAYBE TODO: Android
 	}
+	final int _OUTPUT_FRAME_SIZE;
+	final int _OUTPUT_BUFFER_SIZE ;
 
-	public PhononRenderer() {
+	public PhononRenderer(int frameSize, int bufferSize) {
+		_OUTPUT_FRAME_SIZE = frameSize;
+		_OUTPUT_BUFFER_SIZE = bufferSize;
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
 	}
 
-	final int _OUTPUT_FRAME_SIZE = 1024;
-	final int _OUTPUT_BUFFER_SIZE = 100;
-
+	
 	public PhononOutputChannel getChannel(int i) {
 		return channels[i];
 	}
 
-	@Override
-	public void initialize() {
-		
+	public void preInit() {
 		initNative();
 		for (int i = 0; i < channels.length; i++) {
-			channels[i] = new PhononOutputChannel( _OUTPUT_FRAME_SIZE, _OUTPUT_BUFFER_SIZE);
-			loadChannel(i, channels[i].getAddress(), channels[i].getFrameSize(), channels[i].getBufferSize());
+			channels[i] = new PhononOutputChannel(_OUTPUT_FRAME_SIZE, _OUTPUT_BUFFER_SIZE);
+			loadChannelNative(i, channels[i].getAddress(), channels[i].getFrameSize(), channels[i].getBufferSize());
 		}
+	}
+
+	@Override
+	public void initialize() {
+		preInit();		
 		setDaemon(true);
 		start();
 	}
@@ -71,7 +76,7 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 	 * @param frameSize samples per frame
 	 * @param bufferSize total number of frames in this buffer
 	 */
-	public native void loadChannel(int id,long addr,int frameSize,int bufferSize);
+	public native void loadChannelNative(int id,long addr,int frameSize,int bufferSize);
 
 	
 
@@ -118,12 +123,20 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 				+ " samples, to channel " + channelId);
 
 		channels[channelId].connectSourceBuffer(audioData.getAddress(), audioData.getSizeInSamples());
-		connectSource(channelId, audioData.getAddress());
+		connectSourceNative(channelId, audioData.getSizeInSamples(),audioData.getAddress());
 		return this;
 	}
+
 	
-	private native void connectSource(int channelId, long sourceAddr);
-	private native void disconnectSource(int channelId);
+	public void connectSourceRaw(int channelId, int length, ByteBuffer source) {
+		long addr = DirectBufferUtils.getAddr(source);
+		connectSourceNative(channelId, length, addr);
+		channels[channelId].connectSourceBuffer(addr,length);
+
+	}
+
+	private native void connectSourceNative(int channelId, int length, long sourceAddr);
+	public native void disconnectSourceNative(int channelId);
 	
 	
 	@Override

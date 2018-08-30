@@ -39,26 +39,26 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
- * Method:    loadChannel
+ * Method:    loadChannelNative
  * Signature: (IJII)V
  */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_loadChannel
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_loadChannelNative
   (JNIEnv *, jobject, jint, jlong, jint, jint);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
- * Method:    connectSource
- * Signature: (IJ)V
+ * Method:    connectSourceNative
+ * Signature: (IIJ)V
  */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_connectSource
-  (JNIEnv *, jobject, jint, jlong);
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
+  (JNIEnv *, jobject, jint, jint, jlong);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
- * Method:    disconnectSource
+ * Method:    disconnectSourceNative
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSource
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative
   (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus

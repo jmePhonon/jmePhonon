@@ -28,6 +28,9 @@ main {
 
 
 test {   
+    java{
+        srcDir "src/test/unit"
+    }
     resources {
         srcDir 'build/natives/'
     }

@@ -6,20 +6,20 @@
 #include "com_jme3_phonon_PhononRenderer.h"
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
 
+#include "types.h"
 
 
 #define _BUFFER_HEADER_32bit 2+1+1 +1 // connected input addr + source size + write index + read index
 #define _MAX_CHANNELS 1
 
-#define bool jint
-#define true 1
-#define false 0
+
 
 struct OutputChannel {
-    void *outputBuffer;
-    void *inputBuffer;
-
+    jfloat *outputBuffer;
+    jfloat *inputBuffer;
+    jint inputSize;
     jint frameSize;
     jint bufferSize;
     jfloat *lastReadFrame;
@@ -30,7 +30,7 @@ struct OutputChannel {
 /**
  * Return true of any audio source is connected to this channel
  */
-bool chHasConnectedSourceBuffer(struct OutputChannel *chan){
+jboolean chHasConnectedSourceBuffer(struct OutputChannel *chan){
     
     // 
     // if(chan->lastReadFrame==NULL){
@@ -71,7 +71,7 @@ jint chGetLastProcessedFrameId(struct OutputChannel *chan) {
     return n;
 }
 
-bool chIsProcessingCompleted(struct OutputChannel *chan) {
+jboolean chIsProcessingCompleted(struct OutputChannel *chan) {
     jint n= ((jint *)chan->outputBuffer)[2+1 /*8bytes + 4*/];
     return n<0;
 }
@@ -87,12 +87,18 @@ jint chGetLastPlayedFrameId(struct OutputChannel *chan) {
     return ((jint *)chan->outputBuffer)[2+1+1 /*8bytes + 4 + 4*/];
 }
 
+
+
+jfloat chReadInputSample(struct OutputChannel *chan,jfloat *input,jint sampleIndex){
+    return input[sampleIndex];
+}
+
 /**
  * Read frame from audio source
  */
 jfloat* chReadFrame(struct OutputChannel *chan,jint frameIndex) {
     jint frameSize = chan->frameSize;
-    jint sourceSize = chGetSourceSizeInSamples(chan);
+    jint sourceSize = chan->inputSize;
     jfloat *input = (jfloat *)chan->inputBuffer;
 
     for (jint i = 0; i < frameSize; i++) {
@@ -100,16 +106,18 @@ jfloat* chReadFrame(struct OutputChannel *chan,jint frameIndex) {
         /**
          *  Write 0s if the frame size exceed the remaining source's bytes
          */
-        jfloat v;
-        if (sampleIndex >= sourceSize) {
-            printf("Phonon: trying to read sample n%d but source contains only %d samples. A zero sample will be returned instead.\n ", sampleIndex, sourceSize);
-            v = 0;
-        } else {
-            v = input[sampleIndex];
-        }
+        jfloat v = chReadInputSample(chan, input, sampleIndex);
+        // if (sampleIndex >= sourceSize) {
+        //     printf("Phonon: trying to read sample n%d but source contains only %d samples. A zero sample will be returned instead.\n ", sampleIndex, sourceSize);
+        //     v = 0;
+        // } else {
+        //     v = input[sampleIndex];
+        // }
 
         chan->lastReadFrame[i] = v;
+        // frame[i] = v;
     }
+    // return f;
     return chan->lastReadFrame;
 }
 
@@ -128,6 +136,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
   (JNIEnv *env, jobject obj){
     for(jint i=0;i<_MAX_CHANNELS;i++){
         CHANNELS[i].lastReadFrame = NULL;
+        CHANNELS[i].inputBuffer = NULL;
     }
 
   }
@@ -137,19 +146,19 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative
 
   }
 
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_connectSource
-  (JNIEnv *env, jobject obj,jint channelId,jlong sourceAddr){
-    CHANNELS[channelId].inputBuffer = (void *)sourceAddr;
-  }
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
+  (JNIEnv *env, jobject obj,jint channelId,jint size,jlong sourceAddr){
+    CHANNELS[channelId].inputBuffer = (jfloat *)(intptr_t)sourceAddr;
+    CHANNELS[channelId].inputSize = size;
+}
 
- JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSource
-  (JNIEnv *env, jobject obj,jint channelId){
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative(JNIEnv *env, jobject obj, jint channelId) {
     CHANNELS[channelId].inputBuffer = NULL;
   } 
 
 JNIEXPORT void JNICALL
-Java_com_jme3_phonon_PhononRenderer_loadChannel(JNIEnv *env, jobject obj,jint channelId, jlong outputBufferAddr, jint frameSize, jint bufferSize) {
-    CHANNELS[channelId].outputBuffer = (void *)outputBufferAddr;
+Java_com_jme3_phonon_PhononRenderer_loadChannelNative(JNIEnv *env, jobject obj,jint channelId, jlong outputBufferAddr, jint frameSize, jint bufferSize) {
+    CHANNELS[channelId].outputBuffer = (jfloat *)(intptr_t)outputBufferAddr;
     CHANNELS[channelId].frameSize = frameSize;
     CHANNELS[channelId].bufferSize = bufferSize;
     CHANNELS[channelId].inputBuffer = NULL;
@@ -163,15 +172,21 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
     callN++;
     for (jint i = 0; i < _MAX_CHANNELS; i++) {
         struct OutputChannel *channel = &CHANNELS[i];
-        if (!chHasConnectedSourceBuffer(channel)||chIsProcessingCompleted(channel)){
-           continue;
+        if (!chHasConnectedSourceBuffer(channel)){
+            printf("Source not connected. Skip channel %d\n", i);
+            continue;
+        }
+
+        if(chIsProcessingCompleted(channel)){
+            printf("Processing completed in channel %d\n", i);
+            continue;
         }
 
         jint frameIndex = chGetLastProcessedFrameId(channel);
         jint frameToRead = frameIndex;
         jint sourceFrames=(jint)ceil( chGetSourceSizeInSamples(channel) / channel->frameSize);
 
-        bool loop = false;
+        jboolean loop = false;
         if (loop) {
             frameToRead = frameIndex %  sourceFrames;
         }else{
@@ -186,7 +201,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         // for(jint j=0;j<channel->frameSize;j++){
         //     frame[j] = (jfloat)(rand() / RAND_MAX);
         // }
-        jfloat *frame=chReadFrame(channel, frameToRead);
+        // jfloat frame[channel->frameSize];
+        jfloat *frame= chReadFrame(channel, frameToRead);
         // processing
         // ....
         // ....
