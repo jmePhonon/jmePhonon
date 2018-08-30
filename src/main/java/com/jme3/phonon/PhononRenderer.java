@@ -95,10 +95,10 @@ public class PhononRenderer extends Thread implements AudioRenderer {
 			delay=sleeptime-delay;
 			if (delay < 0) {
 				System.err.println("FIXME: Phonon is taking too long");
-			}else{
+			} else {
 				try {
 					// System.out.println("Delay " + delay);
-					Thread.sleep(delay);
+					// Thread.sleep(delay);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

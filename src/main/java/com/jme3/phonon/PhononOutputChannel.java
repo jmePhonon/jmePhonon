@@ -126,7 +126,7 @@ public class PhononOutputChannel {
         int rawIndex = getLastPlayedFrameId();
         int phononIndex = getLastProcessedFrameId();
         if(rawIndex>phononIndex){
-            System.err.println("Error... no data is ready to be read");
+            // System.err.println("Error... no data is ready to be read");
             return ChannelStatus.NODATA;
         }
               
