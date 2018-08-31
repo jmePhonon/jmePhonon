@@ -23,7 +23,7 @@ import com.jme3.system.Platform;
  * PhononRenderer
  */
 public class PhononRenderer implements AudioRenderer {
-	int CHANNEL_LIMIT = 2;
+	int CHANNEL_LIMIT = 16;
 
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
 	private final PhononOutputChannel[] channels = new PhononOutputChannel[CHANNEL_LIMIT];

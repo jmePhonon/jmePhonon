@@ -11,7 +11,7 @@
 #include "Channel.h"
 
 
-#define _MAX_CHANNELS 2
+#define _MAX_CHANNELS 16
 
 
 struct ChOutput CHANNELS[_MAX_CHANNELS];
@@ -43,12 +43,12 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
     for (jint i = 0; i < _MAX_CHANNELS; i++) {
         struct ChOutput *channel = &CHANNELS[i];
         if (!chHasConnectedSourceBuffer(channel)){
-            printf("Source not connected. Skip channel %d\n", i);
+            // printf("Source not connected. Skip channel %d\n", i);
             continue;
         }
 
         if(chIsProcessingCompleted(channel)){
-            printf("Processing completed in channel %d\n", i);
+            // printf("Processing completed in channel %d\n", i);
             continue;
         }
 

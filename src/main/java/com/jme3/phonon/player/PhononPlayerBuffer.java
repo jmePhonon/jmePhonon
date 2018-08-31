@@ -31,6 +31,8 @@ class PhononPlayerBuffer {
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
         this.intBuffer = new byte[bufferFrameSize * 2];
+
+        bufferIndex = 0;
     }
 
     /**
@@ -39,12 +41,24 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
+    private int preloadedFrames = 0;
+
     public void fillBuffer() {
-        loadNextFrame();
-        loadNextFrame();
+        while(!isBufferFilled()) {
+            if(loadNextFrame() == ChannelStatus.NODATA) {
+                break;
+            } else {
+                preloadedFrames++;
+            }
+        }
 
         remainingBytes = bufferFrameSize;
     }
+
+    private boolean isBufferFilled() {
+        return preloadedFrames >= 2;
+    }
+
     /**
      * @return Remaining bytes in the current loaded frame
      * 
@@ -63,7 +77,7 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
     
-    public boolean loadNextFrame() {
+    public ChannelStatus loadNextFrame() {
         ChannelStatus stat = phononChannel.readNextFrameForPlayer(floatFrame);
         switch (stat) {
             case NODATA:
@@ -71,14 +85,13 @@ class PhononPlayerBuffer {
                 break;
             case OVER:
                 System.out.println("Audio data is over");
-                return false; 
             case READY:
                 // Convert to proper encoding
                 int loadBufferIndex = 1 - bufferIndex;
                 convertFloats(floatFrame, intBuffer, loadBufferIndex * bufferFrameSize);
         }
 
-        return true;
+        return stat;
     }
 
     /**
@@ -91,19 +104,48 @@ class PhononPlayerBuffer {
      */
 
     public boolean writeToLine(SourceDataLine dataLine) {
-        if(remainingBytes > 0) {
-            int available = dataLine.available();
-            int writable = remainingBytes > available ? available : remainingBytes;
+        if(!isBufferFilled()) {
+            fillBuffer();
+            return true;
+        }
 
-            dataLine.write(intBuffer, (bufferIndex * bufferFrameSize) + bufferFrameSize - remainingBytes, writable);
-            remainingBytes -= writable;
+        if(remainingBytes > 0) {
+            int availableBytes = dataLine.available();
+            if(availableBytes > 0) {
+                int maxWritableBytes;
+
+                if(remainingBytes > availableBytes) {
+                    maxWritableBytes = availableBytes < bufferFrameSize ? availableBytes : bufferFrameSize;
+                } else {
+                    maxWritableBytes = remainingBytes;
+                }
+
+                int offset = (bufferIndex * bufferFrameSize) + bufferFrameSize - remainingBytes;
+                // System.out.printf("Writing frame (%d) -- %d %d %d\n", writable, bufferIndex, bufferIndex * bufferFrameSize, offset);
+
+                dataLine.write(intBuffer, offset, maxWritableBytes);
+                remainingBytes -= maxWritableBytes;
+            }
         }
 
         if(remainingBytes == 0) {
             bufferIndex = 1 - bufferIndex;
             remainingBytes = bufferFrameSize;
 
-            return loadNextFrame();
+            int availableBytes = dataLine.available();
+            if(availableBytes > 0) {
+                if(availableBytes > bufferFrameSize) {
+                    availableBytes = bufferFrameSize;
+                }
+
+                int offset = bufferIndex * bufferFrameSize;
+                // System.out.printf("Writing next frame start (%d) -- %d %d\n", available, bufferIndex, offset);
+
+                dataLine.write(intBuffer, offset, availableBytes);
+                remainingBytes -= availableBytes;
+            }
+
+            return loadNextFrame() != ChannelStatus.OVER;
         }
 
         return true;
