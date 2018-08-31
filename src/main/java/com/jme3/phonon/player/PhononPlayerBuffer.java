@@ -163,10 +163,12 @@ class PhononPlayerBuffer {
             }
 
             if(remainingBytes == 0) {
+                ChannelStatus stat = loadNextFrame();
+
                 bufferWriteIndex = 1 - bufferWriteIndex;
                 remainingBytes = bufferFrameSize;
                 writtenFrames++;
-                System.err.printf("Finished to write a frame (%d, %d)\n", writtenFrames, preloadedFrames);
+                System.err.printf("Finished to write a frame -- (%d, %d)\n", writtenFrames, preloadedFrames);
 
                 availableBytes = dataLine.available();
                 if(availableBytes > 0) {
@@ -181,11 +183,9 @@ class PhononPlayerBuffer {
                     remainingBytes -= availableBytes;
                 }
 
-                return loadNextFrame() != ChannelStatus.OVER;
+                return stat != ChannelStatus.OVER;
             }
         }
-
-        
 
         return true;
     }
