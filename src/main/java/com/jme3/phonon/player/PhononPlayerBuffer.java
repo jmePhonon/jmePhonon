@@ -7,7 +7,7 @@ import com.jme3.phonon.PhononOutputChannel;
 import com.jme3.phonon.PhononOutputChannel.ChannelStatus;
 
 class PhononPlayerBuffer {
-    public final int sizeInFrames, sampleSize, bufferFrameSize;
+    public final int sampleSize, bufferFrameSize;
     public final byte[] floatFrame, intBuffer;
 
     public final PhononOutputChannel phononChannel;
@@ -24,14 +24,13 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    PhononPlayerBuffer(int sizeInFrames, int sampleSize, PhononOutputChannel channel) {
-        this.sizeInFrames = sizeInFrames;
+    PhononPlayerBuffer(int sampleSize, PhononOutputChannel channel) {
         this.phononChannel = channel;
         this.sampleSize = sampleSize;
 
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
-        this.intBuffer = new byte[bufferFrameSize * sizeInFrames];
+        this.intBuffer = new byte[bufferFrameSize * 2];
     }
 
     /**
@@ -41,9 +40,10 @@ class PhononPlayerBuffer {
      */
 
     public void fillBuffer() {
-        for(int i = 0; i < sizeInFrames; ++i) {
-            loadNextFrame();
-        }
+        loadNextFrame();
+        loadNextFrame();
+
+        remainingBytes = bufferFrameSize;
     }
     /**
      * @return Remaining bytes in the current loaded frame
@@ -74,9 +74,8 @@ class PhononPlayerBuffer {
                 return false; 
             case READY:
                 // Convert to proper encoding
-                convertFloats(floatFrame, intBuffer, bufferIndex * bufferFrameSize);
-                bufferIndex = (bufferIndex + 1) % sizeInFrames;
-                remainingBytes = bufferFrameSize;
+                int loadBufferIndex = 1 - bufferIndex;
+                convertFloats(floatFrame, intBuffer, loadBufferIndex * bufferFrameSize);
         }
 
         return true;
@@ -91,9 +90,23 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    public void writeToLine(SourceDataLine dataLine, int bytesToWrite) {
-        dataLine.write(intBuffer, (bufferIndex * bufferFrameSize) + bufferFrameSize - remainingBytes, bytesToWrite);
-        remainingBytes -= bytesToWrite;
+    public boolean writeToLine(SourceDataLine dataLine) {
+        if(remainingBytes > 0) {
+            int available = dataLine.available();
+            int writable = remainingBytes > available ? available : remainingBytes;
+
+            dataLine.write(intBuffer, (bufferIndex * bufferFrameSize) + bufferFrameSize - remainingBytes, writable);
+            remainingBytes -= writable;
+        }
+
+        if(remainingBytes == 0) {
+            bufferIndex = 1 - bufferIndex;
+            remainingBytes = bufferFrameSize;
+
+            return loadNextFrame();
+        }
+
+        return true;
     }
    
     /**

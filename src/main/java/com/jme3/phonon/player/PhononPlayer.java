@@ -8,7 +8,7 @@ import javax.sound.sampled.SourceDataLine;
 import com.jme3.phonon.PhononOutputChannel;
 
 public class PhononPlayer {
-    public final static int FRAMES_IN_BUFFER = 16;
+    // public final static int FRAMES_IN_BUFFER = 2; 
 
     public final PhononOutputChannel phononChannel;
 
@@ -42,7 +42,7 @@ public class PhononPlayer {
         dataLine = AudioSystem.getSourceDataLine(audioFormat);
         dataLine.open(audioFormat, chan.getBufferSize() * audioFormat.getFrameSize());
 
-        buffer = new PhononPlayerBuffer(FRAMES_IN_BUFFER, audioFormat.getSampleSizeInBits(), phononChannel);
+        buffer = new PhononPlayerBuffer(audioFormat.getSampleSizeInBits(), phononChannel);
     }
 
     /**
@@ -64,27 +64,12 @@ public class PhononPlayer {
      */
 
     public void continuePlayback() {
-        if(buffer.getRemainingFrameBytes() > 0) {
-            int available = dataLine.available();
-            int writable = buffer.getRemainingFrameBytes() > available ? available : buffer.getRemainingFrameBytes();
+        inPlayback = buffer.writeToLine(dataLine); 
 
-            if (writable >  available) {
-                System.err.println("FIX ME: " + writable 
-                        + " bytes ready to be written but the source buffer has only " +available
-                        + " left. This will cause the thread to stop and wait until more bytes are available");
-            }
-
-            buffer.writeToLine(dataLine, writable); 
-
-            // Start the dataLine if it is not playing yet. 
-            // We do this here to be sure there is some data already available to be played
-            if (!dataLine.isRunning())
-                dataLine.start();
-        }
-
-        if(buffer.getRemainingFrameBytes() == 0) {        
-            inPlayback = buffer.loadNextFrame();
-        }    
+        // Start the dataLine if it is not playing yet. 
+        // We do this here to be sure there is some data already available to be played
+        if (!dataLine.isRunning())
+            dataLine.start();
     }
     
     /**

@@ -41,7 +41,7 @@ public class TestPhononRenderer extends SimpleApplication {
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        } 
+        }
 
         /*
         Thread playerThread = new Thread(new Runnable() {        
