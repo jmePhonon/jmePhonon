@@ -54,7 +54,8 @@ public class PhononPlayer {
     public void startPlayback() {
         inPlayback = true; 
         
-        buffer.fillBuffer();
+        // buffer.loadNextFrame();
+        // buffer.fillBuffer();
     }
 
     /**
