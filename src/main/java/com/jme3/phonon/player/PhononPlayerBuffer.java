@@ -49,9 +49,7 @@ class PhononPlayerBuffer {
         while(!isBufferFilled()) {
             if(loadNextFrame() == ChannelStatus.NODATA) {
                 break;
-            } /*else {
-                preloadedFrames++;
-            }*/
+            }
         }
 
         if(isBufferFilled()) {
@@ -95,7 +93,7 @@ class PhononPlayerBuffer {
                 // Convert to proper encoding
                 int offset = bufferLoadIndex * bufferFrameSize;
 
-                System.err.printf("Loading a frame -- %d ... ", bufferLoadIndex);
+                System.err.printf("Loading a frame -- %d (%d) ... ", bufferLoadIndex, bufferWriteIndex);
                 convertFloats(floatFrame, intBuffer, offset);
                 
                 boolean areBytesNull = true;
@@ -168,7 +166,7 @@ class PhononPlayerBuffer {
                 bufferWriteIndex = 1 - bufferWriteIndex;
                 remainingBytes = bufferFrameSize;
                 writtenFrames++;
-                // System.err.printf("Finished to write a frame (%d, %d)\n", writtenFrames, preloadedFrames);
+                System.err.printf("Finished to write a frame (%d, %d)\n", writtenFrames, preloadedFrames);
 
                 availableBytes = dataLine.available();
                 if(availableBytes > 0) {
