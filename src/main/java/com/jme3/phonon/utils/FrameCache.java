@@ -1,8 +1,11 @@
 package com.jme3.phonon.utils;
 
+import javax.sound.sampled.SourceDataLine;
+
 /**
  * FrameCache
  */
+
 public class FrameCache {
     private final byte cache[];
     private int lastLoadedFrameIndex;
@@ -37,7 +40,8 @@ public class FrameCache {
     /**
      * Read the next chunk of bytes of length up to frameSize. 
      */
-    public boolean readNext(byte out[], int length) {
+    public boolean readNextFrame(SourceDataLine out) {
+        int length = out.available();
         boolean needNewFrame = false;
         
         int readable = length;
@@ -48,13 +52,15 @@ public class FrameCache {
             readable = remaining;
         }
         // Read first batch 
-        System.arraycopy(cache, readIndex, out, 0, readable);
+        out.write(cache, readIndex, readable);
+        // System.arraycopy(cache, readIndex, out, 0, readable);
         if (readable != length) {
             // bytes that we still need to read
             int leftToRead = length - readable;
 
             // Read the second batch from the beginning of the cache
-            System.arraycopy(cache, 0, out, readable,leftToRead);
+            // System.arraycopy(cache, 0, out, readable,leftToRead);
+            out.write(cache, 0, leftToRead);
 
             // readIndex restarts from 0 
             readIndex = leftToRead;
