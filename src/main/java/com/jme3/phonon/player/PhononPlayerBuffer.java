@@ -5,14 +5,16 @@ import javax.sound.sampled.SourceDataLine;
 import com.jme3.phonon.BitUtils;
 import com.jme3.phonon.PhononOutputChannel;
 import com.jme3.phonon.PhononOutputChannel.ChannelStatus;
+import com.jme3.phonon.utils.FrameCache;
 
 class PhononPlayerBuffer {
     public final int sampleSize, bufferFrameSize;
-    public final byte[] floatFrame, intBuffer;
+    public final byte[] floatFrame, intFrame;
+    public final FrameCache frameCache;
 
     public final PhononOutputChannel phononChannel;
 
-    private int remainingBytes, bufferLoadIndex, bufferWriteIndex;
+    // private int remainingBytes, bufferLoadIndex, bufferWriteIndex;
 
     /**
      * An auxiliary class containing a buffer for PhononPlayer.
@@ -29,12 +31,8 @@ class PhononPlayerBuffer {
 
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
-        this.intBuffer = new byte[bufferFrameSize * 2];
-
-        System.out.println("Initialized buffer of size " + intBuffer.length);
-
-        bufferLoadIndex = 0;
-        bufferWriteIndex = 0;
+        this.intFrame = new byte[bufferFrameSize];
+        this.frameCache = new FrameCache(2, bufferFrameSize);
     }
 
     /**
@@ -43,7 +41,7 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private int preloadedFrames = 0, writtenFrames = 0;
+    private int preloadedFrames = 0;
 
     public void fillBuffer() {
         while(!isBufferFilled()) {
@@ -51,24 +49,10 @@ class PhononPlayerBuffer {
                 break;
             }
         }
-
-        if(isBufferFilled()) {
-            remainingBytes = bufferFrameSize;
-        }
     }
 
     private boolean isBufferFilled() {
         return preloadedFrames >= 2;
-    }
-
-    /**
-     * @return Remaining bytes in the current loaded frame
-     * 
-     * @author aegroto
-     */
-
-    public int getRemainingFrameBytes() {
-        return remainingBytes;
     }
 
     /**
@@ -90,26 +74,9 @@ class PhononPlayerBuffer {
                 System.out.println("Audio data is over");
                 break;
             case READY:
-                // Convert to proper encoding
-                int offset = bufferLoadIndex * bufferFrameSize;
-
-                System.err.printf("Loading a frame -- %d (%d) ... ", bufferLoadIndex, bufferWriteIndex);
-                convertFloats(floatFrame, intBuffer, offset);
-                
-                boolean areBytesNull = true;
-                for(int i = 0; i < bufferFrameSize && areBytesNull; ++i) {
-                    if(intBuffer[offset + i] != 0) {
-                        areBytesNull = false;
-                    }
-                }
-
-                if(areBytesNull) {
-                    System.err.printf("[FIXME] Loading an entire null frame (%d)\n", preloadedFrames);
-                }
-
-                System.err.printf("Loaded %d\n", bufferLoadIndex);
-                preloadedFrames++;
-                bufferLoadIndex = 1 - bufferLoadIndex;
+                convertFloats(floatFrame, intFrame, 0);
+                if(!frameCache.loadFrame(intFrame))
+                    preloadedFrames++;
         }
 
         return stat;
@@ -124,70 +91,19 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    public boolean writeToLine(SourceDataLine dataLine) {
+    public int write(byte[] out, int length) {
         if(!isBufferFilled()) {
             fillBuffer();
-            return true;
+            return 0;
         }
 
-        if(remainingBytes > 0) {
-            int availableBytes = dataLine.available();
+        boolean needNewFrame = frameCache.readNextInBuffer(out, length);
 
-            if(availableBytes > 0) {
-                int maxWritableBytes;
-
-                if(remainingBytes > availableBytes) {
-                    maxWritableBytes = availableBytes < bufferFrameSize ? availableBytes : bufferFrameSize;
-                } else {
-                    maxWritableBytes = remainingBytes;
-                }
-
-                int offset = (bufferWriteIndex * bufferFrameSize) + bufferFrameSize - remainingBytes;
-                // System.out.printf("Writing frame (%d) -- %d %d %d\n", maxWritableBytes, bufferIndex, bufferIndex * bufferFrameSize, offset);
-
-                boolean areBytesNull = true;
-                for(int i = 0; i < maxWritableBytes && areBytesNull; ++i) {
-                    if(intBuffer[offset + i] != 0) {
-                        areBytesNull = false;
-                    }
-                }
-
-                /*System.err.printf("Writing frame (%d / %d) -- (%d, %d)\n", maxWritableBytes, bufferFrameSize, writtenFrames, preloadedFrames);
-
-                if(areBytesNull) {
-                    System.err.printf("[FIXME] Writing a null frame fragment (%d)\n", writtenFrames);
-                }*/
-
-                dataLine.write(intBuffer, offset, maxWritableBytes);
-                remainingBytes -= maxWritableBytes;                
-            }
-
-            if(remainingBytes == 0) {
-                ChannelStatus stat = loadNextFrame();
-
-                bufferWriteIndex = 1 - bufferWriteIndex;
-                remainingBytes = bufferFrameSize;
-                writtenFrames++;
-                System.err.printf("Finished to write a frame -- (%d, %d)\n", writtenFrames, preloadedFrames);
-
-                availableBytes = dataLine.available();
-                if(availableBytes > 0) {
-                    if(availableBytes > bufferFrameSize) {
-                        availableBytes = bufferFrameSize;
-                    }
-
-                    int offset = bufferWriteIndex * bufferFrameSize;
-                    // System.out.printf("Writing next frame start (%d) -- %d %d\n", availableBytes, bufferIndex, offset);
-
-                    dataLine.write(intBuffer, offset, availableBytes);
-                    remainingBytes -= availableBytes;
-                }
-
-                return stat != ChannelStatus.OVER;
-            }
+        if(needNewFrame) {
+            loadNextFrame();
         }
 
-        return true;
+        return length;
     }
    
     /**
