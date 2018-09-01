@@ -32,6 +32,7 @@ class PhononPlayerBuffer {
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
         this.intFrame = new byte[bufferFrameSize];
+
         this.frameCache = new FrameCache(2, bufferFrameSize);
     }
 

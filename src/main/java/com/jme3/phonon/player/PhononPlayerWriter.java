@@ -17,11 +17,6 @@ class PhononPlayerWriter {
 
     public void writeToLine(int length) {
         dataLine.write(lineWriteCache, 0, length);
-        
-        // Start the dataLine if it is not playing yet. 
-        // We do this here to be sure there is some data already available to be played
-        if (!dataLine.isRunning())
-            dataLine.start();
     }
 
     public int getWritableBytes() {
