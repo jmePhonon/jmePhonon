@@ -64,12 +64,9 @@ public class PhononPlayer {
      */
 
     public void continuePlayback() {
-        int writableBytes = writer.getWritableBytes();
-        int writtenBytes = buffer.write(writer.getCache(), writableBytes); 
+        int writtenBytes = writer.writeFromBuffer(buffer);
 
         if(writtenBytes > 0) {
-            writer.writeToLine(writableBytes);
-
             // Start the dataLine if it is not playing yet. 
             // We do this here to be sure there is some data already available to be played
             if (!dataLine.isRunning())

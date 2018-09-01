@@ -1,6 +1,7 @@
 package com.jme3.phonon.player;
 
 import javax.sound.sampled.SourceDataLine;
+import javax.xml.transform.Source;
 
 import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.PhononChannel;
@@ -91,19 +92,20 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    public int write(byte[] out, int length) {
+    public int write(SourceDataLine outLine) {
         if(!isBufferFilled()) {
             fillBuffer();
             return 0;
         }
 
-        boolean needNewFrame = frameCache.readNextInBuffer(out, length);
-
-        if(needNewFrame) {
-            loadNextFrame();
+        int writableBytes = outLine.available();
+        if(writableBytes > 0) {
+            if(frameCache.readNextFrame(outLine, writableBytes)) {
+                loadNextFrame();
+            }
         }
 
-        return length;
+        return writableBytes;
     }
    
     /**
