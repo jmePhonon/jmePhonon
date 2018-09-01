@@ -43,8 +43,8 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    // private int preloadedFrames = 0;
-    private boolean bufferFilled = false;
+    private int preloadedFrames = 0;
+    // private boolean bufferFilled = false;
 
     public void fillBuffer() {
         while(!isBufferFilled()) {
@@ -55,7 +55,7 @@ public class PhononPlayerBuffer {
     }
 
     private boolean isBufferFilled() {
-        return bufferFilled;
+        return preloadedFrames >= 2;
     }
 
     /**
@@ -77,11 +77,13 @@ public class PhononPlayerBuffer {
                 System.out.println("Audio data is over");
                 break;
             case READY:
-                System.out.println("[Buffer] Read frame: " + Arrays.toString(floatFrame));
+                // System.out.println("[Buffer] Read frame: " + Arrays.toString(floatFrame));
                 convertFloats(floatFrame, intFrame, 0);
-                System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
+                // System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
 
-                bufferFilled = frameCache.loadFrame(intFrame); 
+                frameCache.loadFrame(intFrame);
+
+                preloadedFrames++;
         }
 
         return stat;
@@ -96,31 +98,24 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private boolean dataInBuffer = false;
+    // private boolean dataInBuffer = false;
 
     public int write(SourceDataLine outLine) {
         if(!isBufferFilled()) {
             fillBuffer();
             return 0;
-        } else dataInBuffer = true;
-
-        if(dataInBuffer) {
-            int writableBytes = outLine.available();
-            if(writableBytes > 0) {
-                if(frameCache.readNextFrame(outLine, writableBytes)) {
-                    if(dataInBuffer) {
-                        dataInBuffer = loadNextFrame() != ChannelStatus.NODATA;
-                        // loadNextFrame();
-                    } else {
-                        return -1;
-                    }
-                }
-            }
-
-            return writableBytes;
         }
 
-        return 0;
+        int writableBytes = outLine.available();
+
+        if(writableBytes > 0) {
+            if(frameCache.readNextFrame(outLine, writableBytes)) {
+                // System.out.println("[Buffer] Frame cache says we need more frames");
+                loadNextFrame();
+            }
+        } 
+
+        return writableBytes;
     }
    
     /**

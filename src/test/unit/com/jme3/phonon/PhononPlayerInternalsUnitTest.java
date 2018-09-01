@@ -20,11 +20,11 @@ import com.jme3.phonon.player.PhononPlayerWriter;
 
 import com.jme3.math.FastMath;
 
-public class PhononPlayerWriterUnitTest extends TestCase {
-    final static int TEST_COUNT = 1;
+public class PhononPlayerInternalsUnitTest extends TestCase {
+    final static int TEST_COUNT = 1000;
 
-    final int sampleSizeBytes = 1;
-    final int inputArraySize = 128, outputArraySize = (inputArraySize / 4) * sampleSizeBytes, lineSize = 4;
+    final int sampleSizeBytes = 3;
+    final int inputArraySize = 2048, outputArraySize = (inputArraySize / 4) * sampleSizeBytes, lineSize = 4;
 
     class PhononChannelWrapper extends PhononChannel {
         PhononChannelWrapper(int frameSize, int bufferSize, byte[] content) {
@@ -43,13 +43,13 @@ public class PhononPlayerWriterUnitTest extends TestCase {
     @Test
     public void testPlayerWriter() {
         for(int t = 0; t < TEST_COUNT; ++t) {
-            byte[] inputArray =  {72, 90, 8, 91, 80, 22, 51, 48, 69, 83, 56, 60, 48, 9, 19, 58, 31, 0, 63, 58, 16, 32, 31, 92, 50, 80, 17, 25, 94, 45, 32, 78, 91, 0, 95, 55, 69, 18, 56, 35, 43, 67, 79, 22, 2, 82, 13, 59, 59, 45, 86, 85, 64, 53, 13, 22, 19, 89, 20, 45, 49, 82, 87, 97, 6, 97, 4, 44, 45, 94, 15, 80, 50, 75, 20, 94, 11, 51, 75, 41, 77, 30, 25, 50, 92, 25, 29, 18, 53, 55, 79, 34, 58, 51, 39, 65, 42, 91, 81, 38, 100, 39, 63, 21, 89, 80, 82, 31, 70, 13, 79, 18, 41, 93, 98, 19, 14, 95, 66, 98, 78, 92, 48, 76, 37, 73, 51, 44};
-            // byte[] inputArray = new byte[inputArraySize];
+            // byte[] inputArray =  {72, 90, 8, 91, 80, 22, 51, 48, 69, 83, 56, 60, 48, 9, 19, 58, 31, 0, 63, 58, 16, 32, 31, 92, 50, 80, 17, 25, 94, 45, 32, 78, 91, 0, 95, 55, 69, 18, 56, 35, 43, 67, 79, 22, 2, 82, 13, 59, 59, 45, 86, 85, 64, 53, 13, 22, 19, 89, 20, 45, 49, 82, 87, 97, 6, 97, 4, 44, 45, 94, 15, 80, 50, 75, 20, 94, 11, 51, 75, 41, 77, 30, 25, 50, 92, 25, 29, 18, 53, 55, 79, 34, 58, 51, 39, 65, 42, 91, 81, 38, 100, 39, 63, 21, 89, 80, 82, 31, 70, 13, 79, 18, 41, 93, 98, 19, 14, 95, 66, 98, 78, 92, 48, 76, 37, 73, 51, 44};
+            byte[] inputArray = new byte[inputArraySize];
             byte[] outputArray = new byte[outputArraySize];
 
-            /*for(int i = 0; i < inputArraySize; ++i) {
+            for(int i = 0; i < inputArraySize; ++i) {
                 inputArray[i] = (byte) FastMath.nextRandomInt(0, 100);
-            }*/
+            }
 
             System.out.println("Input array: " + Arrays.toString(inputArray));
 
@@ -59,7 +59,7 @@ public class PhononPlayerWriterUnitTest extends TestCase {
             byte[] convertedInputArray = new byte[outputArraySize];
             buffer.convertFloats(inputArray, convertedInputArray, 0);
 
-            System.out.println("Converted input array: " + Arrays.toString(convertedInputArray));
+            // System.out.println("Converted input array: " + Arrays.toString(convertedInputArray));
 
             SourceDataLine dataLine = new SourceDataLine() {
                 byte[] lineCache = new byte[lineSize];
@@ -72,7 +72,7 @@ public class PhononPlayerWriterUnitTest extends TestCase {
                 @Override public int write(byte[] b, int off, int len) {
                     assertTrue("Tried to write more bytes than available.", len <= available());
 
-                    System.out.println("Writing (" + off + ", " + len + "): " + Arrays.toString(b));
+                    // System.out.println("Writing (" + off + ", " + len + "): " + Arrays.toString(b));
 
                     for(int i = 0; i < len; ++i) {
                         lineCache[i] = b[off + i];
@@ -80,7 +80,7 @@ public class PhononPlayerWriterUnitTest extends TestCase {
 
                     writtenLineBytes += len;
                     
-                    System.out.println("Line cache is: " + Arrays.toString(lineCache) + "(" + writtenLineBytes + ")");
+                    // System.out.println("Line cache is: " + Arrays.toString(lineCache) + "(" + writtenLineBytes + ")");
                     return len;
                 }
 
@@ -93,7 +93,7 @@ public class PhononPlayerWriterUnitTest extends TestCase {
                         outputOffset += writtenLineBytes;
                         writtenLineBytes = 0;
 
-                        System.out.println("Output array is: " + Arrays.toString(outputArray));
+                        // System.out.println("Output array is: " + Arrays.toString(outputArray));
                     }
                 }
                 
@@ -132,7 +132,7 @@ public class PhononPlayerWriterUnitTest extends TestCase {
                     dataLine.drain();
                     writtenBytes += lastWrittenBytes;
 
-                    System.out.println("Wrote " + writtenBytes + "/" + outputArraySize + " bytes");
+                    // System.out.println("Wrote " + writtenBytes + "/" + outputArraySize + " bytes");
                 }
             }
 
