@@ -21,10 +21,10 @@ import com.jme3.phonon.player.PhononPlayerWriter;
 import com.jme3.math.FastMath;
 
 public class PhononPlayerInternalsUnitTest extends TestCase {
-    final static int TEST_COUNT = 1000;
+    final static int TEST_COUNT = 20000;
 
     final int sampleSizeBytes = 3;
-    final int inputArraySize = 2048, outputArraySize = (inputArraySize / 4) * sampleSizeBytes, lineSize = 4;
+    final int inputArraySize = 64, outputArraySize = (inputArraySize / 4) * sampleSizeBytes, lineSize = 32;
 
     class PhononChannelWrapper extends PhononChannel {
         PhononChannelWrapper(int frameSize, int bufferSize, byte[] content) {
@@ -43,7 +43,7 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
     @Test
     public void testPlayerWriter() {
         for(int t = 0; t < TEST_COUNT; ++t) {
-            // byte[] inputArray =  {72, 90, 8, 91, 80, 22, 51, 48, 69, 83, 56, 60, 48, 9, 19, 58, 31, 0, 63, 58, 16, 32, 31, 92, 50, 80, 17, 25, 94, 45, 32, 78, 91, 0, 95, 55, 69, 18, 56, 35, 43, 67, 79, 22, 2, 82, 13, 59, 59, 45, 86, 85, 64, 53, 13, 22, 19, 89, 20, 45, 49, 82, 87, 97, 6, 97, 4, 44, 45, 94, 15, 80, 50, 75, 20, 94, 11, 51, 75, 41, 77, 30, 25, 50, 92, 25, 29, 18, 53, 55, 79, 34, 58, 51, 39, 65, 42, 91, 81, 38, 100, 39, 63, 21, 89, 80, 82, 31, 70, 13, 79, 18, 41, 93, 98, 19, 14, 95, 66, 98, 78, 92, 48, 76, 37, 73, 51, 44};
+            // byte[] inputArray = {75, 16, 43, 94, 66, 94, 96, 82, 75, 61, 70, 6, 62, 91, 78, 55, 67, 27, 79, 0, 64, 80, 53, 3, 63, 8, 71, 46, 7, 87, 50, 33, 24, 19, 52, 67, 14, 46, 39, 92, 43, 78, 3, 84, 33, 62, 9, 72, 50, 72, 39, 45, 76, 5, 21, 26, 47, 48, 23, 62, 75, 95, 99, 24};
             byte[] inputArray = new byte[inputArraySize];
             byte[] outputArray = new byte[outputArraySize];
 
@@ -51,7 +51,7 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
                 inputArray[i] = (byte) FastMath.nextRandomInt(0, 100);
             }
 
-            System.out.println("Input array: " + Arrays.toString(inputArray));
+            // System.out.println("Input array: " + Arrays.toString(inputArray));
 
             PhononChannelWrapper channelWrapper = new PhononChannelWrapper(8 * sampleSizeBytes, inputArraySize, inputArray);
             PhononPlayerBuffer buffer = new PhononPlayerBuffer(8 * sampleSizeBytes, channelWrapper);
@@ -136,7 +136,8 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
                 }
             }
 
-            assertArrayEquals("Output differs from input:\n" + Arrays.toString(convertedInputArray) + "\n" + Arrays.toString(outputArray),
+            assertArrayEquals("Output differs from input:\n" + Arrays.toString(convertedInputArray) + "\n" + Arrays.toString(outputArray) + "\n" +
+            "Input array was: " + Arrays.toString(inputArray),
             convertedInputArray, outputArray);
         }
     }

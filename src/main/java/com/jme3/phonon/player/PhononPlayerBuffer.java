@@ -34,7 +34,7 @@ public class PhononPlayerBuffer {
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
         this.intFrame = new byte[bufferFrameSize];
-        this.frameCache = new FrameCache(2, bufferFrameSize);
+        this.frameCache = new FrameCache(2, intFrame.length);
     }
 
     /**
@@ -43,8 +43,7 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private int preloadedFrames = 0;
-    // private boolean bufferFilled = false;
+    private boolean bufferFilled = false;
 
     public void fillBuffer() {
         while(!isBufferFilled()) {
@@ -55,7 +54,7 @@ public class PhononPlayerBuffer {
     }
 
     private boolean isBufferFilled() {
-        return preloadedFrames >= 2;
+        return bufferFilled;
     }
 
     /**
@@ -81,9 +80,15 @@ public class PhononPlayerBuffer {
                 convertFloats(floatFrame, intFrame, 0);
                 // System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
 
-                frameCache.loadFrame(intFrame);
+                boolean cacheFull = frameCache.loadFrame(intFrame);
 
-                preloadedFrames++;
+                /*if(!cacheFull) {
+                    System.err.println("FIXME: Cache is not full");                    
+                }*/
+
+                if(!bufferFilled && cacheFull) {
+                    bufferFilled = true;
+                } 
         }
 
         return stat;
@@ -139,7 +144,7 @@ public class PhononPlayerBuffer {
     }
 
     /**
-     * Auxiliary method to decode multiple floats to an ints.
+     * Auxiliary method to decode multiple floats to ints.
      * 
      * @param inputBuffer Input buffer
      * @param outputBuffer Output buffer
