@@ -43,7 +43,8 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private int preloadedFrames = 0;
+    // private int preloadedFrames = 0;
+    private boolean bufferFilled = false;
 
     public void fillBuffer() {
         while(!isBufferFilled()) {
@@ -54,7 +55,7 @@ public class PhononPlayerBuffer {
     }
 
     private boolean isBufferFilled() {
-        return preloadedFrames > 0;
+        return bufferFilled;
     }
 
     /**
@@ -80,8 +81,7 @@ public class PhononPlayerBuffer {
                 convertFloats(floatFrame, intFrame, 0);
                 System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
 
-                if(!frameCache.loadFrame(intFrame))
-                    preloadedFrames++;
+                bufferFilled = frameCache.loadFrame(intFrame); 
         }
 
         return stat;
@@ -96,26 +96,31 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private boolean dataInBuffer = true;
+    private boolean dataInBuffer = false;
 
     public int write(SourceDataLine outLine) {
         if(!isBufferFilled()) {
             fillBuffer();
             return 0;
-        }
+        } else dataInBuffer = true;
 
-        int writableBytes = outLine.available();
-        if(writableBytes > 0) {
-            if(frameCache.readNextFrame(outLine, writableBytes)) {
-                if(dataInBuffer) {
-                    loadNextFrame();
-                } else {
-                    return -1;
+        if(dataInBuffer) {
+            int writableBytes = outLine.available();
+            if(writableBytes > 0) {
+                if(frameCache.readNextFrame(outLine, writableBytes)) {
+                    if(dataInBuffer) {
+                        dataInBuffer = loadNextFrame() != ChannelStatus.NODATA;
+                        // loadNextFrame();
+                    } else {
+                        return -1;
+                    }
                 }
             }
+
+            return writableBytes;
         }
 
-        return writableBytes;
+        return 0;
     }
    
     /**
