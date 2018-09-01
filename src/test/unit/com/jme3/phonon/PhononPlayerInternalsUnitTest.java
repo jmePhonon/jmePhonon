@@ -24,7 +24,7 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
     final static int TEST_COUNT = 20000;
 
     final int sampleSizeBytes = 3;
-    final int inputArraySize = 64, outputArraySize = (inputArraySize / 4) * sampleSizeBytes, lineSize = 32;
+    final int inputArraySize = 256, outputArraySize = (inputArraySize / 4) * sampleSizeBytes, lineSize = 32;
 
     class PhononChannelWrapper extends PhononChannel {
         PhononChannelWrapper(int frameSize, int bufferSize, byte[] content) {
@@ -32,7 +32,7 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
             setLastProcessedFrameId(bufferSize - 1);
             buffer.position(CHANNEL_LAYOUT.BODY);
             buffer.put(content);
-            buffer.position(CHANNEL_LAYOUT.BODY);
+            // buffer.position(CHANNEL_LAYOUT.BODY);
 
             /*byte[] testBuffer = new byte[inputArraySize];
             buffer.get(testBuffer);
@@ -75,7 +75,7 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
                     // System.out.println("Writing (" + off + ", " + len + "): " + Arrays.toString(b));
 
                     for(int i = 0; i < len; ++i) {
-                        lineCache[i] = b[off + i];
+                        lineCache[writtenLineBytes + i] = b[off + i];
                     }
 
                     writtenLineBytes += len;
