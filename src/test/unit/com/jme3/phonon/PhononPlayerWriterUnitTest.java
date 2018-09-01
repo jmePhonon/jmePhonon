@@ -1,5 +1,7 @@
 package com.jme3.phonon;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import java.util.Arrays;
 
 import org.junit.Test;
@@ -13,11 +15,20 @@ import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.Control.Type;
 import javax.sound.sampled.Line.Info;
 
+import com.jme3.phonon.player.PhononPlayerBuffer;
 import com.jme3.phonon.player.PhononPlayerWriter;
 
 import com.jme3.math.FastMath;
 
 public class PhononPlayerWriterUnitTest extends TestCase {
+
+    class PhononChannelWrapper extends PhononChannel {
+        PhononChannelWrapper(int frameSize, int bufferSize, byte[] content) {
+            super(frameSize, bufferSize);
+            buffer.put(content);
+            buffer.putInt(CHANNEL_LAYOUT.LAST_PROCESSED_FRAME, bufferSize - 1);
+        }
+    }
 
     @Test
     public void testPlayerWriter() {
@@ -30,15 +41,24 @@ public class PhononPlayerWriterUnitTest extends TestCase {
             inputArray[i] = (byte) FastMath.nextRandomInt(0, 100);
         }
 
-        System.out.println ("Input array: " + Arrays.toString(inputArray));
-
+        PhononChannelWrapper channelWrapper = new PhononChannelWrapper(1024, 2048, inputArray);
+        PhononPlayerBuffer buffer = new PhononPlayerBuffer(24, channelWrapper);
         PhononPlayerWriter writer = new PhononPlayerWriter(new SourceDataLine() {
+            int lastAvailableBytes = 0;
+
             @Override public int available() { 
-                return FastMath.nextRandomInt(0, lineSize);
+                lastAvailableBytes = FastMath.nextRandomInt(0, lineSize);
+                return lastAvailableBytes;
             }
 
-            @Override public int write(byte[] b, int off, int len) { 
-                return 0;
+            @Override public int write(byte[] b, int off, int len) {
+                assertTrue("Tried to write more bytes than available.", len <= lastAvailableBytes);
+
+                for(int i = 0; i < len; ++i) {
+                    outputArray[off + i] = b[i];
+                }
+
+                return len;
             }
             
             @Override public void removeLineListener(LineListener listener) { }        
@@ -65,5 +85,14 @@ public class PhononPlayerWriterUnitTest extends TestCase {
             @Override public void open(AudioFormat format, int bufferSize) throws LineUnavailableException { }
             @Override public void open(AudioFormat format) throws LineUnavailableException { }
         }, lineSize);
+
+        int writtenBytes = 0;
+
+        while(writtenBytes < arraySize) {
+            writtenBytes += writer.writeFromBuffer(buffer);
+        }
+
+        assertArrayEquals("Output differs from input: " + Arrays.toString(inputArray) + " -- " + Arrays.toString(outputArray),
+        inputArray, outputArray);
     }
 }

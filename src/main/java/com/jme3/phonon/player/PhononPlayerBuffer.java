@@ -1,11 +1,10 @@
 package com.jme3.phonon.player;
 
 import javax.sound.sampled.SourceDataLine;
-import javax.xml.transform.Source;
 
-import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.PhononChannel;
 import com.jme3.phonon.PhononChannel.ChannelStatus;
+import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.utils.FrameCache;
 
 public class PhononPlayerBuffer {
@@ -26,7 +25,7 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    PhononPlayerBuffer(int sampleSize, PhononChannel channel) {
+    public PhononPlayerBuffer(int sampleSize, PhononChannel channel) {
         this.phononChannel = channel;
         this.sampleSize = sampleSize;
 
