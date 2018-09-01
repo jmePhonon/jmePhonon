@@ -11,8 +11,7 @@
 #include "Channel.h"
 
 
-#define _MAX_CHANNELS 2
-
+#define _MAX_CHANNELS 16
 
 struct ChOutput CHANNELS[_MAX_CHANNELS];
 
