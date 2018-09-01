@@ -53,7 +53,7 @@ public class FrameCacheUnitTest extends TestCase{
                 // load new frame
 
                 FrameCacheUnitTestSourceDataLineWrapper sourceLineWrapper = new FrameCacheUnitTestSourceDataLineWrapper(frameToRead);
-                if (cache.readNextFrame(sourceLineWrapper)) {
+                if (cache.readNextFrame(sourceLineWrapper, sourceLineWrapper.available())) {
 
                     int remaining = bbf.limit() - bbf.position();
                     if (remaining > frame1.length)

@@ -2,7 +2,7 @@ package com.jme3.phonon.player;
 
 import javax.sound.sampled.SourceDataLine;
 
-class PhononPlayerWriter {
+public class PhononPlayerWriter {
     public final SourceDataLine dataLine;
     public final int size;
 

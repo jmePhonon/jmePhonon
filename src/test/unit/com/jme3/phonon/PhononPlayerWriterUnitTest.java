@@ -2,6 +2,9 @@ package com.jme3.phonon;
 
 import java.util.Arrays;
 
+import org.junit.Test;
+import junit.framework.TestCase;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.Control;
 import javax.sound.sampled.LineListener;
@@ -9,6 +12,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.Control.Type;
 import javax.sound.sampled.Line.Info;
+
+import com.jme3.phonon.player.PhononPlayerWriter;
 
 import com.jme3.math.FastMath;
 

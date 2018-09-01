@@ -8,7 +8,7 @@ import com.jme3.phonon.PhononChannel;
 import com.jme3.phonon.PhononChannel.ChannelStatus;
 import com.jme3.phonon.utils.FrameCache;
 
-class PhononPlayerBuffer {
+public class PhononPlayerBuffer {
     public final int sampleSize, bufferFrameSize;
     public final byte[] floatFrame, intFrame;
     public final FrameCache frameCache;
