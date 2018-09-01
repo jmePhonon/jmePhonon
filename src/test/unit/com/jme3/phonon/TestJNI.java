@@ -27,7 +27,7 @@ public class TestJNI extends TestCase {
         renderer.connectSourceRaw(0, bbf.limit()/4, bbf);
 
 
-        PhononOutputChannel chan = renderer.getChannel(0);
+        PhononChannel chan = renderer.getChannel(0);
 
         ByteBuffer tmpout_cnv = ByteBuffer.allocateDirect(frameSize*4).order(ByteOrder.LITTLE_ENDIAN);
         byte tmpout[] = new byte[frameSize*4];

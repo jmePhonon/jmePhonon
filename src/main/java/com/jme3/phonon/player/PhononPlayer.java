@@ -5,12 +5,12 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-import com.jme3.phonon.PhononOutputChannel;
+import com.jme3.phonon.PhononChannel;
 
 public class PhononPlayer {
     // public final static int FRAMES_IN_BUFFER = 2; 
 
-    public final PhononOutputChannel phononChannel;
+    public final PhononChannel phononChannel;
 
     private final SourceDataLine dataLine;
     private final AudioFormat audioFormat;
@@ -32,7 +32,7 @@ public class PhononPlayer {
      * @author aegroto, riccardobl
      */
 
-    public PhononPlayer(PhononOutputChannel chan,int channels, int sampleSize)
+    public PhononPlayer(PhononChannel chan,int channels, int sampleSize)
             throws LineUnavailableException {
         phononChannel = chan;
         this.channels = channels;

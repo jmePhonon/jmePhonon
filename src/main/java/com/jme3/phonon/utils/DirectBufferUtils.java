@@ -1,4 +1,4 @@
-package com.jme3.phonon;
+package com.jme3.phonon.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

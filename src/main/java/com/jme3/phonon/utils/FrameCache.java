@@ -3,7 +3,6 @@ package com.jme3.phonon.utils;
 /**
  * FrameCache
  */
-
 public class FrameCache {
     private final byte cache[];
     private int lastLoadedFrameIndex;

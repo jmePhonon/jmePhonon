@@ -38,32 +38,36 @@ test {
 
 }
 
+task getSteamAudio(type :Exec){
+    commandLine 'bash','prepare.sh',"getSteamAudio"
+}
 
 task buildNativeTests(type :Exec){
-    commandLine 'bash','premake.sh',"buildNativeTests"
+    commandLine 'bash','prepare.sh',"buildNativeTests"
 }
+buildNativeTests.dependsOn(getSteamAudio)
 
-task premake(type :Exec){
-    commandLine 'bash','premake.sh'
+task updateJNIHeaders(type:Exec) {
+    def javapth=project.sourceSets.main.java.outputDir
+    def classpath = configurations.compile.join(":")+ ":"+javapth;
+    commandLine 'bash','prepare.sh',"updateJNIHeaders",classpath,javapth,"src/main/natives/include"
 }
+updateJNIHeaders.dependsOn(classes)
 
-// task premakeClean(type :Exec){
-//     commandLine 'bash','premake.sh','clean'
-// }
-// clean.dependsOn(premakeClean)
-
+task deepClean(type:Exec){
+    commandLine 'bash','prepare.sh',"deepClean"
+}
+deepClean.dependsOn(clean);
 
 
 task buildNatives(type :Exec){
-    commandLine 'bash','premake.sh',"buildNatives"
+    commandLine 'bash','prepare.sh',"buildNatives"
 }
-// buildNatives.dependsOn(clean)
-buildNatives.finalizedBy(build)
+buildNatives.dependsOn(getSteamAudio)
 
-task updateJNIHeaders(type:Exec) {
-    def classpath = configurations.compile.join(":")+ ":build/classes/java/main";
-    commandLine 'bash','premake.sh',"updateJNIHeaders",classpath,"build/classes/java/main","src/main/natives/include"
-    dependsOn classes
+task genWorkspace(type:Exec){
+    commandLine 'bash','prepare.sh','getSteamAudio' 
 }
+genWorkspace.finalizedBy(buildNatives)
 
-build.dependsOn(premake)
+build.dependsOn(buildNatives)

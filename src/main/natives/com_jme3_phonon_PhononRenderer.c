@@ -1,5 +1,5 @@
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    #error Error.
+    #error This implementation runs only on little endian machines
 #endif
 
 #include <jni.h>
@@ -12,7 +12,6 @@
 
 
 #define _MAX_CHANNELS 16
-
 
 struct ChOutput CHANNELS[_MAX_CHANNELS];
 

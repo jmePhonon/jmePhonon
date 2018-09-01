@@ -2,9 +2,9 @@ package com.jme3.phonon.player;
 
 import javax.sound.sampled.SourceDataLine;
 
-import com.jme3.phonon.BitUtils;
-import com.jme3.phonon.PhononOutputChannel;
-import com.jme3.phonon.PhononOutputChannel.ChannelStatus;
+import com.jme3.phonon.utils.BitUtils;
+import com.jme3.phonon.PhononChannel;
+import com.jme3.phonon.PhononChannel.ChannelStatus;
 import com.jme3.phonon.utils.FrameCache;
 
 class PhononPlayerBuffer {
@@ -12,7 +12,7 @@ class PhononPlayerBuffer {
     public final byte[] floatFrame, intFrame;
     public final FrameCache frameCache;
 
-    public final PhononOutputChannel phononChannel;
+    public final PhononChannel phononChannel;
 
     // private int remainingBytes, bufferLoadIndex, bufferWriteIndex;
 
@@ -25,14 +25,13 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    PhononPlayerBuffer(int sampleSize, PhononOutputChannel channel) {
+    PhononPlayerBuffer(int sampleSize, PhononChannel channel) {
         this.phononChannel = channel;
         this.sampleSize = sampleSize;
 
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
         this.intFrame = new byte[bufferFrameSize];
-
         this.frameCache = new FrameCache(2, bufferFrameSize);
     }
 

@@ -1,0 +1,5 @@
+sudo: required
+services:
+  - docker
+script:
+  - NO_CACHE=true ./make.sh updateJNIHeaders build

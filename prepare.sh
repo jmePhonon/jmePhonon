@@ -4,8 +4,8 @@ mkdir -p tmp/tools
 mkdir -p tmp/cache
 mkdir -p build/natives
 
-source premake.dep/safeRm.sh
-source premake.dep/findJava.sh
+source build.dep/safeRm.sh
+source build.dep/findJava.sh
 
 # Get steam audio
 if [ "$STEAM_AUDIO_URL" = "" ];
@@ -14,6 +14,9 @@ then
 fi
 
 export STEAM_AUDIO_URL_HASH="`echo "$STEAM_AUDIO_URL" | sha256sum | cut -d' ' -f1`"
+
+
+function getSteamAudio {
 
 if [  ! -f src/steamaudio/include/phonon.h -o  "$REGEN_BINDINGS" != "" ];
 then
@@ -43,64 +46,22 @@ then
 
     cp -Rf bin/* lib/
     safeRm bin
-
-    # mkdir -p lib/linux-x86
-    # cp lib/Linux/x86/*.so lib/linux-x86/
-
-    # mkdir -p lib/linux-x86-64
-    # cp lib/Linux/x64/*.so lib/linux-x86-64
-
-    # mkdir -p lib/win32-x86
-    # cp bin/Windows/x86/*.dll lib/win32-x86
-
-    # mkdir -p lib/win32-x86-64
-    # cp bin/Windows/x64/*.dll lib/win32-x86-64
-
-    # mkdir -p lib/darwin
-    # cp lib/OSX/*.dylib lib/darwin
-
-    # rm -Rf lib/Android
-    # rm -Rf lib/Linux
-    # rm -Rf lib/OSX
-    # rm -Rf lib/Windows
-
-    # rm -Rf bin
-
-    #apt-get install htmldoc archmage
-    if [ "$CONVERT_DOC" == "true" ];
-    then
-        cd doc
-        archmage -c pdf steamaudio_api.chm steamaudio_api.pdf
-        # archmage -c html steamaudio_api.chm steamaudio_api.html
-        cd ..
-    fi
     cd ../../
 fi
 ################
 
+}
 
-function clean {
-    # safeRm build/classes
-    # safeRm build/libs
-    # safeRm build/natives
-    # safeRm build/reports
-    # safeRm build/resources
-    # safeRm build/test-results
-    # safeRm bin
-
+function deepClean {
     safeRm build
     safeRm tmp
     safeRm bin
     safeRm src/steamaudio
-    gradle clean
+    safeRm .gradle
+    rm -Rf .Trash    
 }
 
 
-# function deepClean {
-#     clean
-
-   
-# }
 
 
 #####

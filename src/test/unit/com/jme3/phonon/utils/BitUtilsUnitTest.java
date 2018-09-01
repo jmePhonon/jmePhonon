@@ -1,9 +1,8 @@
-package com.jme3.phonon;
+package com.jme3.phonon.utils;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.function.BiConsumer;
 
-import com.jme3.phonon.BitUtils;
 
 import org.junit.Test;
 
