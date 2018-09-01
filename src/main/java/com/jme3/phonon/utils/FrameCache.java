@@ -1,5 +1,7 @@
 package com.jme3.phonon.utils;
 
+import java.util.Arrays;
+
 import javax.sound.sampled.SourceDataLine;
 
 /**
@@ -50,6 +52,7 @@ public class FrameCache {
         if (readable > remaining) {
             readable = remaining;
         }
+
         // Read first batch 
         out.write(cache, readIndex, readable);
         // System.arraycopy(cache, readIndex, out, 0, readable);

@@ -71,6 +71,8 @@ public class PhononPlayer {
             // We do this here to be sure there is some data already available to be played
             if (!dataLine.isRunning())
                 dataLine.start();
+        } else if (writtenBytes == -1) {
+            inPlayback = false;
         }
     }
     

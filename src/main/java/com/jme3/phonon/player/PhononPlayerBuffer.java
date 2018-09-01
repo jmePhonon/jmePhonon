@@ -1,5 +1,7 @@
 package com.jme3.phonon.player;
 
+import java.util.Arrays;
+
 import javax.sound.sampled.SourceDataLine;
 
 import com.jme3.phonon.PhononChannel;
@@ -52,7 +54,7 @@ public class PhononPlayerBuffer {
     }
 
     private boolean isBufferFilled() {
-        return preloadedFrames >= 2;
+        return preloadedFrames > 0;
     }
 
     /**
@@ -74,7 +76,10 @@ public class PhononPlayerBuffer {
                 System.out.println("Audio data is over");
                 break;
             case READY:
+                System.out.println("[Buffer] Read frame: " + Arrays.toString(floatFrame));
                 convertFloats(floatFrame, intFrame, 0);
+                System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
+
                 if(!frameCache.loadFrame(intFrame))
                     preloadedFrames++;
         }
@@ -91,6 +96,8 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
+    private boolean dataInBuffer = true;
+
     public int write(SourceDataLine outLine) {
         if(!isBufferFilled()) {
             fillBuffer();
@@ -100,7 +107,11 @@ public class PhononPlayerBuffer {
         int writableBytes = outLine.available();
         if(writableBytes > 0) {
             if(frameCache.readNextFrame(outLine, writableBytes)) {
-                loadNextFrame();
+                if(dataInBuffer) {
+                    loadNextFrame();
+                } else {
+                    return -1;
+                }
             }
         }
 
@@ -137,7 +148,7 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private void convertFloats(byte[] inb, byte[] outb, int offset) {
+    public void convertFloats(byte[] inb, byte[] outb, int offset) {
         byte[] partInputBuffer = new byte[4];
         byte[] partOutputBuffer = new byte[sampleSize / 8];
 

@@ -86,7 +86,7 @@ public class PhononChannel {
     }
 
   
-    private void setLastProcessedFrameId(int v) {
+    protected void setLastProcessedFrameId(int v) {
         buffer.putInt(CHANNEL_LAYOUT.LAST_PROCESSED_FRAME, v);
     }
 
