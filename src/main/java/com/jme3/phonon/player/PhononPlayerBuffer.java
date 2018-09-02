@@ -10,6 +10,8 @@ import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.utils.FrameCache;
 
 public class PhononPlayerBuffer {
+    public final int CACHE_SIZE = 4;
+
     public final int sampleSize, bufferFrameSize;
     public final byte[] floatFrame, intFrame;
     public final FrameCache frameCache;
@@ -34,7 +36,7 @@ public class PhononPlayerBuffer {
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
         this.intFrame = new byte[bufferFrameSize];
-        this.frameCache = new FrameCache(2, intFrame.length);
+        this.frameCache = new FrameCache(CACHE_SIZE, intFrame.length);
     }
 
     /**
@@ -82,13 +84,9 @@ public class PhononPlayerBuffer {
 
                 boolean cacheFull = frameCache.loadFrame(intFrame);
 
-                /*if(!cacheFull) {
-                    System.err.println("FIXME: Cache is not full");                    
-                }*/
-
                 if(!bufferFilled && cacheFull) {
                     bufferFilled = true;
-                } 
+                }
         }
 
         return stat;
@@ -108,7 +106,9 @@ public class PhononPlayerBuffer {
     public int write(SourceDataLine outLine) {
         if(!isBufferFilled()) {
             fillBuffer();
-            return 0;
+            
+            if(!isBufferFilled())
+                return 0;
         }
 
         int writableBytes = outLine.available();

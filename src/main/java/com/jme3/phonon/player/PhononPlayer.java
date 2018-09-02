@@ -64,6 +64,9 @@ public class PhononPlayer {
      */
 
     public void continuePlayback() {
+        if(!isInPlayback())
+            return;
+        
         int writtenBytes = writer.writeFromBuffer(buffer);
 
         if(writtenBytes > 0) {
