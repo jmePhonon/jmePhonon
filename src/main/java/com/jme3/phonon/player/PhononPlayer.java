@@ -1,6 +1,7 @@
 package com.jme3.phonon.player;
 
 import java.io.EOFException;
+import java.io.InputStream;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
@@ -13,7 +14,7 @@ public class PhononPlayer {
 
 
     PhononChannel channel;
-    PhononChannelIntInputStream input;
+    InputStream input;
     SourceDataLine output;
     AudioFormat audioFormat;
     int dataLineSampleSize;    
@@ -22,7 +23,7 @@ public class PhononPlayer {
     boolean isRunning;
 
     public PhononPlayer(PhononChannel chan, int sampleRate,
-            int outputChannels,int outputSampleSize,int preloadedSamplesNum) throws LineUnavailableException {
+            int outputChannels,int outputSampleSize) throws LineUnavailableException {
         channel = chan;
         dataLineSampleSize = outputSampleSize;
 
@@ -31,12 +32,18 @@ public class PhononPlayer {
         input = new PhononChannelIntInputStream(channel,outputSampleSize);
         audioFormat = new AudioFormat(sampleRate, outputSampleSize, outputChannels, true, false);
         output = AudioSystem.getSourceDataLine(audioFormat);
-        output.open(audioFormat, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
+        output.open(audioFormat);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
+
+   
+      //preloadedSamplesNum * bytesPerSample;
 
 
-        preloadBytes = preloadedSamplesNum * bytesPerSample;
         long nsPerSample= 1000000000l / sampleRate;
-  
+       
+       preloadBytes = (int)(((1000000l * 50l) / nsPerSample)*bytesPerSample);
+       if (output.getBufferSize() < preloadBytes)
+           preloadBytes = output.getBufferSize();
+           int preloadedSamplesNum = preloadBytes / bytesPerSample;
 
         System.out.println("Delay playback for " +( (preloadedSamplesNum *nsPerSample )/1000000l )+ " ms / " + preloadedSamplesNum
                 + " samples / " + preloadBytes + " bytes");
@@ -58,10 +65,10 @@ public class PhononPlayer {
             if (read > 0) {
                 // System.out.println("Write "+read);
 
-                output.write(tmp, 0, read);
+                int written=output.write(tmp, 0, read);
                 if (preloadBytes > 0) {
-                    System.out.println("Loaded "+read+" bytes");
-                    preloadBytes -= read;
+                    System.out.println("Loaded "+written+" bytes");
+                    preloadBytes -= written;
                 }
             } else {
                 // System.out.println("No data");
@@ -82,6 +89,7 @@ public class PhononPlayer {
             if (!isRunning) {
                 isRunning = true;
                 output.start();
+                
                 System.out.println("Start");
             }
         } else {

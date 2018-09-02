@@ -12,7 +12,7 @@ public enum Sleeper {
         switch (this) {
             case SLEEP : {
                 switch (clock) {
-                    case MILLISECONDS : {
+                    case MILLI : {
                         long sleeptime = expectedTimeDelta - (clock.measure()-startTime);
                         if (sleeptime > 0) {
                             // System.out.println("Sleep " + sleeptime);
@@ -37,7 +37,7 @@ public enum Sleeper {
                     }
                   
                     default:
-                    case NANOSECONDS : {
+                    case NANO : {
                         long sleeptime = expectedTimeDelta - (clock.measure()-startTime);
                         long msToSleep = sleeptime / 1000000;
                         int nsToSleep = (int) (sleeptime - msToSleep * 1000000);
@@ -91,7 +91,7 @@ public enum Sleeper {
                     long expectedEndTime = startTime + expectedTimeDelta;
                     do {
                         long timenow;
-
+                        Thread.yield();
                         if ((timenow =clock.measure()) >= expectedEndTime)
                             break;
                             sleeptfor++;

@@ -1,7 +1,7 @@
 package com.jme3.phonon.utils;
 
 public enum Clock {
-    MILLISECONDS, NANOSECONDS, HIGHRES;
+    MILLI, NANO, HIGHRES;
 
     private Clock() {
 
@@ -9,7 +9,7 @@ public enum Clock {
 
     public long measure() {
         switch (this) {
-            case MILLISECONDS : {
+            case MILLI : {
                 return System.currentTimeMillis();
             }
             case HIGHRES : {
@@ -17,7 +17,7 @@ public enum Clock {
                 return perf.highResCounter();
             }
             default:
-            case NANOSECONDS : {
+            case NANO : {
                 return System.nanoTime();
             }
         }
@@ -26,7 +26,7 @@ public enum Clock {
 
     public long getExpectedTimeDelta(double deltaS) {
         switch (this) {
-            case MILLISECONDS : {
+            case MILLI : {
                 return (long)( 1000l * deltaS);
             }
 
@@ -34,7 +34,7 @@ public enum Clock {
                 return (long)(sun.misc.Perf.getPerf().highResFrequency() * deltaS);
             }
             default:
-            case NANOSECONDS : {
+            case NANO : {
                 return (long)(1000000000l * deltaS);
             }
         }

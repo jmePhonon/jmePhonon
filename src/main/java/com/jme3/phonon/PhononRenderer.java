@@ -2,6 +2,7 @@ package com.jme3.phonon;
 
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -30,7 +31,7 @@ public class PhononRenderer implements AudioRenderer {
 
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
 	private final PhononChannel[] channels = new PhononChannel[CHANNEL_LIMIT];
-	private final ConcurrentLinkedQueue<PhononPlayer> enqueuedPlayers = new ConcurrentLinkedQueue<>();
+	// private final List<PhononPlayer> enqueuedPlayers = new LinkedList<>();
 	private final LinkedList<PhononPlayer> players = new LinkedList<>();
 
 	static{
@@ -45,8 +46,8 @@ public class PhononRenderer implements AudioRenderer {
 	final int _OUTPUT_FRAME_SIZE;
 	final int _OUTPUT_BUFFER_SIZE ;
 
-	Clock CLOCK=Clock.NANOSECONDS;
-	Sleeper WAIT_MODE = Sleeper.BUSYSLEEP;
+	Clock CLOCK=Clock.HIGHRES;
+	Sleeper WAIT_MODE = Sleeper.SLEEP;
 
 	
 	
@@ -126,38 +127,38 @@ public class PhononRenderer implements AudioRenderer {
 	}
 
 	public void attachPlayer(PhononPlayer player) {
-		enqueuedPlayers.add(player);
+		players.add(player);
 	}	
 
 	public void runPlayer() {
-		while (true) {
-			while(!enqueuedPlayers.isEmpty()) {
-				players.add(enqueuedPlayers.poll());
-			}
+	// 	while (true) {
+	// 		while(!enqueuedPlayers.isEmpty()) {
+	// 			players.add(enqueuedPlayers.poll());
+	// 		}
 
-			int stalling = players.size();
-			for (PhononPlayer player : players) {
-				byte res = player.playLoop();
-				if (res == 0) {
-					stalling--;
-				}
-			}
+	// 		int stalling = players.size();
+	// 		for (PhononPlayer player : players) {
+	// 			byte res = player.playLoop();
+	// 			if (res == 0) {
+	// 				stalling--;
+	// 			}
+	// 		}
 
-			if (stalling == players.size()) {
-				try {
-					synchronized(playeThread){
-					playeThread.wait();
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
+	// 		if (stalling == players.size()) {
+	// 			try {
+	// 				synchronized(playeThread){
+	// 				playeThread.wait();
+	// 				}
+	// 			} catch (Exception e) {
+	// 				e.printStackTrace();
+	// 			}
+	// 		}
 
-		// 	try{
-		// 	Thread.sleep(10);
-		// 	} catch (Exception e) {
-		// 	}
-		}
+	// 	// 	try{
+	// 	// 	Thread.sleep(10);
+	// 	// 	} catch (Exception e) {
+	// 	// 	}
+	// 	}
 	}
 
 
@@ -176,15 +177,31 @@ public class PhononRenderer implements AudioRenderer {
 		while (true) {
 			startTime = CLOCK.measure();
 		
+			// while(!enqueuedPlayers.isEmpty()) {
+			// 	players.add(enqueuedPlayers.remove(0));
+			// }
+
 			updateNative();
-			synchronized(playeThread){
-				playeThread.notify();
+
+			int stalling = players.size();
+			for (PhononPlayer player : players) {
+				byte res = player.playLoop();
+				if (res == 0) {
+					stalling--;
 				}
+			}
+
+
+
+
+			// synchronized(playeThread){
+			// 	playeThread.notify();
+			// 	}
+
 
 			try {
-				// Thread.sleep((int)deltaS * 1000);
+				// Thread.yield();
 				WAIT_MODE.wait(CLOCK, startTime, updateRateNanos);
-				// if(!WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta))System.err.println("FIXME: Phonon is taking too long");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
