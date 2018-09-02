@@ -10,13 +10,14 @@ import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.utils.FrameCache;
 
 public class PhononPlayerBuffer {
-    public final int CACHE_SIZE = 4;
+    public final int CACHE_SIZE=2;
 
-    public final int sampleSize, bufferFrameSize;
+    public final int sampleSize;
     public final byte[] floatFrame, intFrame;
     public final FrameCache frameCache;
 
     public final PhononChannel phononChannel;
+    byte needFrames;
 
     // private int remainingBytes, bufferLoadIndex, bufferWriteIndex;
 
@@ -30,12 +31,15 @@ public class PhononPlayerBuffer {
      */
 
     public PhononPlayerBuffer(int sampleSize, PhononChannel channel) {
+        needFrames =(byte) CACHE_SIZE;
         this.phononChannel = channel;
         this.sampleSize = sampleSize;
-
-        this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
+        int bytesPerSample = sampleSize / 8;
+        
         this.floatFrame = new byte[channel.getFrameSize() * 4];
-        this.intFrame = new byte[bufferFrameSize];
+        this.intFrame = new byte[channel.getFrameSize() * bytesPerSample];
+
+
         this.frameCache = new FrameCache(CACHE_SIZE, intFrame.length);
     }
 
@@ -45,19 +49,9 @@ public class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private boolean bufferFilled = false;
+    // private boolean bufferFilled = false;
 
-    public void fillBuffer() {
-        while(!isBufferFilled()) {
-            if(loadNextFrame() == ChannelStatus.NODATA) {
-                break;
-            }
-        }
-    }
-
-    private boolean isBufferFilled() {
-        return bufferFilled;
-    }
+ 
 
     /**
      * Loads next frame in the buffer.
@@ -80,13 +74,11 @@ public class PhononPlayerBuffer {
             case READY:
                 // System.out.println("[Buffer] Read frame: " + Arrays.toString(floatFrame));
                 convertFloats(floatFrame, intFrame, 0);
-                // System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
+            // System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
+                frameCache.loadFrame(intFrame);
+                needFrames--;
 
-                boolean cacheFull = frameCache.loadFrame(intFrame);
-
-                if(!bufferFilled && cacheFull) {
-                    bufferFilled = true;
-                }
+              
         }
 
         return stat;
@@ -104,23 +96,25 @@ public class PhononPlayerBuffer {
     // private boolean dataInBuffer = false;
 
     public int write(SourceDataLine outLine) {
-        if(!isBufferFilled()) {
-            fillBuffer();
-            
-            if(!isBufferFilled())
-                return 0;
+        if (needFrames > 0) {
+            if (loadNextFrame() == ChannelStatus.OVER)
+                return -1;
+        }
+        
+        if (needFrames == 0) {
+            int writableBytes = outLine.available();
+            if (writableBytes > 0) {
+                if (frameCache.readNextFrame(outLine, writableBytes)) {
+                    // System.out.println("[Buffer] Frame cache says we need more frames");
+                    needFrames++;
+                }
+            }
+            return writableBytes;
         }
 
-        int writableBytes = outLine.available();
+        return 0;
 
-        if(writableBytes > 0) {
-            if(frameCache.readNextFrame(outLine, writableBytes)) {
-                // System.out.println("[Buffer] Frame cache says we need more frames");
-                loadNextFrame();
-            }
-        } 
-
-        return writableBytes;
+       
     }
    
     /**

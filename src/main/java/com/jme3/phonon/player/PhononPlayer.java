@@ -36,11 +36,12 @@ public class PhononPlayer {
         phononChannel = chan;
         this.channels = channels;
         float sampleRate = 44100;
-
+        
+        int bytesPerSample=(sampleSize/8);
         audioFormat = new AudioFormat(sampleRate, sampleSize,  this.channels, true, false);
 
         dataLine = AudioSystem.getSourceDataLine(audioFormat);
-        dataLine.open(audioFormat, chan.getBufferSize() * audioFormat.getFrameSize());
+        dataLine.open(audioFormat, chan.getFrameSize() *bytesPerSample);
 
         buffer = new PhononPlayerBuffer(audioFormat.getSampleSizeInBits(), phononChannel);
     }
@@ -67,11 +68,11 @@ public class PhononPlayer {
         
         int writtenBytes = buffer.write(dataLine);
 
-        if(writtenBytes > 0) {
+        if(!dataLine.isRunning()&&writtenBytes > 0) {
             // Start the dataLine if it is not playing yet. 
             // We do this here to be sure there is some data already available to be played
-            if (!dataLine.isRunning())
-                dataLine.start();
+            // if ()
+            dataLine.start();
         } else if (writtenBytes == -1) {
             inPlayback = false;
         }
