@@ -140,17 +140,15 @@ public class PhononRenderer implements AudioRenderer {
 
 	// long UPDATE_RATE = 50* 1000000l;
 	public void runDecoder() {
-		long updatesPerS = (44100 / _OUTPUT_FRAME_SIZE);
-		// float UPDATE_RATE = 0.05f;
+		long updatesPerS =  (44100 / _OUTPUT_FRAME_SIZE) ;
 		long expectedTimeDelta = CLOCK.getExpectedTimeDelta(updatesPerS);
-        // long expectedTimeDelta = (long) (UPDATE_RATE * 1000000000);
-        // long updateRateNanos = (long) (UPDATE_RATE * 1000000000);
-
+     
 		System.out.println("Updates per S " + updatesPerS 
-		+ " expected delta " + expectedTimeDelta);
+				+ " expected delta " + expectedTimeDelta);
+		
 		long startTime = 0;
 		while (true) {
-			startTime = System.nanoTime();
+			startTime = CLOCK.measure();
 			updateNative();
 
 			while(!enqueuedPlayers.isEmpty()) {
@@ -164,8 +162,8 @@ public class PhononRenderer implements AudioRenderer {
 
 
 			try {
-				
-				if(!WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta))System.err.println("FIXME: Phonon is taking too long");
+				WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta);
+				// if(!WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta))System.err.println("FIXME: Phonon is taking too long");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

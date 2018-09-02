@@ -5,7 +5,7 @@ package com.jme3.phonon.utils;
  */
 public enum Sleeper {
 
-    SLEEP, BUSYSLEEP, BUSYSLEEP_NANO, BUSYWAIT;
+    SLEEP, BUSYSLEEP, BUSYSLEEP_NANO, BUSYWAIT,NONE;
 
     public boolean wait(Clock clock, long startTime, long expectedTimeDelta)
             throws InterruptedException {
@@ -36,6 +36,7 @@ public enum Sleeper {
                             break;
                         }
                     }
+                  
                     default:
                     case NANOSECONDS : {
                         long sleeptime = expectedTimeDelta - (clock.measure()-startTime);
@@ -70,13 +71,16 @@ public enum Sleeper {
                 break;
             }
             case BUSYWAIT : {
+                long expectedEndTime = startTime + expectedTimeDelta;
                 do {
-                    long expectedEndTime=startTime+expectedTimeDelta;
-
-                    if (clock.measure() < expectedEndTime)
+                    if (clock.measure() >= expectedEndTime)
                         break;
                     sleepedonce = true;
                 } while (true);
+                break;
+            }
+            case NONE : {
+                sleepedonce = true;
                 break;
             }
         }

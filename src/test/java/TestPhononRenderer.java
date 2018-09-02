@@ -39,17 +39,17 @@ public class TestPhononRenderer extends SimpleApplication {
             e.printStackTrace();
         }
 
-        for(int c = 1; c < 5; c++) {
-            try {
-                Thread.sleep(500);
-                renderer.connectSource(ambientAudioData, c);
+        // for(int c = 1; c < 5; c++) {
+        //     try {
+        //         Thread.sleep(500);
+        //         renderer.connectSource(ambientAudioData, c);
 
-                PhononPlayer ambientPlayer = new PhononPlayer(renderer.getChannel(c), 1, 16);
-                renderer.attachPlayer(ambientPlayer);
-                ambientPlayer.startPlayback();
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        }
+        //         PhononPlayer ambientPlayer = new PhononPlayer(renderer.getChannel(c), 1, 16);
+        //         renderer.attachPlayer(ambientPlayer);
+        //         ambientPlayer.startPlayback();
+        //     } catch(Exception e) {
+        //         e.printStackTrace();
+        //     }
+        // }
     } 
 }
