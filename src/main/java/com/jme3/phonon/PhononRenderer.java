@@ -15,7 +15,9 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
+import com.jme3.phonon.utils.Clock;
 import com.jme3.phonon.utils.DirectBufferUtils;
+import com.jme3.phonon.utils.Sleeper;
 import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
@@ -43,6 +45,10 @@ public class PhononRenderer implements AudioRenderer {
 	final int _OUTPUT_FRAME_SIZE;
 	final int _OUTPUT_BUFFER_SIZE ;
 
+	Clock CLOCK=Clock.NANOSECONDS;
+	Sleeper WAIT_MODE = Sleeper.BUSYWAIT;
+
+	
 	
 
 
@@ -123,8 +129,30 @@ public class PhononRenderer implements AudioRenderer {
 	}	
 
 	public void runPlayer() {
+		// while (true) {
+
+		// }
+	}
+
+
+	
+	
+
+	// long UPDATE_RATE = 50* 1000000l;
+	public void runDecoder() {
+		long updatesPerS = (44100 / _OUTPUT_FRAME_SIZE);
+		// float UPDATE_RATE = 0.05f;
+		long expectedTimeDelta = CLOCK.getExpectedTimeDelta(updatesPerS);
+        // long expectedTimeDelta = (long) (UPDATE_RATE * 1000000000);
+        // long updateRateNanos = (long) (UPDATE_RATE * 1000000000);
+
+		System.out.println("Updates per S " + updatesPerS 
+		+ " expected delta " + expectedTimeDelta);
+		long startTime = 0;
 		while (true) {
-		
+			startTime = System.nanoTime();
+			updateNative();
+
 			while(!enqueuedPlayers.isEmpty()) {
 				players.add(enqueuedPlayers.poll());
 			}
@@ -133,27 +161,15 @@ public class PhononRenderer implements AudioRenderer {
 				if(player.isInPlayback())
 					player.continuePlayback();	
 			});
-		}
-	}
-	public void runDecoder() {
-		long sleeptime = 1000 / (44100 / _OUTPUT_FRAME_SIZE);
-		long lastUpdate = 0;
-		while (true) {
-			lastUpdate = System.currentTimeMillis();
-		
-			updateNative();
-			long delay=(System.currentTimeMillis()-lastUpdate);
-			delay=sleeptime-delay;
-			if (delay < 0) {
-				System.err.println("FIXME: Phonon is taking too long");
-			} else {
-				try {
-					// System.out.println("Delay " + delay);
-					Thread.sleep(delay);
+
+
+			try {
+				
+				if(!WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta))System.err.println("FIXME: Phonon is taking too long");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-			}
+		
 
 		}
 	}
