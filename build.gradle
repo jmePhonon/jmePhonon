@@ -1,8 +1,24 @@
 apply plugin : 'java' 
+apply plugin: 'eclipse'
+import org.gradle.plugins.ide.eclipse.model.AccessRule
 
 
 def jmerepo='com.github.jmonkeyengine.jMonkeyEngine'
 def jmeversion='v3.2.0-stable'
+
+
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                def jre = entries.find { it.path.contains 'org.eclipse.jdt.launching.JRE_CONTAINER' }
+                jre.accessRules.add(new AccessRule('accessible', 'com/**'))
+                jre.accessRules.add(new AccessRule('accessible', '**'))
+                jre.accessRules.add(new AccessRule('accessible', 'sun/**'))           
+             }
+        }
+    }
+}
 
 repositories {
     mavenCentral()
