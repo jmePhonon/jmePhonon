@@ -53,7 +53,7 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
             // System.out.println("Input array: " + Arrays.toString(inputArray));
 
             PhononChannelWrapper channelWrapper = new PhononChannelWrapper(8 * sampleSizeBytes, inputArraySize, inputArray);
-            PhononPlayerBuffer buffer = new PhononPlayerBuffer(8 * sampleSizeBytes, channelWrapper);
+            PhononPlayerBuffer buffer = new PhononPlayerBuffer(1,8 * sampleSizeBytes, channelWrapper);
 
             byte[] convertedInputArray = new byte[outputArraySize];
             buffer.convertFloats(inputArray, convertedInputArray, 0);

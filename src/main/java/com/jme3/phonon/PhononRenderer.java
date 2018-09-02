@@ -46,7 +46,7 @@ public class PhononRenderer implements AudioRenderer {
 	final int _OUTPUT_BUFFER_SIZE ;
 
 	Clock CLOCK=Clock.NANOSECONDS;
-	Sleeper WAIT_MODE = Sleeper.BUSYSLEEP;
+	Sleeper WAIT_MODE = Sleeper.SLEEP;
 
 	
 	
@@ -129,22 +129,14 @@ public class PhononRenderer implements AudioRenderer {
 	}	
 
 	public void runPlayer() {
-		while (true) {
-			while(!enqueuedPlayers.isEmpty()) {
-				players.add(enqueuedPlayers.poll());
-			}
+		// while (true) {
+			
 
-			players.forEach(player -> {
-				if(player.isInPlayback())
-					player.continuePlayback();	
-			});
-
-	
-		// 	try{
-		// 	Thread.sleep(10);
-		// 	} catch (Exception e) {
-		// 	}
-		}
+		// // 	try{
+		// // 	Thread.sleep(10);
+		// // 	} catch (Exception e) {
+		// // 	}
+		// }
 	}
 
 
@@ -164,7 +156,14 @@ public class PhononRenderer implements AudioRenderer {
 			startTime = CLOCK.measure();
 		
 			updateNative();
-	
+		
+			while(!enqueuedPlayers.isEmpty()) {
+				players.add(enqueuedPlayers.poll());
+			}
+
+			players.forEach(player -> {
+					player.playLoop();	
+			});
 
 			try {
 				WAIT_MODE.wait(CLOCK, startTime, updateRateNanos);
