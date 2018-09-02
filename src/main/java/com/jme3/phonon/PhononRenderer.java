@@ -46,7 +46,7 @@ public class PhononRenderer implements AudioRenderer {
 	final int _OUTPUT_BUFFER_SIZE ;
 
 	Clock CLOCK=Clock.NANOSECONDS;
-	Sleeper WAIT_MODE = Sleeper.BUSYWAIT;
+	Sleeper WAIT_MODE = Sleeper.BUSYSLEEP;
 
 	
 	
@@ -129,28 +129,7 @@ public class PhononRenderer implements AudioRenderer {
 	}	
 
 	public void runPlayer() {
-		// while (true) {
-
-		// }
-	}
-
-
-	
-	
-
-	// long UPDATE_RATE = 50* 1000000l;
-	public void runDecoder() {
-		long updatesPerS =  (44100 / _OUTPUT_FRAME_SIZE) ;
-		long expectedTimeDelta = CLOCK.getExpectedTimeDelta(updatesPerS);
-     
-		System.out.println("Updates per S " + updatesPerS 
-				+ " expected delta " + expectedTimeDelta);
-		
-		long startTime = 0;
 		while (true) {
-			startTime = CLOCK.measure();
-			updateNative();
-
 			while(!enqueuedPlayers.isEmpty()) {
 				players.add(enqueuedPlayers.poll());
 			}
@@ -160,9 +139,35 @@ public class PhononRenderer implements AudioRenderer {
 					player.continuePlayback();	
 			});
 
+	
+		// 	try{
+		// 	Thread.sleep(10);
+		// 	} catch (Exception e) {
+		// 	}
+		}
+	}
+
+
+	
+	
+
+	// long UPDATE_RATE = 50* 1000000l;
+	public void runDecoder() {
+		double deltaS=  1./(44100 / _OUTPUT_FRAME_SIZE) ;
+		long updateRateNanos = CLOCK.getExpectedTimeDelta(deltaS);
+     
+		System.out.println("Updates per S " + deltaS 
+				+ " expected delta " + updateRateNanos);
+		
+		long startTime = 0;
+		while (true) {
+			startTime = CLOCK.measure();
+		
+			updateNative();
+	
 
 			try {
-				WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta);
+				WAIT_MODE.wait(CLOCK, startTime, updateRateNanos);
 				// if(!WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta))System.err.println("FIXME: Phonon is taking too long");
 				} catch (Exception e) {
 					e.printStackTrace();

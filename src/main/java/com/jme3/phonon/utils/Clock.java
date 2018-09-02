@@ -24,18 +24,18 @@ public enum Clock {
 
     }
 
-    public long getExpectedTimeDelta(long updatesPerS) {
+    public long getExpectedTimeDelta(double deltaS) {
         switch (this) {
             case MILLISECONDS : {
-                return 1000l / updatesPerS;
+                return (long)( 1000l * deltaS);
             }
 
             case HIGHRES : {
-                return sun.misc.Perf.getPerf().highResFrequency() / updatesPerS;
+                return (long)(sun.misc.Perf.getPerf().highResFrequency() * deltaS);
             }
             default:
             case NANOSECONDS : {
-                return 1000000000l / updatesPerS;
+                return (long)(1000000000l * deltaS);
             }
         }
     }
