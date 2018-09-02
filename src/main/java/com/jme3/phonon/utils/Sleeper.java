@@ -4,12 +4,11 @@ package com.jme3.phonon.utils;
  * Sleeper
  */
 public enum Sleeper {
-
     SLEEP, BUSYSLEEP, BUSYSLEEP_NANO, BUSYWAIT,NONE;
 
     public boolean wait(Clock clock, long startTime, long expectedTimeDelta)
             throws InterruptedException {
-        boolean sleepedonce = false;
+        int sleeptfor=0;
         switch (this) {
             case SLEEP : {
                 switch (clock) {
@@ -18,7 +17,7 @@ public enum Sleeper {
                         if (sleeptime > 0) {
                             // System.out.println("Sleep " + sleeptime);
                             Thread.sleep(sleeptime);
-                            sleepedonce=true;
+                            sleeptfor++;
                         }
                         break;
                     }
@@ -32,7 +31,7 @@ public enum Sleeper {
                             // System.out.println("Sleep for " + msToSleep + "ms and " + nsToSleep +
                             // " ns");
                             Thread.sleep(msToSleep, nsToSleep);
-                            sleepedonce=true;
+                            sleeptfor++;
                             break;
                         }
                     }
@@ -46,7 +45,7 @@ public enum Sleeper {
                             // System.out.println("Sleep for " + msToSleep + "ms and " + nsToSleep +
                             // " ns");
                             Thread.sleep(msToSleep, nsToSleep);
-                            sleepedonce=true;
+                            sleeptfor++;
                             break;
                         }
                     }
@@ -54,37 +53,58 @@ public enum Sleeper {
                 break;
             }
             case BUSYSLEEP : {
-                long expectedEndTime=startTime+expectedTimeDelta;
-                while (clock.measure() < expectedEndTime) {
-                    Thread.sleep(1);
-                    sleepedonce=true;
+                long endTime = clock.measure();
+                long diffTime = endTime - startTime;
+
+                if (diffTime < expectedTimeDelta) {
+                    long expectedEndTime = startTime + expectedTimeDelta;
+                    long timenow;
+                    while ((timenow =clock.measure())< expectedEndTime) {
+                        Thread.sleep(1);
+                        sleeptfor++;
+                    }
                 }
                 break;
             }
             case BUSYSLEEP_NANO : {
-                long expectedEndTime=startTime+expectedTimeDelta;
+                long endTime = clock.measure();
+                long diffTime = endTime - startTime;
 
-                while (clock.measure() < expectedEndTime) {
-                    Thread.sleep(0, 1);
-                    sleepedonce=true;
+
+                if (diffTime < expectedTimeDelta) {
+                    long expectedEndTime = startTime + expectedTimeDelta;
+                    long timenow;
+
+                    while ((timenow =clock.measure())< expectedEndTime) {
+                        Thread.sleep(0, 1);
+                        sleeptfor++;
+                    }
                 }
+
                 break;
             }
             case BUSYWAIT : {
-                long expectedEndTime = startTime + expectedTimeDelta;
-                do {
-                    if (clock.measure() >= expectedEndTime)
-                        break;
-                    sleepedonce = true;
-                } while (true);
+                long endTime = clock.measure();
+                long diffTime = endTime - startTime;
+                if (diffTime < expectedTimeDelta) {
+
+                    long expectedEndTime = startTime + expectedTimeDelta;
+                    do {
+                        long timenow;
+
+                        if ((timenow =clock.measure()) >= expectedEndTime)
+                            break;
+                            sleeptfor++;
+                    } while (true);
+                }
                 break;
             }
             case NONE : {
-                sleepedonce = true;
+                sleeptfor++;
                 break;
             }
         }
-        return sleepedonce;
+        return sleeptfor>0;
     }
 
 }

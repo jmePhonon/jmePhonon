@@ -19,7 +19,7 @@ public class PhononPlayer {
     int dataLineSampleSize;    
     int preloadBytes = 0;
 
-
+    boolean isRunning;
 
     public PhononPlayer(PhononChannel chan, int sampleRate,
             int outputChannels,int outputSampleSize,int preloadedSamplesNum) throws LineUnavailableException {
@@ -44,7 +44,8 @@ public class PhononPlayer {
 
 
 
-    public boolean playLoop() {
+    public byte playLoop() {
+        byte out = 0;
         int writableBytes = 0;
         int read = 0;
         try {
@@ -64,13 +65,13 @@ public class PhononPlayer {
                 }
             } else {
                 // System.out.println("No data");
-
+                out=1;
                 // no data available
             }
         } catch (EOFException e) {
             // Channel over;
             System.err.println("TO BE IMPLEMENTED: End of channel");
-
+            return -1;
         } catch (Exception e) {
             System.out.println("Writable " + writableBytes+" read "+read);
 
@@ -78,7 +79,8 @@ public class PhononPlayer {
         }
 
         if (preloadBytes <= 0) {
-            if (!output.isRunning()) {
+            if (!isRunning) {
+                isRunning = true;
                 output.start();
                 System.out.println("Start");
             }
@@ -90,7 +92,7 @@ public class PhononPlayer {
       
 
        
-        return true;
+        return out;
 
     }
 

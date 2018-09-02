@@ -46,7 +46,7 @@ public class PhononRenderer implements AudioRenderer {
 	final int _OUTPUT_BUFFER_SIZE ;
 
 	Clock CLOCK=Clock.NANOSECONDS;
-	Sleeper WAIT_MODE = Sleeper.SLEEP;
+	Sleeper WAIT_MODE = Sleeper.BUSYSLEEP;
 
 	
 	
@@ -72,11 +72,12 @@ public class PhononRenderer implements AudioRenderer {
 		}
 	}
 
+	Thread playeThread;
 	@Override
 	public void initialize() {
 		preInit();		
 		Thread decoderThread = new Thread(() -> runDecoder());
-		Thread playeThread = new Thread(() -> runPlayer());
+		 playeThread = new Thread(() -> runPlayer());
 		decoderThread.setDaemon(true);
 		decoderThread.start();
 		playeThread.setDaemon(true);
@@ -129,14 +130,34 @@ public class PhononRenderer implements AudioRenderer {
 	}	
 
 	public void runPlayer() {
-		// while (true) {
-			
+		while (true) {
+			while(!enqueuedPlayers.isEmpty()) {
+				players.add(enqueuedPlayers.poll());
+			}
 
-		// // 	try{
-		// // 	Thread.sleep(10);
-		// // 	} catch (Exception e) {
-		// // 	}
-		// }
+			int stalling = players.size();
+			for (PhononPlayer player : players) {
+				byte res = player.playLoop();
+				if (res == 0) {
+					stalling--;
+				}
+			}
+
+			if (stalling == players.size()) {
+				try {
+					synchronized(playeThread){
+					playeThread.wait();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+		// 	try{
+		// 	Thread.sleep(10);
+		// 	} catch (Exception e) {
+		// 	}
+		}
 	}
 
 
@@ -156,16 +177,12 @@ public class PhononRenderer implements AudioRenderer {
 			startTime = CLOCK.measure();
 		
 			updateNative();
-		
-			while(!enqueuedPlayers.isEmpty()) {
-				players.add(enqueuedPlayers.poll());
-			}
-
-			players.forEach(player -> {
-					player.playLoop();	
-			});
+			synchronized(playeThread){
+				playeThread.notify();
+				}
 
 			try {
+				// Thread.sleep((int)deltaS * 1000);
 				WAIT_MODE.wait(CLOCK, startTime, updateRateNanos);
 				// if(!WAIT_MODE.wait(CLOCK, startTime, expectedTimeDelta))System.err.println("FIXME: Phonon is taking too long");
 				} catch (Exception e) {
