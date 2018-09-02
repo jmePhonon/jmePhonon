@@ -16,7 +16,6 @@ import javax.sound.sampled.Control.Type;
 import javax.sound.sampled.Line.Info;
 
 import com.jme3.phonon.player.PhononPlayerBuffer;
-import com.jme3.phonon.player.PhononPlayerWriter;
 
 import com.jme3.math.FastMath;
 
@@ -121,12 +120,12 @@ public class PhononPlayerInternalsUnitTest extends TestCase {
                 @Override public void open(AudioFormat format) throws LineUnavailableException { }
             };
 
-            PhononPlayerWriter writer = new PhononPlayerWriter(dataLine, lineSize);
+            // PhononPlayerWriter writer = new PhononPlayerWriter(dataLine, lineSize);
 
             int writtenBytes = 0;
 
             while(writtenBytes < outputArraySize) {
-                int lastWrittenBytes = writer.writeFromBuffer(buffer);
+                int lastWrittenBytes = buffer.write(dataLine);
 
                 if(lastWrittenBytes > 0) {
                     dataLine.drain();
