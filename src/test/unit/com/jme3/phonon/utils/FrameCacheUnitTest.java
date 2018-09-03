@@ -52,7 +52,6 @@ public class FrameCacheUnitTest extends TestCase{
                 // System.out.println("Read " + frameToRead.length + " bytes");
                 // load new frame
 
-                FrameCacheUnitTestSourceDataLineWrapper sourceLineWrapper = new FrameCacheUnitTestSourceDataLineWrapper(frameToRead);
 
                 if (cache.readNextFrame(sourceLineWrapper, sourceLineWrapper.available())) {
 
