@@ -77,7 +77,6 @@ public class PhononRenderer implements AudioRenderer {
 		}
 	}
 
-	Thread playeThread;
 	@Override
 	public void initialize() {
 		preInit();
