@@ -13,13 +13,13 @@ import com.jme3.phonon.utils.BitUtils;
 public class PhononPlayer {
 
 
+
     PhononChannel channel;
     InputStream input;
     SourceDataLine output;
     AudioFormat audioFormat;
     int dataLineSampleSize;    
     int preloadBytes = 0;
-
 
     boolean isRunning;
 

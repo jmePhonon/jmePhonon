@@ -42,24 +42,26 @@ public class ClockAndSleeperTest extends TestCase {
     @Test
     public void testClockAndSleeper() throws InterruptedException {
         System.out.println("Test Sleep");
-        performTest(20, Clock.MILLISECONDS, Sleeper.SLEEP, 1);
-        performTest(32, Clock.NANOSECONDS, Sleeper.SLEEP,1);
+
+        performTest(20, Clock.MILLI, Sleeper.SLEEP, 1);
+        performTest(32, Clock.NANO, Sleeper.SLEEP,1);
         performTest(17, Clock.HIGHRES, Sleeper.SLEEP, 1);
         
         System.out.println("Test BusySleep");
-        performTest(47, Clock.MILLISECONDS, Sleeper.BUSYSLEEP, 1);
-        performTest(56, Clock.NANOSECONDS, Sleeper.BUSYSLEEP,1);
+        performTest(47, Clock.MILLI, Sleeper.BUSYSLEEP, 1);
+        performTest(56, Clock.NANO, Sleeper.BUSYSLEEP,1);
         performTest(71, Clock.HIGHRES, Sleeper.BUSYSLEEP, 1);        
 
         System.out.println("Test BusySleep-nano");
-        performTest(87, Clock.MILLISECONDS, Sleeper.BUSYSLEEP_NANO, 1);
-        performTest(99, Clock.NANOSECONDS, Sleeper.BUSYSLEEP_NANO,1);
+        performTest(87, Clock.MILLI, Sleeper.BUSYSLEEP_NANO, 1);
+        performTest(99, Clock.NANO, Sleeper.BUSYSLEEP_NANO,1);
         performTest(76, Clock.HIGHRES, Sleeper.BUSYSLEEP_NANO, 1);
 
         System.out.println("Test BusyWait");
 
-        performTest(87, Clock.MILLISECONDS, Sleeper.BUSYWAIT, 1);
-        performTest(99, Clock.NANOSECONDS, Sleeper.BUSYWAIT,1);
+
+        performTest(87, Clock.MILLI, Sleeper.BUSYWAIT, 1);
+        performTest(99, Clock.NANO, Sleeper.BUSYWAIT,1);
         performTest(76, Clock.HIGHRES, Sleeper.BUSYWAIT,1);
     }
     
