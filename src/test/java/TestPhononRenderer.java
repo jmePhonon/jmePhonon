@@ -39,7 +39,7 @@ public class TestPhononRenderer extends SimpleApplication {
             e.printStackTrace();
         }
 
-        for(int c = 1; c < 13; c++) {
+        /*for(int c = 1; c < 13; c++) {
             try {
                 renderer.connectSource(ambientAudioData, c);
 
@@ -48,6 +48,6 @@ public class TestPhononRenderer extends SimpleApplication {
             } catch(Exception e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     } 
 }
