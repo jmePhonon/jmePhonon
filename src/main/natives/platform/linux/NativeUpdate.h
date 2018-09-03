@@ -28,7 +28,6 @@ struct {
 #define CLOCK_TYPE CLOCK_REALTIME_COARSE
 
 void *nuLoop() {
-
     while (1) {
         jlong startTime = 0;
         if (ThreadContext.useNativeClock) {
