@@ -1,90 +1,110 @@
 package com.jme3.phonon.player;
 
+import java.io.EOFException;
+import java.io.InputStream;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-
 import com.jme3.phonon.PhononChannel;
+import com.jme3.phonon.PhononChannel.ChannelStatus;
+import com.jme3.phonon.utils.BitUtils;
 
 public class PhononPlayer {
-    // public final static int FRAMES_IN_BUFFER = 2; 
 
-    public final PhononChannel phononChannel;
 
-    private final SourceDataLine dataLine;
-    private final AudioFormat audioFormat;
+    PhononChannel channel;
+    InputStream input;
+    SourceDataLine output;
+    AudioFormat audioFormat;
+    int dataLineSampleSize;    
+    int preloadBytes = 0;
 
-    public final int channels;
 
-    private boolean inPlayback = false;
-    
-    private final PhononPlayerBuffer buffer;
+    boolean isRunning;
 
-    /**
-     * Player object for jME's Phonon interface.
-     * 
-     * @param chan Phonon channel to stream on
-     * @param channels Number of audio channels
-     * @param sampleSize Either 8 16 or 24
-     * 
-     * @author aegroto, riccardobl
-     */
+    public PhononPlayer(PhononChannel chan, int sampleRate,
+            int outputChannels,int outputSampleSize) throws LineUnavailableException {
+        channel = chan;
+        dataLineSampleSize = outputSampleSize;
 
-    public PhononPlayer(PhononChannel chan,int channels, int sampleSize)
-            throws LineUnavailableException {
-        phononChannel = chan;
-        this.channels = channels;
-        float sampleRate = 44100;
-        
-        int bytesPerSample=(sampleSize/8);
-        audioFormat = new AudioFormat(sampleRate, sampleSize,  this.channels, true, false);
 
-        dataLine = AudioSystem.getSourceDataLine(audioFormat);
-        dataLine.open(audioFormat, chan.getFrameSize() *bytesPerSample);
+        int bytesPerSample = (outputSampleSize / 8);
 
-        buffer = new PhononPlayerBuffer(audioFormat.getSampleSizeInBits(), phononChannel);
+        input = new PhononChannelIntInputStream(channel,outputSampleSize);
+        audioFormat = new AudioFormat(sampleRate, outputSampleSize, outputChannels, true, false);
+        output = AudioSystem.getSourceDataLine(audioFormat);
+        output.open(audioFormat);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
+
+   
+      //preloadedSamplesNum * bytesPerSample;
+
+
+        long nsPerSample= 1000000000l / sampleRate;
+       
+       preloadBytes = (int)(((1000000l * 50l) / nsPerSample)*bytesPerSample);
+       if (output.getBufferSize() < preloadBytes)
+           preloadBytes = output.getBufferSize();
+           int preloadedSamplesNum = preloadBytes / bytesPerSample;
+
+        System.out.println("Delay playback for " +( (preloadedSamplesNum *nsPerSample )/1000000l )+ " ms / " + preloadedSamplesNum
+                + " samples / " + preloadBytes + " bytes");
     }
 
-    /**
-     * Starts playback.
-     * 
-     * @author aegroto
-     */
-
-    public void startPlayback() {
-        inPlayback = true;
-    }
-
-    /**
-     * Proceed with next playback step.
-     * 
-     * @author aegroto, riccardobl
-     */
-
-    public void continuePlayback() {
-        if(!isInPlayback())
-            return;
-        
-        int writtenBytes = buffer.write(dataLine);
 
 
-        if(!dataLine.isRunning()&&writtenBytes > 0) {
-            // Start the dataLine if it is not playing yet. 
-            // We do this here to be sure there is some data already available to be played
-            // if ()
-            dataLine.start();
-        } else if (writtenBytes == -1) {
-            inPlayback = false;
+
+    public byte playLoop() {
+        byte out = 0;
+        int writableBytes = 0;
+        int read = 0;
+        try {
+            
+            writableBytes= output.available();
+            
+            byte tmp[] = new byte[writableBytes];
+            read = input.read(tmp);
+            
+            if (read > 0) {
+                // System.out.println("Write "+read);
+
+                int written=output.write(tmp, 0, read);
+                if (preloadBytes > 0) {
+                    System.out.println("Loaded "+written+" bytes");
+                    preloadBytes -= written;
+                }
+            } else {
+                // System.out.println("No data");
+                out=1;
+                // no data available
+            }
+        } catch (EOFException e) {
+            // Channel over;
+            System.err.println("TO BE IMPLEMENTED: End of channel");
+            return -1;
+        } catch (Exception e) {
+            System.out.println("Writable " + writableBytes+" read "+read);
+
+            e.printStackTrace();
         }
+
+        if (preloadBytes <= 0) {
+            if (!isRunning) {
+                isRunning = true;
+                output.start();
+                
+                System.out.println("Start");
+            }
+        } else {
+            System.out.println("Preloading " + preloadBytes + " bytes");
+        }
+      
+
+      
+
+       
+        return out;
+
     }
-    
-    /**
-     * @return true if player is in playback, false otherwise.
-     * 
-     * @author aegroto
-     */
-    public boolean isInPlayback() {
-        return inPlayback;
-    }
+
 }

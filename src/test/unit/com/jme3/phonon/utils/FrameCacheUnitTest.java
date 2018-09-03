@@ -52,8 +52,9 @@ public class FrameCacheUnitTest extends TestCase{
                 // System.out.println("Read " + frameToRead.length + " bytes");
                 // load new frame
 
-
-                if (cache.readNextFrame(sourceLineWrapper, sourceLineWrapper.available())) {
+   if (cache.readNextFrame(sourceLineWrapper, sourceLineWrapper.available())) {
+                FrameCacheUnitTestSourceDataLineWrapper sourceLineWrapper = new FrameCacheUnitTestSourceDataLineWrapper(frameToRead);
+                if (cache.readNextFrame(sourceLineWrapper)) {
 
                     int remaining = bbf.limit() - bbf.position();
                     if (remaining > frame1.length)
