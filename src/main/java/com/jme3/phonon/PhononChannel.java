@@ -15,7 +15,7 @@ import com.jme3.util.BufferUtils;
 public class PhononChannel {
     private static final int _SAMPLE_SIZE = 4;//Always 4 byte (float32) sample
 
-    private final ByteBuffer buffer;
+    protected final ByteBuffer buffer;
     private final int bufferSize;    // Buffersize in frames
     private final int frameSize;    // Frame size in samples
     private final long bufferAddress;
@@ -86,7 +86,7 @@ public class PhononChannel {
     }
 
   
-    private void setLastProcessedFrameId(int v) {
+    protected void setLastProcessedFrameId(int v) {
         buffer.putInt(CHANNEL_LAYOUT.LAST_PROCESSED_FRAME, v);
     }
 

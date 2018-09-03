@@ -20,7 +20,6 @@ public class PhononPlayer {
     private boolean inPlayback = false;
     
     private final PhononPlayerBuffer buffer;
-    private final PhononPlayerWriter writer;
 
     /**
      * Player object for jME's Phonon interface.
@@ -44,7 +43,6 @@ public class PhononPlayer {
         dataLine.open(audioFormat, chan.getBufferSize() * audioFormat.getFrameSize());
 
         buffer = new PhononPlayerBuffer(audioFormat.getSampleSizeInBits(), phononChannel);
-        writer = new PhononPlayerWriter(dataLine, phononChannel.getFrameSize() * (audioFormat.getSampleSizeInBits() / 8));
     }
 
     /**
@@ -64,11 +62,19 @@ public class PhononPlayer {
      */
 
     public void continuePlayback() {
-        int writableBytes = writer.getWritableBytes();
-        int writtenBytes = buffer.write(writer.getCache(), writableBytes); 
+        if(!isInPlayback())
+            return;
+        
+        int writtenBytes = buffer.write(dataLine);
 
-        if(writtenBytes > 0)
-            writer.writeToLine(writableBytes);
+        if(writtenBytes > 0) {
+            // Start the dataLine if it is not playing yet. 
+            // We do this here to be sure there is some data already available to be played
+            if (!dataLine.isRunning())
+                dataLine.start();
+        } else if (writtenBytes == -1) {
+            inPlayback = false;
+        }
     }
     
     /**

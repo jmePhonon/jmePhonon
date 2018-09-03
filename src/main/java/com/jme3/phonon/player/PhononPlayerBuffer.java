@@ -1,13 +1,17 @@
 package com.jme3.phonon.player;
 
+import java.util.Arrays;
+
 import javax.sound.sampled.SourceDataLine;
 
-import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.PhononChannel;
 import com.jme3.phonon.PhononChannel.ChannelStatus;
+import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.utils.FrameCache;
 
-class PhononPlayerBuffer {
+public class PhononPlayerBuffer {
+    public final int CACHE_SIZE = 4;
+
     public final int sampleSize, bufferFrameSize;
     public final byte[] floatFrame, intFrame;
     public final FrameCache frameCache;
@@ -25,14 +29,14 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    PhononPlayerBuffer(int sampleSize, PhononChannel channel) {
+    public PhononPlayerBuffer(int sampleSize, PhononChannel channel) {
         this.phononChannel = channel;
         this.sampleSize = sampleSize;
 
         this.bufferFrameSize = channel.getFrameSize() * sampleSize / 8;
         this.floatFrame = new byte[channel.getFrameSize() * 4];
         this.intFrame = new byte[bufferFrameSize];
-        this.frameCache = new FrameCache(2, bufferFrameSize);
+        this.frameCache = new FrameCache(CACHE_SIZE, intFrame.length);
     }
 
     /**
@@ -41,7 +45,7 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private int preloadedFrames = 0;
+    private boolean bufferFilled = false;
 
     public void fillBuffer() {
         while(!isBufferFilled()) {
@@ -52,7 +56,7 @@ class PhononPlayerBuffer {
     }
 
     private boolean isBufferFilled() {
-        return preloadedFrames >= 2;
+        return bufferFilled;
     }
 
     /**
@@ -74,9 +78,15 @@ class PhononPlayerBuffer {
                 System.out.println("Audio data is over");
                 break;
             case READY:
+                // System.out.println("[Buffer] Read frame: " + Arrays.toString(floatFrame));
                 convertFloats(floatFrame, intFrame, 0);
-                if(!frameCache.loadFrame(intFrame))
-                    preloadedFrames++;
+                // System.out.println("[Buffer] Converted frame: " + Arrays.toString(intFrame));
+
+                boolean cacheFull = frameCache.loadFrame(intFrame);
+
+                if(!bufferFilled && cacheFull) {
+                    bufferFilled = true;
+                }
         }
 
         return stat;
@@ -91,19 +101,26 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    public int write(byte[] out, int length) {
+    // private boolean dataInBuffer = false;
+
+    public int write(SourceDataLine outLine) {
         if(!isBufferFilled()) {
             fillBuffer();
-            return 0;
+            
+            if(!isBufferFilled())
+                return 0;
         }
 
-        boolean needNewFrame = frameCache.readNext(out, length);
+        int writableBytes = outLine.available();
 
-        if(needNewFrame) {
-            loadNextFrame();
-        }
+        if(writableBytes > 0) {
+            if(frameCache.readNextFrame(outLine, writableBytes)) {
+                // System.out.println("[Buffer] Frame cache says we need more frames");
+                loadNextFrame();
+            }
+        } 
 
-        return length;
+        return writableBytes;
     }
    
     /**
@@ -127,7 +144,7 @@ class PhononPlayerBuffer {
     }
 
     /**
-     * Auxiliary method to decode multiple floats to an ints.
+     * Auxiliary method to decode multiple floats to ints.
      * 
      * @param inputBuffer Input buffer
      * @param outputBuffer Output buffer
@@ -136,7 +153,7 @@ class PhononPlayerBuffer {
      * @author aegroto
      */
 
-    private void convertFloats(byte[] inb, byte[] outb, int offset) {
+    public void convertFloats(byte[] inb, byte[] outb, int offset) {
         byte[] partInputBuffer = new byte[4];
         byte[] partOutputBuffer = new byte[sampleSize / 8];
 

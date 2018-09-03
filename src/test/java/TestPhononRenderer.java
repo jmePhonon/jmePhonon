@@ -23,9 +23,9 @@ public class TestPhononRenderer extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         songAudioData = new F32leAudioData(assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg"));
-        ambientAudioData = new F32leAudioData(assetManager.loadAudio("48412__luftrum__oceanwavescrushing.wav"));
+        ambientAudioData = new F32leAudioData(assetManager.loadAudio("433016__derjuli__ocean.wav"));
 
-        PhononRenderer renderer = new PhononRenderer(1024, 1024);
+        PhononRenderer renderer = new PhononRenderer(1024, 2048);
         renderer.initialize();    
         renderer.connectSource(songAudioData, 0);
 
@@ -38,7 +38,7 @@ public class TestPhononRenderer extends SimpleApplication {
             e.printStackTrace();
         }
 
-        for(int c = 1; c < 5; c++) {
+        /*for(int c = 1; c < 5; c++) {
             try {
                 Thread.sleep(500);
                 renderer.connectSource(ambientAudioData, c);
@@ -49,6 +49,6 @@ public class TestPhononRenderer extends SimpleApplication {
             } catch(Exception e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     } 
 }
