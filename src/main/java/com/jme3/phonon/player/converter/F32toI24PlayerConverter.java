@@ -12,10 +12,15 @@ class F32toI24PlayerConverter implements PlayerConverter {
         return instance;
     }
 
-    public void convert(byte[] inputBuffer, byte[] outputBuffer) {
-        byte[] partInputBuffer = new byte[4];
-        byte[] partOutputBuffer = new byte[3];
+    final byte[] partInputBuffer;
+    final byte[] partOutputBuffer;
 
+    private F32toI24PlayerConverter() {
+        partInputBuffer = new byte[4];
+        partOutputBuffer = new byte[3];
+    }
+
+    public void convert(byte[] inputBuffer, byte[] outputBuffer) {
         for (int i = 0; i < inputBuffer.length; i += 4) {
             for(int j = 0; j < partInputBuffer.length; ++j) {
                 partInputBuffer[j] = inputBuffer[i + j];
