@@ -7,6 +7,7 @@
 #include <math.h>
 #include <stdint.h>
 
+
 #include "types.h"
 #include "Channel.h"
 
@@ -14,11 +15,6 @@
 #define _MAX_CHANNELS 16
 
 struct ChOutput CHANNELS[_MAX_CHANNELS];
-
-
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, jobject obj){
-    for(jint i=0;i<_MAX_CHANNELS;i++) chPreInit(&CHANNELS[i]);    
-}
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj){
     for(jint i=0;i<_MAX_CHANNELS;i++) chDestroy(&CHANNELS[i]);    
@@ -36,6 +32,13 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_loadChannelNative(JNI
     chInit(&CHANNELS[channelId], (jfloat *)(intptr_t)outputBufferAddr, bufferSize, frameSize);
     printf("Phonon: Load channel id %d with frame size %d and length %d\n", channelId, frameSize, bufferSize);
 }
+
+
+
+
+
+
+
 
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
@@ -80,4 +83,15 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         chWriteFrame(channel, frameIndex%channelBufferSize, frame);
         chSetLastProcessedFrameId(channel,++frameIndex);
     }
+}
+#if defined(__linux__)
+    #include "platform/linux/NativeUpdate.h"
+#endif
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, jobject obj, jdouble deltas, jboolean nativeThread, jboolean nativeClock) {
+    for(jint i=0;i<_MAX_CHANNELS;i++) chPreInit(&CHANNELS[i]);    
+    #ifdef HAS_NATIVE_THREAD_SUPPORT
+        if(nativeThread){
+            nuInit(env,&obj,nativeClock,deltas);
+        }
+    #endif
 }

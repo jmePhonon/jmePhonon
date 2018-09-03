@@ -46,12 +46,14 @@ public class PhononRenderer implements AudioRenderer {
 	final int _OUTPUT_FRAME_SIZE;
 	final int _OUTPUT_BUFFER_SIZE ;
 
-	Clock CLOCK=Clock.HIGHRES;
-	Sleeper WAIT_MODE = Sleeper.SLEEP;
 
-	
-	
+	volatile boolean attachingPlayers = false;
+	volatile boolean updatingPlayers = false;
 
+	Clock CLOCK=Clock.NATIVE;
+	Sleeper WAIT_MODE = Sleeper.NATIVE;
+	boolean useNativeThreads;
+	double DELTA_S;
 
 	public PhononRenderer(int frameSize, int bufferSize) {
 		_OUTPUT_FRAME_SIZE = frameSize;
@@ -66,9 +68,11 @@ public class PhononRenderer implements AudioRenderer {
 	}
 
 	void preInit() {
-		initNative();
+		DELTA_S=  1./(44100 / _OUTPUT_FRAME_SIZE) ;
+		useNativeThreads=CLOCK==Clock.NATIVE||WAIT_MODE==Sleeper.NATIVE;
+		initNative(DELTA_S, useNativeThreads,CLOCK==Clock.NATIVE);
 		for (int i = 0; i < channels.length; i++) {
-			channels[i] = new PhononChannel(_OUTPUT_FRAME_SIZE, _OUTPUT_BUFFER_SIZE);
+			channels[i] = new PhononChannel(_OUTPUT_FRAME_SIZE*2, _OUTPUT_BUFFER_SIZE);
 			loadChannelNative(i, channels[i].getAddress(), channels[i].getFrameSize(), channels[i].getBufferSize());
 		}
 	}
@@ -76,13 +80,20 @@ public class PhononRenderer implements AudioRenderer {
 	Thread playeThread;
 	@Override
 	public void initialize() {
-		preInit();		
-		Thread decoderThread = new Thread(() -> runDecoder());
-		 playeThread = new Thread(() -> runPlayer());
-		decoderThread.setDaemon(true);
-		decoderThread.start();
-		playeThread.setDaemon(true);
-		playeThread.start();
+		preInit();
+
+  
+		if (!useNativeThreads) {
+			Thread decoderThread = new Thread(() -> runDecoder());
+
+			decoderThread.setPriority(Thread.NORM_PRIORITY + 2);
+			decoderThread.setDaemon(true);
+			decoderThread.start();
+		}
+		//  playeThread = new Thread(() -> runPlayer());
+	
+		// playeThread.setDaemon(true);
+		// playeThread.start();
 
 	}
 
@@ -91,7 +102,7 @@ public class PhononRenderer implements AudioRenderer {
 		destroyNative();
 	}
 
-	native void initNative();
+	native void initNative(double updateRate,boolean nativeThread,boolean nativeClock);
 	native void updateNative();
 	native void destroyNative();
 	native void connectSourceNative(int channelId, int length, long sourceAddr);
@@ -127,7 +138,15 @@ public class PhononRenderer implements AudioRenderer {
 	}
 
 	public void attachPlayer(PhononPlayer player) {
+		do {
+			try{
+			Thread.sleep(10);
+			} catch (Exception e) {
+			}
+		} while (updatingPlayers);
+		attachingPlayers = true;
 		players.add(player);
+		attachingPlayers = false;
 	}	
 
 	public void runPlayer() {
@@ -167,28 +186,32 @@ public class PhononRenderer implements AudioRenderer {
 
 	// long UPDATE_RATE = 50* 1000000l;
 	public void runDecoder() {
-		double deltaS=  1./(44100 / _OUTPUT_FRAME_SIZE) ;
-		long updateRateNanos = CLOCK.getExpectedTimeDelta(deltaS);
-     
-		System.out.println("Updates per S " + deltaS 
-				+ " expected delta " + updateRateNanos);
-		
+		long UPDATE_RATE= CLOCK.getExpectedTimeDelta(DELTA_S);
+
+				// if () {
+
 		long startTime = 0;
-		while (true) {
+		do {
 			startTime = CLOCK.measure();
 		
 			// while(!enqueuedPlayers.isEmpty()) {
 			// 	players.add(enqueuedPlayers.remove(0));
 			// }
 
-			updateNative();
+			if (!useNativeThreads) {
+				updateNative();
+			}
 
-			int stalling = players.size();
-			for (PhononPlayer player : players) {
-				byte res = player.playLoop();
-				if (res == 0) {
-					stalling--;
+			if (!attachingPlayers) {
+				updatingPlayers = true;
+				for (PhononPlayer player : players) {
+					byte res = player.playLoop();
+					// if (res == 0) {
+					// 	stalling--;
+					// }
+
 				}
+				updatingPlayers = false;
 			}
 
 
@@ -198,16 +221,15 @@ public class PhononRenderer implements AudioRenderer {
 			// 	playeThread.notify();
 			// 	}
 
-
-			try {
-				// Thread.yield();
-				WAIT_MODE.wait(CLOCK, startTime, updateRateNanos);
+				try {
+					// Thread.yield();
+					WAIT_MODE.wait(CLOCK, startTime, UPDATE_RATE);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-		
+			
 
-		}
+		} while (!useNativeThreads);
 	}
 
 

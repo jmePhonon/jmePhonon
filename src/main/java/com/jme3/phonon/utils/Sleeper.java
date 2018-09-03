@@ -4,10 +4,12 @@ package com.jme3.phonon.utils;
  * Sleeper
  */
 public enum Sleeper {
-    SLEEP, BUSYSLEEP, BUSYSLEEP_NANO, BUSYWAIT,NONE;
+    SLEEP, BUSYSLEEP, BUSYSLEEP_NANO, BUSYWAIT,NONE,NATIVE;
 
     public boolean wait(Clock clock, long startTime, long expectedTimeDelta)
             throws InterruptedException {
+        if (clock == Clock.NATIVE||this==NATIVE)
+            return true;
         int sleeptfor=0;
         switch (this) {
             case SLEEP : {
@@ -30,7 +32,7 @@ public enum Sleeper {
                         if (sleeptime > 0 || nsToSleep > 0) {
                             // System.out.println("Sleep for " + msToSleep + "ms and " + nsToSleep +
                             // " ns");
-                            Thread.sleep(msToSleep, nsToSleep);
+                            Thread.sleep(msToSleep);
                             sleeptfor++;
                             break;
                         }
@@ -44,7 +46,7 @@ public enum Sleeper {
                         if (sleeptime > 0 || nsToSleep > 0) {
                             // System.out.println("Sleep for " + msToSleep + "ms and " + nsToSleep +
                             // " ns");
-                            Thread.sleep(msToSleep, nsToSleep);
+                            Thread.sleep(msToSleep);
                             sleeptfor++;
                             break;
                         }

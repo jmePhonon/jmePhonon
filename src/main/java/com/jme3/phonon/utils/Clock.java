@@ -1,7 +1,7 @@
 package com.jme3.phonon.utils;
 
 public enum Clock {
-    MILLI, NANO, HIGHRES;
+    MILLI, NANO, HIGHRES,NATIVE;
 
     private Clock() {
 
@@ -16,6 +16,8 @@ public enum Clock {
                 sun.misc.Perf perf = sun.misc.Perf.getPerf();
                 return perf.highResCounter();
             }
+            case NATIVE :
+                return 0;
             default:
             case NANO : {
                 return System.nanoTime();
@@ -31,8 +33,12 @@ public enum Clock {
             }
 
             case HIGHRES : {
-                return (long)(sun.misc.Perf.getPerf().highResFrequency() * deltaS);
+                return (long) (sun.misc.Perf.getPerf().highResFrequency() * deltaS);
             }
+            case NATIVE: {
+                return 0;
+            }
+
             default:
             case NANO : {
                 return (long)(1000000000l * deltaS);

@@ -222,7 +222,7 @@ function buildNatives {
     build "gcc" \
     "Linux" "x64" \
     "$dest" \
-    "--std=c99 
+    "--std=gnu99 
     -Isrc/main/natives/include
     -Isrc/main/natives
     -I$JDK_ROOT/include
@@ -236,7 +236,7 @@ function buildNatives {
     build "gcc" \
     "Linux" "x86" \
     "$dest" \
-    "--std=c99
+    "--std=gnu99
     -Wint-to-pointer-cast
     -Isrc/main/natives/include
     -Isrc/main/natives
