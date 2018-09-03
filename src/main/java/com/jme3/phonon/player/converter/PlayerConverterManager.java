@@ -3,8 +3,11 @@ package com.jme3.phonon.player.converter;
 public class PlayerConverterManager {
     /**
      * Factory method to initialize a proper PlayerConverter
+     * Warning: Converters are not thread safe
      * 
+     * @param sampleSize Sample's size
      * 
+     * @return Proper player converter for given sampleSize 
      */
 
     public static PlayerConverter getPlayerConverter(int sampleSize) {
