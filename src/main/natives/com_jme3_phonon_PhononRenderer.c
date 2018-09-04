@@ -122,9 +122,10 @@ jdouble deltas, jboolean nativeThread, jboolean nativeClock) {
         chPreInit(&SETTINGS,&OUTPUT_LINES[i]);
     phInit(&SETTINGS);
 
-#ifdef HAS_NATIVE_THREAD_SUPPORT
+    #ifdef HAS_NATIVE_THREAD_SUPPORT
+
         if(nativeThread){
-            nuInit(env,&obj,nativeClock,deltas);
+            nuInit(env, &obj, nativeClock, deltas, Java_com_jme3_phonon_PhononRenderer_updateNative);
         }
     #endif
 }
