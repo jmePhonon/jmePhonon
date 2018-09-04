@@ -33,14 +33,6 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_loadChannelNative(JNI
     printf("Phonon: Load channel id %d with frame size %d and length %d\n", channelId, frameSize, bufferSize);
 }
 
-
-
-
-
-
-
-
-
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
     for (jint i = 0; i < _MAX_CHANNELS; i++) {
         struct ChOutput *channel = &CHANNELS[i];
@@ -88,10 +80,12 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
     #include "platform/linux/NativeUpdate.h"
 #endif
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, jobject obj, jdouble deltas, jboolean nativeThread, jboolean nativeClock) {
-    for(jint i=0;i<_MAX_CHANNELS;i++) chPreInit(&CHANNELS[i]);    
+    for(jint i=0;i<_MAX_CHANNELS;i++)
+        chPreInit(&CHANNELS[i]);    
+    
     #ifdef HAS_NATIVE_THREAD_SUPPORT
         if(nativeThread){
-            nuInit(env,&obj,nativeClock,deltas);
+            nuInit(env, &obj, nativeClock, deltas, Java_com_jme3_phonon_PhononRenderer_updateNative);
         }
     #endif
 }

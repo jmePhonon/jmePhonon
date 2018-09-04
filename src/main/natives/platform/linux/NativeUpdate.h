@@ -22,6 +22,7 @@ struct {
     jboolean useNativeClock;
     jlong timeDelta;
     struct timespec tp;
+    void (*updateFunc)(JNIEnv*, jobject);
 } ThreadContext;
 
 #define timespec2ns(x) (x.tv_sec * 1000000000LL + x.tv_nsec)
@@ -41,7 +42,8 @@ void *nuLoop() {
 
         (*ThreadContext.vm)->AttachCurrentThreadAsDaemon(ThreadContext.vm, (void **)&ThreadContext.env, &thread_arg);
 
-        Java_com_jme3_phonon_PhononRenderer_updateNative(ThreadContext.env, ThreadContext.renderer);
+        // Java_com_jme3_phonon_PhononRenderer_updateNative(ThreadContext.env, ThreadContext.renderer);
+        ThreadContext.updateFunc(ThreadContext.env, ThreadContext.renderer);
 
         jclass class = (*ThreadContext.env)->GetObjectClass(ThreadContext.env, ThreadContext.renderer);
         jmethodID mid = (*ThreadContext.env)->GetMethodID(ThreadContext.env, class, "runDecoder", "()V");
@@ -64,10 +66,11 @@ void *nuLoop() {
     return NULL;
 }
 
-void nuInit(JNIEnv *env, jobject *renderer, jboolean useNativeClock, jdouble sdelta) {
+void nuInit(JNIEnv *env, jobject *renderer, jboolean useNativeClock, jdouble sdelta, void (*uf)(JNIEnv*, jobject)) {
     printf("Initialize pthread\n");
     ThreadContext.useNativeClock = useNativeClock;
     ThreadContext.timeDelta = 1000000000LL * sdelta;
+    ThreadContext.updateFunc = uf;
 
     (*env)->GetJavaVM(env, &ThreadContext.vm);
     ThreadContext.renderer = (*env)->NewGlobalRef(env, (*renderer));
