@@ -33,7 +33,7 @@ void phSubVecVec(IPLVector3 *v1, IPLVector3 *v2,IPLVector3 *store){
     store->z = z-v2->z;
 }
 
-void phInit(struct GlobalSettings *settings) {
+void phInit(struct GlobalSettings *settings){
     iplCreateContext(NULL, NULL, NULL, &PhContext.context);
     PhContext.settings.samplingRate = settings->sampleRate;
     PhContext.settings.frameSize =settings->inputFrameSize;

@@ -22,7 +22,9 @@ public class TestJNI extends TestCase {
             bbf.putFloat((float) Math.random());
         }
 
-        PhononRenderer renderer = new PhononRenderer(44100,1,1,frameSize, bufferSize);
+        PhononRenderer renderer = new PhononRenderer(44100, 1, 1, frameSize, bufferSize);
+        renderer.effects.passThrough = true;
+        
         renderer.preInit();        
         renderer.connectSourceRaw(0, bbf.limit()/4, bbf);
 

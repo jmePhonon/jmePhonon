@@ -8,6 +8,7 @@ struct GlobalSettings{
     jint inputFrameSize; // How many samples for each frame
     // jint outputFrameSize; // How many samples for each frame
     jint sampleRate; // Sound sampling rate ( eg 44100 )
+    jboolean isPassthrough; // debugonly
 };
 
 #endif 

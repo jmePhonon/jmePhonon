@@ -57,6 +57,7 @@ public class PhononRenderer implements AudioRenderer {
 	// Samplerate (eg 44100)
 	private final int SAMPLE_RATE;
 
+	public final PhononEffects effects=new PhononEffects();
 
 	volatile boolean attachingPlayers = false;
 	volatile boolean updatingPlayers = false;
@@ -85,7 +86,11 @@ public class PhononRenderer implements AudioRenderer {
 	void preInit() {
 		DELTA_S=  1./(44100 / FRAME_SIZE) ;
 		useNativeThreads=CLOCK==Clock.NATIVE||WAIT_MODE==Sleeper.NATIVE;
-		initNative(SAMPLE_RATE,OUTPUT_LINES.length,OUTPUT_CHANNELS_NUM,FRAME_SIZE,BUFFER_SIZE, DELTA_S, useNativeThreads,CLOCK==Clock.NATIVE);
+		initNative(SAMPLE_RATE,OUTPUT_LINES.length,OUTPUT_CHANNELS_NUM,FRAME_SIZE,BUFFER_SIZE, DELTA_S, useNativeThreads,CLOCK==Clock.NATIVE,
+		// Effects
+		effects.passThrough
+		
+		);
 		for (int i = 0; i < OUTPUT_LINES.length; i++) {
 			OUTPUT_LINES[i] = new PhononChannel(FRAME_SIZE*OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
 			loadChannelNative(i, OUTPUT_LINES[i].getAddress());
@@ -117,7 +122,10 @@ public class PhononRenderer implements AudioRenderer {
 		destroyNative();
 	}
 
-	native void initNative(int sampleRate,int nOutputLines,int nOutputChannels,int frameSize,int bufferSize,double updateRate,boolean nativeThread,boolean nativeClock);
+	native void initNative(int sampleRate,int nOutputLines,int nOutputChannels,int frameSize,int bufferSize,double updateRate,boolean nativeThread,boolean nativeClock,
+	// effects
+	boolean isPassThrough
+	);
 	native void updateNative();
 	native void destroyNative();
 	native void connectSourceNative(int lineID, int length, long sourceAddr);
