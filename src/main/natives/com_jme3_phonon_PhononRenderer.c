@@ -10,7 +10,7 @@
 #include "Settings.h"
 #include "types.h"
 #include "Channel.h"
-
+#include "JmePhonon.h"
 
 
 struct GlobalSettings SETTINGS;
@@ -22,7 +22,8 @@ struct  {
 } Temp;
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj){
-    for(jint i=0;i<SETTINGS.nOutputLines;i++) chDestroy(&SETTINGS,&OUTPUT_LINES[i]);
+    for(jint i=0;i<SETTINGS.nOutputLines;i++) chDestroy(&SETTINGS,&OUTPUT_LINES[i]);    
+    phDestroy(&SETTINGS);
     free(OUTPUT_LINES);
 }
 
@@ -89,12 +90,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jfloat *outputFrame = Temp.outputFrame;
         chReadFrame(&SETTINGS, line, frameToRead, inputFrame);
 
-        passThrough(inputFrame, outputFrame);
-        // processing
-        // ....
-        // ....
-        // -----------
-        chWriteFrame(&SETTINGS,line, frameIndex%channelBufferSize, outputFrame,SETTINGS.outputFrameSize);
+        // passThrough(inputFrame, outputFrame);
+         phProcessFrame(&SETTINGS,inputFrame,outputFrame);
+
+        chWriteFrame(&SETTINGS,line, frameIndex%channelBufferSize, outputFrame,SETTINGS.inputFrameSize*SETTINGS.nOutputChannels);
         chSetLastProcessedFrameId(&SETTINGS,line,++frameIndex);
     }
 }
@@ -111,16 +110,17 @@ jdouble deltas, jboolean nativeThread, jboolean nativeClock) {
     SETTINGS.nOutputLines = nOutputLines;
     SETTINGS.nOutputChannels = nOutputChannels;
     SETTINGS.inputFrameSize = frameSize;
-    SETTINGS.outputFrameSize = frameSize * nOutputChannels;
+    // SETTINGS.outputFrameSize = frameSize * nOutputChannels;
     SETTINGS.sampleRate = sampleRate;
     SETTINGS.bufferSize = bufferSize;
 
-    Temp.outputFrame= (jfloat*)malloc(4 * SETTINGS.outputFrameSize);
+    Temp.outputFrame= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
     Temp.inputFrame= (jfloat*)malloc(4 * SETTINGS.inputFrameSize);
 
 
     for (jint i = 0; i < SETTINGS.nOutputLines ; i++)
         chPreInit(&SETTINGS,&OUTPUT_LINES[i]);
+    phInit(&SETTINGS);
 
 #ifdef HAS_NATIVE_THREAD_SUPPORT
         if(nativeThread){

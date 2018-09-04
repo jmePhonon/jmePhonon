@@ -1,3 +1,6 @@
+
+#ifndef __CHANNEL__
+#define __CHANNEL__
 #include "com_jme3_phonon_CHANNEL_LAYOUT.h"
 #include "Settings.h"
 
@@ -96,3 +99,5 @@ jfloat *chReadFrame(struct GlobalSettings *settings,struct ChOutput *chan, jint 
 *   Write one frame to the output buffer
 */
 void chWriteFrame(struct GlobalSettings *settings,struct ChOutput *chan, jint frameIndex, jfloat *frame,jint frameSize);
+
+#endif

@@ -27,14 +27,14 @@ public class TestPhononRenderer extends SimpleApplication {
         songAudioData = new F32leAudioData(assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg"));
         ambientAudioData = new F32leAudioData(assetManager.loadAudio("433016__derjuli__ocean.wav"));
 
-        PhononRenderer renderer = new PhononRenderer(44100,1,1,1024, 32);
+        PhononRenderer renderer = new PhononRenderer(44100,1,2,1024, 32);
         renderer.initialize();    
         renderer.connectSource(songAudioData, 0);
 
         try {
 
 
-            PhononPlayer songPlayer = new PhononPlayer(renderer.getLine(0),44100,1,16);
+            PhononPlayer songPlayer = new PhononPlayer(renderer.getLine(0),44100,2,16);
             renderer.attachPlayer(songPlayer);
         } catch (Exception e) {
             // TODO Auto-generated catch block
