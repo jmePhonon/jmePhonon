@@ -10,22 +10,44 @@ source build.dep/findJava.sh
 # Get steam audio
 if [ "$STEAM_AUDIO_URL" = "" ];
 then
-    export STEAM_AUDIO_URL="https://github.com/ValveSoftware/steam-audio/releases/download/v2.0-beta.14/steamaudio_api_2.0-beta.14.zip"
+    export STEAM_AUDIO_URL="https://github.com/ValveSoftware/steam-audio/releases/download/v2.0-beta.15/steamaudio_api_2.0-beta.15.zip"
+    export STEAM_AUDIO_HASH="5b888a84c6bbe79560346338a3a708787645cc8324091b865187d4138df85b43"
 fi
 
 export STEAM_AUDIO_URL_HASH="`echo "$STEAM_AUDIO_URL" | sha256sum | cut -d' ' -f1`"
 
 
+function compareSteamAudioHash {
+    if [ "`cat tmp/cache/$STEAM_AUDIO_URL_HASH.zip | sha256sum | cut -d' ' -f1`" != "$STEAM_AUDIO_HASH" ];
+    then
+        echo "fail"
+    else
+        echo ""
+    fi
+}
+
 function getSteamAudio {
 
-if [  ! -f src/steamaudio/include/phonon.h -o  "$REGEN_BINDINGS" != "" ];
+    if [ "$UPDATE_STEAMAUDIO" = "" ];
+    then
+        export UPDATE_STEAMAUDIO="`compareSteamAudioHash`"
+    fi
+
+if [  ! -f src/steamaudio/include/phonon.h -o  "$UPDATE_STEAMAUDIO" != "" ];
 then
     safeRm tmp/ext_sta
     mkdir -p tmp/ext_sta
-    if [ ! -f tmp/cache/$STEAM_AUDIO_URL_HASH.zip ];
+    if [ ! -f tmp/cache/$STEAM_AUDIO_URL_HASH.zip -o "$UPDATE_STEAMAUDIO" != "" ];
     then
         echo "Download steam audio"
         wget "$STEAM_AUDIO_URL" -O tmp/cache/$STEAM_AUDIO_URL_HASH.zip
+        
+        if [ "`compareSteamAudioHash`" != "" ];
+        then
+            echo "Error. Steamaudio hash is wrong or the download is corrupted"
+            safeRm  tmp/cache/$STEAM_AUDIO_URL_HASH.zip
+            exit 1
+        fi
        cp tmp/cache/$STEAM_AUDIO_URL_HASH.zip tmp/ext_sta/steamaudio.zip
     else
         echo "Use steam audio from cache tmp/cache/$STEAM_AUDIO_URL_HASH.zip"
