@@ -1,5 +1,7 @@
 sudo: required
 services:
   - docker
+git:
+  lfs_skip_smudge: true
 script:
   - NO_CACHE=true ./make.sh updateJNIHeaders build
