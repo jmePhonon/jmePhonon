@@ -15,6 +15,14 @@ _______
 _______
 _______
 _______
+
+```bash
+GIT_LFS_SKIP_SMUDGE=1 git clone <REPO
+```
+_______
+```bash
+gradle downloadsResources
+```
 _______
 
 ```bash

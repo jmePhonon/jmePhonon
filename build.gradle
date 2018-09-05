@@ -54,6 +54,11 @@ test {
 
 }
 
+task downloadResources(type: Exec){
+    commandLine 'bash','prepare.sh',"downloadResources"
+}    
+
+
 task getSteamAudio(type :Exec){
     commandLine 'bash','prepare.sh',"getSteamAudio"
 }
