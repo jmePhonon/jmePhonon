@@ -5,7 +5,7 @@
 #include <jni.h>
 #include "phonon.h"
 #include "Settings.h"
-#include "Channel.h"
+#include "OutputLine.h"
 struct {
     IPLhandle context;
     IPLRenderingSettings settings;

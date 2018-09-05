@@ -21,7 +21,10 @@ struct {
     jobject renderer;
     jboolean useNativeClock;
     jlong timeDelta;
-    struct timespec tp;
+    struct timespec tp;    
+    jboolean decoupled;
+    jboolean initialized;
+
     void (*updateFunc)(JNIEnv*, jobject);
 } ThreadContext;
 
@@ -35,21 +38,26 @@ void *nuLoop() {
             clock_gettime(CLOCK_TYPE, &ThreadContext.tp);
             startTime = timespec2ns(ThreadContext.tp);
         }
-        JavaVMAttachArgs thread_arg;
-        thread_arg.version = JNI_VERSION_1_6;
-        thread_arg.name = "Phonon Native Thread";
-        thread_arg.group = NULL;
 
-        (*ThreadContext.vm)->AttachCurrentThreadAsDaemon(ThreadContext.vm, (void **)&ThreadContext.env, &thread_arg);
+        if( !ThreadContext.initialized ){
+            JavaVMAttachArgs thread_arg;
+            thread_arg.version = JNI_VERSION_1_6;
+            thread_arg.name = "Phonon Native Thread";
+            thread_arg.group = NULL;
 
-        // Java_com_jme3_phonon_PhononRenderer_updateNative(ThreadContext.env, ThreadContext.renderer);
+            (*ThreadContext.vm)->AttachCurrentThreadAsDaemon(ThreadContext.vm, (void **)&ThreadContext.env, &thread_arg);
+            
+            ThreadContext.initialized = true;
+        }
+
         ThreadContext.updateFunc(ThreadContext.env, ThreadContext.renderer);
 
-        jclass class = (*ThreadContext.env)->GetObjectClass(ThreadContext.env, ThreadContext.renderer);
-        jmethodID mid = (*ThreadContext.env)->GetMethodID(ThreadContext.env, class, "runDecoder", "()V");
-
-        (*ThreadContext.env)->CallVoidMethod(ThreadContext.env, ThreadContext.renderer, mid);
-
+        if( !ThreadContext.decoupled ){
+            jclass class = (*ThreadContext.env)->GetObjectClass(ThreadContext.env, ThreadContext.renderer);
+            jmethodID mid = (*ThreadContext.env)->GetMethodID(ThreadContext.env, class, "runDecoder", "()V");
+            (*ThreadContext.env)->CallVoidMethod(ThreadContext.env, ThreadContext.renderer, mid);
+        }
+        
         if (ThreadContext.useNativeClock) {
             clock_gettime(CLOCK_TYPE, &ThreadContext.tp);
             jlong endTime = timespec2ns(ThreadContext.tp);
@@ -66,11 +74,13 @@ void *nuLoop() {
     return NULL;
 }
 
-void nuInit(JNIEnv *env, jobject *renderer, jboolean useNativeClock, jdouble sdelta, void (*uf)(JNIEnv*, jobject)) {
+void nuInit(JNIEnv *env, jobject *renderer, jboolean useNativeClock, jdouble sdelta, jboolean decoupled,void (*uf)(JNIEnv*, jobject)) {
     printf("Initialize pthread\n");
     ThreadContext.useNativeClock = useNativeClock;
     ThreadContext.timeDelta = 1000000000LL * sdelta;
     ThreadContext.updateFunc = uf;
+    ThreadContext.decoupled = decoupled;
+    ThreadContext.initialized = false;
 
     (*env)->GetJavaVM(env, &ThreadContext.vm);
     ThreadContext.renderer = (*env)->NewGlobalRef(env, (*renderer));

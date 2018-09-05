@@ -63,10 +63,9 @@ public class PhononRenderer implements AudioRenderer {
 
 	public final PhononEffects effects=new PhononEffects();
 
-
-	Clock CLOCK=Clock.NATIVE;
-	Sleeper WAIT_MODE = Sleeper.NATIVE;
-	boolean useNativeThreads;
+	ThreadMode THREAD_MODE = ThreadMode.NATIVE_DECOUPLED;
+	Clock CLOCK=Clock.HIGHRES;
+	Sleeper WAIT_MODE = Sleeper.BUSYSLEEP;
 	double DELTA_S;
 
 	public PhononRenderer(int sampleRate, int nOutputLines, int nOutputChannels, int frameSize,
@@ -86,9 +85,17 @@ public class PhononRenderer implements AudioRenderer {
 	}
 
 	void preInit() {
+		if (CLOCK == Clock.NATIVE && THREAD_MODE == ThreadMode.NATIVE_DECOUPLED) { // FIXME
+			System.err
+					.println("Error: can't use both  ThreadMode.NATIVE_DECOUPLED and Clock.NATIVE");
+			System.exit(1);
+		}
 		DELTA_S=  1./(44100 / FRAME_SIZE) ;
-		useNativeThreads=CLOCK==Clock.NATIVE||WAIT_MODE==Sleeper.NATIVE;
-		initNative(SAMPLE_RATE,OUTPUT_LINES.length,OUTPUT_CHANNELS_NUM,FRAME_SIZE,BUFFER_SIZE, DELTA_S, useNativeThreads,CLOCK==Clock.NATIVE,
+		initNative(SAMPLE_RATE, OUTPUT_LINES.length, OUTPUT_CHANNELS_NUM, FRAME_SIZE, BUFFER_SIZE,
+				DELTA_S, 
+				THREAD_MODE.isNative,
+				THREAD_MODE.isDecoupled,
+				THREAD_MODE.isDecoupled||CLOCK==Clock.NATIVE,
 		// Effects
 		effects.passThrough
 		
@@ -105,7 +112,7 @@ public class PhononRenderer implements AudioRenderer {
 		preInit();
 
   
-		if (!useNativeThreads) {
+		if (!THREAD_MODE.isNative||THREAD_MODE.isDecoupled) {
 			Thread decoderThread = new Thread(() -> runDecoder());
 
 			decoderThread.setPriority(Thread.NORM_PRIORITY + 2);
@@ -124,7 +131,7 @@ public class PhononRenderer implements AudioRenderer {
 		destroyNative();
 	}
 
-	native void initNative(int sampleRate,int nOutputLines,int nOutputChannels,int frameSize,int bufferSize,double updateRate,boolean nativeThread,boolean nativeClock,
+	native void initNative(int sampleRate,int nOutputLines,int nOutputChannels,int frameSize,int bufferSize,double updateRate,boolean nativeThread,boolean decoupledNativeThread,boolean nativeClock,
 	// effects
 	boolean isPassThrough
 	);
@@ -217,7 +224,7 @@ public class PhononRenderer implements AudioRenderer {
 			// }
 
 
-			if (!useNativeThreads) {
+			if (!THREAD_MODE.isNative) {
 				updateNative();
 			}
 
@@ -246,7 +253,7 @@ public class PhononRenderer implements AudioRenderer {
 				}
 			
 
-		} while (!useNativeThreads);
+		} while (!THREAD_MODE.isNative||THREAD_MODE.isDecoupled);
 	}
 
 

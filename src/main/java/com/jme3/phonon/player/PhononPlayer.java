@@ -42,7 +42,7 @@ public class PhononPlayer {
 
         long nsPerSample= 1000000000l / sampleRate;
        
-       preloadBytes = (int)(((1000000l * 50l) / nsPerSample)*bytesPerSample);
+       preloadBytes = (int)(((1000000l * 100l) / nsPerSample)*bytesPerSample);
        if (output.getBufferSize() < preloadBytes)
            preloadBytes = output.getBufferSize();
            int preloadedSamplesNum = preloadBytes / bytesPerSample;

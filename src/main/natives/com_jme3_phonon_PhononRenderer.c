@@ -9,34 +9,74 @@
 #include "com_jme3_phonon_PhononRenderer.h"
 #include "Settings.h"
 #include "types.h"
-#include "Channel.h"
+#include "OutputLine.h"
 #include "JmePhonon.h"
 
 
 struct GlobalSettings SETTINGS;
-struct ChOutput *OUTPUT_LINES;
+struct OutputLine *OUTPUT_LINES;
 
 struct  {
     jfloat *outputFrame;
     jfloat *inputFrame;
 } Temp;
 
+
+#if defined(__linux__)
+    #include "platform/linux/NativeUpdate.h"
+#endif
+
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, jobject obj, 
+jint sampleRate,
+jint nOutputLines,jint nOutputChannels,jint frameSize,jint bufferSize,
+jdouble deltas, jboolean nativeThread,jboolean decoupledNativeThread, jboolean nativeClock,
+// effects
+jboolean isPassthrough
+) {
+    
+    OUTPUT_LINES = malloc(sizeof(struct OutputLine) * nOutputLines);
+    SETTINGS.nOutputLines = nOutputLines;
+    SETTINGS.nOutputChannels = nOutputChannels;
+    SETTINGS.inputFrameSize = frameSize;
+    // SETTINGS.outputFrameSize = frameSize * nOutputChannels;
+    SETTINGS.sampleRate = sampleRate;
+    SETTINGS.bufferSize = bufferSize;
+
+    SETTINGS.isPassthrough = isPassthrough;
+
+    Temp.outputFrame= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
+    Temp.inputFrame= (jfloat*)malloc(4 * SETTINGS.inputFrameSize);
+
+
+    for (jint i = 0; i < SETTINGS.nOutputLines ; i++)
+        olPreInit(&SETTINGS,&OUTPUT_LINES[i]);
+    phInit(&SETTINGS);
+
+    #ifdef HAS_NATIVE_THREAD_SUPPORT
+
+        if(nativeThread){
+            nuInit(env, &obj, nativeClock, deltas,decoupledNativeThread, Java_com_jme3_phonon_PhononRenderer_updateNative);
+        }
+    #endif
+}
+
+
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj){
-    for(jint i=0;i<SETTINGS.nOutputLines;i++) chDestroy(&SETTINGS,&OUTPUT_LINES[i]);    
+    for(jint i=0;i<SETTINGS.nOutputLines;i++) olDestroy(&SETTINGS,&OUTPUT_LINES[i]);    
     phDestroy(&SETTINGS);
     free(OUTPUT_LINES);
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj,jint channelId,jint size,jlong sourceAddr){
-    chConnectSource(&SETTINGS,&OUTPUT_LINES[channelId], (jfloat *)(intptr_t)sourceAddr,size);
+    olConnectSource(&SETTINGS,&OUTPUT_LINES[channelId], (jfloat *)(intptr_t)sourceAddr,size);
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative(JNIEnv *env, jobject obj, jint channelId) {
-    chDisconnectSource(&SETTINGS,&OUTPUT_LINES[channelId]);
+    olDisconnectSource(&SETTINGS,&OUTPUT_LINES[channelId]);
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_loadChannelNative(JNIEnv *env, jobject obj,jint channelId, jlong outputBufferAddr) {
-    chInit(&SETTINGS,&OUTPUT_LINES[channelId], (jfloat *)(intptr_t)outputBufferAddr);
+    olInit(&SETTINGS,&OUTPUT_LINES[channelId], (jfloat *)(intptr_t)outputBufferAddr);
     printf("Phonon: Load channel id %d\n", channelId);
 }
 
@@ -54,41 +94,41 @@ void passThrough(jfloat *input, jfloat *output) {
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
     for (jint i = 0; i < SETTINGS.nOutputLines; i++) {    
-        struct ChOutput *line = &OUTPUT_LINES[i];
-        if (!chHasConnectedSourceBuffer(&SETTINGS,line)){
+        struct OutputLine *line = &OUTPUT_LINES[i];
+        if (!olHasConnectedSourceBuffer(&SETTINGS,line)){
             // printf("Source not connected. Skip channel %d\n", i);
             continue;
         }
 
-        if(chIsProcessingCompleted(&SETTINGS,line)){
+        if(olIsProcessingCompleted(&SETTINGS,line)){
             // printf("Processing completed in channel %d\n", i);
             continue;
         }
 
-        jint frameIndex = chGetLastProcessedFrameId(&SETTINGS,line);
-        jint lastPlayedFrameIndex = chGetLastPlayedFrameId(&SETTINGS,line);
+        jint frameIndex = olGetLastProcessedFrameId(&SETTINGS,line);
+        jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS,line);
         jint channelBufferSize = SETTINGS.bufferSize;
-        // Processing is too fast, skip.
-        if(frameIndex-lastPlayedFrameIndex>channelBufferSize/2){ 
-            continue;
-        }
+        // // Processing is too fast, skip.
+        // if(frameIndex-lastPlayedFrameIndex>channelBufferSize/2){ 
+        //     continue;
+        // }
 
         jint frameToRead = frameIndex;
-        jint sourceFrames=(jint)ceil( chGetConnectedSourceSamples(&SETTINGS,line) / SETTINGS.inputFrameSize);
+        jint sourceFrames=(jint)ceil( olGetConnectedSourceSamples(&SETTINGS,line) / SETTINGS.inputFrameSize);
 
         jboolean loop = false;
         if (loop) {
             frameToRead = frameIndex %  sourceFrames;
         }else{
             if(frameIndex>=sourceFrames){
-                chSetProcessingCompleted(&SETTINGS,line);
+                olSetProcessingCompleted(&SETTINGS,line);
                 continue;
             }
         }
 
         jfloat *inputFrame = Temp.inputFrame;
         jfloat *outputFrame = Temp.outputFrame;
-        chReadFrame(&SETTINGS, line, frameToRead, inputFrame);
+        olReadFrame(&SETTINGS, line, frameToRead, inputFrame);
 
         if(SETTINGS.isPassthrough){
             passThrough(inputFrame, outputFrame);
@@ -96,44 +136,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
             phProcessFrame(&SETTINGS,inputFrame,outputFrame);
         }
         
-        chWriteFrame(&SETTINGS,line, frameIndex%channelBufferSize, outputFrame,SETTINGS.inputFrameSize*SETTINGS.nOutputChannels);
-        chSetLastProcessedFrameId(&SETTINGS,line,++frameIndex);
+        olWriteFrame(&SETTINGS,line, frameIndex%channelBufferSize, outputFrame,SETTINGS.inputFrameSize*SETTINGS.nOutputChannels);
+        olSetLastProcessedFrameId(&SETTINGS,line,++frameIndex);
     }
-}
-#if defined(__linux__)
-    #include "platform/linux/NativeUpdate.h"
-#endif
-
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, jobject obj, 
-jint sampleRate,
-jint nOutputLines,jint nOutputChannels,jint frameSize,jint bufferSize,
-jdouble deltas, jboolean nativeThread, jboolean nativeClock,
-// effects
-jboolean isPassthrough
-) {
-    
-    OUTPUT_LINES = malloc(sizeof(struct ChOutput) * nOutputLines);
-    SETTINGS.nOutputLines = nOutputLines;
-    SETTINGS.nOutputChannels = nOutputChannels;
-    SETTINGS.inputFrameSize = frameSize;
-    // SETTINGS.outputFrameSize = frameSize * nOutputChannels;
-    SETTINGS.sampleRate = sampleRate;
-    SETTINGS.bufferSize = bufferSize;
-
-    SETTINGS.isPassthrough = isPassthrough;
-
-    Temp.outputFrame= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
-    Temp.inputFrame= (jfloat*)malloc(4 * SETTINGS.inputFrameSize);
-
-
-    for (jint i = 0; i < SETTINGS.nOutputLines ; i++)
-        chPreInit(&SETTINGS,&OUTPUT_LINES[i]);
-    phInit(&SETTINGS);
-
-    #ifdef HAS_NATIVE_THREAD_SUPPORT
-
-        if(nativeThread){
-            nuInit(env, &obj, nativeClock, deltas, Java_com_jme3_phonon_PhononRenderer_updateNative);
-        }
-    #endif
 }
