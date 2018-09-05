@@ -17,9 +17,7 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
-import com.jme3.phonon.utils.Clock;
 import com.jme3.phonon.utils.DirectBufferUtils;
-import com.jme3.phonon.utils.Sleeper;
 import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
@@ -64,9 +62,6 @@ public class PhononRenderer implements AudioRenderer {
 	public final PhononEffects effects=new PhononEffects();
 
 	ThreadMode THREAD_MODE = ThreadMode.NATIVE_DECOUPLED;
-	Clock CLOCK=Clock.HIGHRES;
-	Sleeper WAIT_MODE = Sleeper.BUSYSLEEP;
-	double DELTA_S;
 
 	public PhononRenderer(int sampleRate, int nOutputLines, int nOutputChannels, int frameSize,
 			int bufferSize) {
@@ -85,17 +80,12 @@ public class PhononRenderer implements AudioRenderer {
 	}
 
 	void preInit() {
-		if (CLOCK == Clock.NATIVE && THREAD_MODE == ThreadMode.NATIVE_DECOUPLED) { // FIXME
-			System.err
-					.println("Error: can't use both  ThreadMode.NATIVE_DECOUPLED and Clock.NATIVE");
-			System.exit(1);
-		}
-		DELTA_S=  1./(44100 / FRAME_SIZE) ;
+		
+		// DELTA_S=  1./(44100 / FRAME_SIZE) ;
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, OUTPUT_CHANNELS_NUM, FRAME_SIZE, BUFFER_SIZE,
-				DELTA_S, 
 				THREAD_MODE.isNative,
 				THREAD_MODE.isDecoupled,
-				THREAD_MODE.isDecoupled||CLOCK==Clock.NATIVE,
+				
 		// Effects
 		effects.passThrough
 		
@@ -114,8 +104,8 @@ public class PhononRenderer implements AudioRenderer {
   
 		if (!THREAD_MODE.isNative||THREAD_MODE.isDecoupled) {
 			Thread decoderThread = new Thread(() -> runDecoder());
-
-			decoderThread.setPriority(Thread.NORM_PRIORITY + 2);
+			decoderThread.setName("Phonon Java Thread");
+			decoderThread.setPriority(Thread.MAX_PRIORITY);
 			decoderThread.setDaemon(true);
 			decoderThread.start();
 		}
@@ -131,7 +121,8 @@ public class PhononRenderer implements AudioRenderer {
 		destroyNative();
 	}
 
-	native void initNative(int sampleRate,int nOutputLines,int nOutputChannels,int frameSize,int bufferSize,double updateRate,boolean nativeThread,boolean decoupledNativeThread,boolean nativeClock,
+	native void initNative(int sampleRate, int nOutputLines, int nOutputChannels, int frameSize
+	,int bufferSize,boolean nativeThread,boolean decoupledNativeThread,
 	// effects
 	boolean isPassThrough
 	);
@@ -173,87 +164,30 @@ public class PhononRenderer implements AudioRenderer {
 		PLAYERS.add(player);
 	}	
 
-	public void runPlayer() {
-	// 	while (true) {
-	// 		while(!enqueuedPlayers.isEmpty()) {
-	// 			players.add(enqueuedPlayers.poll());
-	// 		}
 
-	// 		int stalling = players.size();
-	// 		for (PhononPlayer player : players) {
-	// 			byte res = player.playLoop();
-	// 			if (res == 0) {
-	// 				stalling--;
-	// 			}
-	// 		}
-
-	// 		if (stalling == players.size()) {
-	// 			try {
-	// 				synchronized(playeThread){
-	// 				playeThread.wait();
-	// 				}
-	// 			} catch (Exception e) {
-	// 				e.printStackTrace();
-	// 			}
-	// 		}
-
-	// 	// 	try{
-	// 	// 	Thread.sleep(10);
-	// 	// 	} catch (Exception e) {
-	// 	// 	}
-	// 	}
-	}
 
 
 	
 	
 
 	// long UPDATE_RATE = 50* 1000000l;
-	public void runDecoder() {
-
-		long UPDATE_RATE= CLOCK.getExpectedTimeDelta(DELTA_S);
-
-				// if () {
-
-		long startTime = 0;
+	public void runDecoder() {	
+	
 		do {
-			startTime = CLOCK.measure();
-		
-			// while(!enqueuedPlayers.isEmpty()) {
-			// 	players.add(enqueuedPlayers.remove(0));
-			// }
+			if(!THREAD_MODE.isNative||THREAD_MODE.isDecoupled){
+				try{
+					Thread.sleep(1);
+					} catch (Exception e) {
 
-
-			if (!THREAD_MODE.isNative) {
-				updateNative();
+					}
 			}
-
-
-				for (PhononPlayer player : PLAYERS) {
-					byte res = player.playLoop();
-					// if (res == 0) {
-					// 	stalling--;
-					// }
-
-				}
-			
-
-
-
-			// synchronized(playeThread){
-			// 	playeThread.notify();
-			// 	}
-
-
-				try {
-					// Thread.yield();
-					WAIT_MODE.wait(CLOCK, startTime, UPDATE_RATE);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			
-
+			if(!THREAD_MODE.isNative)updateNative();
+			for (PhononPlayer player : PLAYERS) {
+				byte res = player.playLoop();
+			}
+		
 		} while (!THREAD_MODE.isNative||THREAD_MODE.isDecoupled);
+		
 	}
 
 

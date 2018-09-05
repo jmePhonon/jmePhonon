@@ -49,11 +49,11 @@ public class TestPhononRenderer extends SimpleApplication {
             renderer.attachPlayer(songPlayer);
             loadedSound.add(audio); // nb. protect sound from garbage collector...
 
-            audio = new F32leAudioData(assetManager.loadAudio("mono/433016__derjuli__ocean.wav"));
-            renderer.connectSource(audio, i);
-            songPlayer = new PhononPlayer(renderer.getLine(i++), 44100, 2, 16);
-            renderer.attachPlayer(songPlayer);
-            loadedSound.add(audio);
+            // audio = new F32leAudioData(assetManager.loadAudio("mono/433016__derjuli__ocean.wav"));
+            // renderer.connectSource(audio, i);
+            // songPlayer = new PhononPlayer(renderer.getLine(i++), 44100, 2, 16);
+            // renderer.attachPlayer(songPlayer);
+            // loadedSound.add(audio);
 
             audio = new F32leAudioData(assetManager.loadAudio("mono/awesomeness.wav"));
 

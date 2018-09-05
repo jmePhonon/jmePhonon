@@ -19,27 +19,20 @@ struct {
     JNIEnv *env;
     pthread_t thread;
     jobject renderer;
-    jboolean useNativeClock;
-    jlong timeDelta;
     struct timespec tp;    
     jboolean decoupled;
     jboolean initialized;
+    jlong startTime;
+    jlong endTime;
 
     void (*updateFunc)(JNIEnv*, jobject);
 } ThreadContext;
 
 #define timespec2ns(x) (x.tv_sec * 1000000000LL + x.tv_nsec)
-#define CLOCK_TYPE CLOCK_REALTIME_COARSE
+#define CLOCK_TYPE CLOCK_MONOTONIC_COARSE
 
 void *nuLoop() {
-    while (1) {
-        jlong startTime = 0;
-        if (ThreadContext.useNativeClock) {
-            clock_gettime(CLOCK_TYPE, &ThreadContext.tp);
-            startTime = timespec2ns(ThreadContext.tp);
-        }
-
-        if( !ThreadContext.initialized ){
+    if (!ThreadContext.initialized) {
             JavaVMAttachArgs thread_arg;
             thread_arg.version = JNI_VERSION_1_6;
             thread_arg.name = "Phonon Native Thread";
@@ -48,39 +41,32 @@ void *nuLoop() {
             (*ThreadContext.vm)->AttachCurrentThreadAsDaemon(ThreadContext.vm, (void **)&ThreadContext.env, &thread_arg);
             
             ThreadContext.initialized = true;
+    }
+
+    while (1) {
+
+        if (nanosleep((const struct timespec[]){{0, 1000000ll}}, NULL) < 0) {
+            printf("Error can't sleep \n");
         }
 
         ThreadContext.updateFunc(ThreadContext.env, ThreadContext.renderer);
 
-        if( !ThreadContext.decoupled ){
+        if(!ThreadContext.decoupled){
             jclass class = (*ThreadContext.env)->GetObjectClass(ThreadContext.env, ThreadContext.renderer);
-            jmethodID mid = (*ThreadContext.env)->GetMethodID(ThreadContext.env, class, "runDecoder", "()V");
-            (*ThreadContext.env)->CallVoidMethod(ThreadContext.env, ThreadContext.renderer, mid);
-        }
-        
-        if (ThreadContext.useNativeClock) {
-            clock_gettime(CLOCK_TYPE, &ThreadContext.tp);
-            jlong endTime = timespec2ns(ThreadContext.tp);
-
-            jlong sleeptime = ThreadContext.timeDelta - (endTime - startTime);
-            if (sleeptime > 0) {
-
-                if (nanosleep((const struct timespec[]){{0, sleeptime}}, NULL) < 0) {
-                    printf("Error can't sleep \n");
-                }
-            }
-        }
+            jmethodID mid = (*ThreadContext.env)->GetMethodID(ThreadContext.env, class, "runDecoder", "()V");  
+            (*ThreadContext.env)->CallVoidMethod(ThreadContext.env, ThreadContext.renderer, mid);      
+        }             
     }
     return NULL;
 }
 
-void nuInit(JNIEnv *env, jobject *renderer, jboolean useNativeClock, jdouble sdelta, jboolean decoupled,void (*uf)(JNIEnv*, jobject)) {
+void nuInit(JNIEnv *env, jobject *renderer, jboolean decoupled,void (*uf)(JNIEnv*, jobject)) {
     printf("Initialize pthread\n");
-    ThreadContext.useNativeClock = useNativeClock;
-    ThreadContext.timeDelta = 1000000000LL * sdelta;
     ThreadContext.updateFunc = uf;
     ThreadContext.decoupled = decoupled;
     ThreadContext.initialized = false;
+    ThreadContext.startTime = 0;
+    ThreadContext.endTime = 0;
 
     (*env)->GetJavaVM(env, &ThreadContext.vm);
     ThreadContext.renderer = (*env)->NewGlobalRef(env, (*renderer));

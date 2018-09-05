@@ -42,7 +42,7 @@ public class PhononPlayer {
 
         long nsPerSample= 1000000000l / sampleRate;
        
-       preloadBytes = (int)(((1000000l * 100l) / nsPerSample)*bytesPerSample);
+       preloadBytes = (int)(((1000000l * 50l) / nsPerSample)*bytesPerSample);
        if (output.getBufferSize() < preloadBytes)
            preloadBytes = output.getBufferSize();
            int preloadedSamplesNum = preloadBytes / bytesPerSample;
@@ -53,8 +53,20 @@ public class PhononPlayer {
 
 
 
-
     public byte playLoop() {
+
+        if (preloadBytes <= 0) {
+            if (!isRunning) {
+                isRunning = true;
+                output.start();
+                
+                System.out.println("Start");
+            }
+        } else {
+            System.out.println("Preloading " + preloadBytes + " bytes");
+        }
+      
+
         byte out = 0;
         int writableBytes = 0;
         int read = 0;
@@ -74,7 +86,7 @@ public class PhononPlayer {
                     preloadBytes -= written;
                 }
             } else {
-                // System.out.println("No data");
+                System.out.println("FIXME: Phonon is lagging behind");
                 out=1;
                 // no data available
             }
@@ -88,17 +100,7 @@ public class PhononPlayer {
             e.printStackTrace();
         }
 
-        if (preloadBytes <= 0) {
-            if (!isRunning) {
-                isRunning = true;
-                output.start();
-                
-                System.out.println("Start");
-            }
-        } else {
-            System.out.println("Preloading " + preloadBytes + " bytes");
-        }
-      
+       
 
       
 
