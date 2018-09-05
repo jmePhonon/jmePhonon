@@ -27,7 +27,10 @@ function compareSteamAudioHash {
 }
 
 function getSteamAudio {
-
+    if [ "$1" != "" ];
+    then
+        export UPDATE_STEAMAUDIO=1
+    fi
     if [ "$UPDATE_STEAMAUDIO" = "" ];
     then
         export UPDATE_STEAMAUDIO="`compareSteamAudioHash`"
@@ -68,7 +71,11 @@ then
 
     cp -Rf bin/* lib/
     safeRm bin
+
+    wget "https://ci-deploy.frk.wf/mirrors/phonon3d_api_1.7.pdf" -O "doc/obsolete_phonon3d_api_1.7.pdf"
     cd ../../
+
+
 fi
 ################
 

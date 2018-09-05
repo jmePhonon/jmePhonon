@@ -86,9 +86,10 @@ task buildNatives(type :Exec){
 }
 buildNatives.dependsOn(getSteamAudio)
 
-task genWorkspace(type:Exec){
-    commandLine 'bash','prepare.sh','getSteamAudio' 
+task prepareWorkspace(type:Exec){
+    commandLine 'bash','prepare.sh','getSteamAudio',"true"
 }
-genWorkspace.finalizedBy(buildNatives)
+prepareWorkspace.dependsOn(downloadResources)
+prepareWorkspace.finalizedBy(buildNatives)
 
 build.dependsOn(buildNatives)
