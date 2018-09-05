@@ -1,8 +1,7 @@
 import java.nio.ByteBuffer;
-
+import java.util.ArrayList;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;
-
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
 import com.jme3.phonon.F32leAudioData;
@@ -18,38 +17,55 @@ public class TestPhononRenderer extends SimpleApplication {
         app.start();
     }
 
-    F32leAudioData songAudioData, ambientAudioData;
-
+    ArrayList<F32leAudioData> loadedSound = new ArrayList<F32leAudioData>();
     @Override
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
 
-        songAudioData = new F32leAudioData(assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg"));
-        ambientAudioData = new F32leAudioData(assetManager.loadAudio("433016__derjuli__ocean.wav"));
+        int outputLines = 16;
 
-        PhononRenderer renderer = new PhononRenderer(44100,1,2,1024, 32);
-        renderer.initialize();    
-        renderer.connectSource(songAudioData, 0);
+        PhononRenderer renderer = new PhononRenderer(44100, outputLines, 2, 1024, 64);
+        // renderer.effects.passThrough = true;
+
+        renderer.initialize();
 
         try {
 
 
-            PhononPlayer songPlayer = new PhononPlayer(renderer.getLine(0),44100,2,16);
-            renderer.attachPlayer(songPlayer);
+
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
 
-        /*for(int c = 1; c < 13; c++) {
-            try {
-                renderer.connectSource(ambientAudioData, c);
+        try {
+            F32leAudioData audio;
+            int i = 0;
 
-                PhononPlayer ambientPlayer = new PhononPlayer(renderer.getChannel(c),44100,1,16);
-                renderer.attachPlayer(ambientPlayer);
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        }*/
-    } 
+            audio = new F32leAudioData(
+                    assetManager.loadAudio("mono/399354__romariogrande__eastandw.ogg"));
+            renderer.connectSource(audio, i);
+            PhononPlayer songPlayer = new PhononPlayer(renderer.getLine(i++), 44100, 2, 16);
+            renderer.attachPlayer(songPlayer);
+            loadedSound.add(audio); // nb. protect sound from garbage collector...
+
+            audio = new F32leAudioData(assetManager.loadAudio("mono/433016__derjuli__ocean.wav"));
+            renderer.connectSource(audio, i);
+            songPlayer = new PhononPlayer(renderer.getLine(i++), 44100, 2, 16);
+            renderer.attachPlayer(songPlayer);
+            loadedSound.add(audio);
+
+            audio = new F32leAudioData(assetManager.loadAudio("mono/awesomeness.wav"));
+
+            renderer.connectSource(audio, i);
+            songPlayer = new PhononPlayer(renderer.getLine(i++), 44100, 2, 16);
+            renderer.attachPlayer(songPlayer);
+            loadedSound.add(audio);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
 }

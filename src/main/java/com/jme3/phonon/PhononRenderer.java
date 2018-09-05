@@ -1,6 +1,7 @@
 package com.jme3.phonon;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,6 @@ public class PhononRenderer implements AudioRenderer {
 
     private final Map<AudioData, F32leAudioData> conversionCache = new WeakHashMap<AudioData, F32leAudioData>();
 	// private final List<PhononPlayer> enqueuedPlayers = new LinkedList<>();
-	private final LinkedList<PhononPlayer> players = new LinkedList<>();
 
 	static {
 		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux32,
@@ -57,10 +57,12 @@ public class PhononRenderer implements AudioRenderer {
 	// Samplerate (eg 44100)
 	private final int SAMPLE_RATE;
 
+
+	private final Collection<PhononPlayer> PLAYERS = new ConcurrentLinkedQueue<>();
+
+
 	public final PhononEffects effects=new PhononEffects();
 
-	volatile boolean attachingPlayers = false;
-	volatile boolean updatingPlayers = false;
 
 	Clock CLOCK=Clock.NATIVE;
 	Sleeper WAIT_MODE = Sleeper.NATIVE;
@@ -161,16 +163,7 @@ public class PhononRenderer implements AudioRenderer {
 	}
 
 	public void attachPlayer(PhononPlayer player) {
-
-		do {
-			try{
-			Thread.sleep(10);
-			} catch (Exception e) {
-			}
-		} while (updatingPlayers);
-		attachingPlayers = true;
-		players.add(player);
-		attachingPlayers = false;
+		PLAYERS.add(player);
 	}	
 
 	public void runPlayer() {
@@ -228,18 +221,15 @@ public class PhononRenderer implements AudioRenderer {
 				updateNative();
 			}
 
-			if (!attachingPlayers) {
-				updatingPlayers = true;
-				for (PhononPlayer player : players) {
+
+				for (PhononPlayer player : PLAYERS) {
 					byte res = player.playLoop();
 					// if (res == 0) {
 					// 	stalling--;
 					// }
 
 				}
-				updatingPlayers = false;
-			}
-
+			
 
 
 

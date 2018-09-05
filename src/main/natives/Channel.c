@@ -119,7 +119,7 @@ jfloat *chReadFrame(struct GlobalSettings *settings,struct ChOutput *chan, jint 
         jint sampleIndex = frameSize * frameIndex + i;
         jfloat v;
         if (sampleIndex >= sourceSamples) {  // Write 0s if the frame size exceed the remaining source's bytes
-            printf("Phonon: trying to read sample n%d but source contains only %d samples. A zero sample will be returned instead.\n ", sampleIndex, sourceSamples);
+            // printf("Phonon: trying to read sample n%d but source contains only %d samples. A zero sample will be returned instead.\n ", sampleIndex, sourceSamples);
             v = 0;
         } else {
             v = source[sampleIndex];

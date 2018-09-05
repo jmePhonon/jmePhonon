@@ -53,7 +53,7 @@ void passThrough(jfloat *input, jfloat *output) {
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
-    for (jint i = 0; i < SETTINGS.nOutputLines; i++) {
+    for (jint i = 0; i < SETTINGS.nOutputLines; i++) {    
         struct ChOutput *line = &OUTPUT_LINES[i];
         if (!chHasConnectedSourceBuffer(&SETTINGS,line)){
             // printf("Source not connected. Skip channel %d\n", i);
