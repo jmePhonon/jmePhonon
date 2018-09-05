@@ -1,20 +1,17 @@
-package com.jme3.phonon;
+package com.jme3.phonon.format;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 
 import com.jme3.audio.AudioBuffer;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioStream;
-import com.jme3.phonon.utils.BitUtils;
+import com.jme3.phonon.format.converter.AudioDataConverter;
+import com.jme3.phonon.format.converter.AudioDataConverterFactory;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 
@@ -24,11 +21,12 @@ import com.jme3.util.BufferUtils;
  * Audio data ready to be processed by phonon
  */
 public class F32leAudioData {
-    private int channels,sampleRate;
-    private ByteBuffer data;
+    protected int sampleRate;
+    protected int channels;
+    protected ByteBuffer data;
     private long dataAddress;
-    public F32leAudioData() {
-    }
+
+    public F32leAudioData() { }
 
 
     /**
@@ -42,7 +40,7 @@ public class F32leAudioData {
      * Get size in samples
      */
     public int getSizeInSamples() {
-        return data.limit()/4;
+        return data.limit() / 4;
     }
  
     public F32leAudioData(AudioData ad) {
@@ -50,45 +48,18 @@ public class F32leAudioData {
             AudioBuffer ab = (AudioBuffer) ad;
             channels = ab.getChannels();
             sampleRate = ab.getSampleRate();
-            int bitsPerSample = ab.getBitsPerSample();
+            int bufferBitsPerSample = ab.getBitsPerSample();
 
             // Little endian input buffer
             ByteBuffer inputData = ab.getData();
         
-            data = BufferUtils.createByteBuffer((inputData.limit() / (bitsPerSample / 8)) * 4);
+            data = BufferUtils.createByteBuffer((inputData.limit() / (bufferBitsPerSample / 8)) * 4);
             inputData.rewind();
             dataAddress = DirectBufferUtils.getAddr(data);
 
-            byte float_le[] = new byte[4];
-            switch (bitsPerSample) {
-            case 8: {
-                byte sm_le[] = new byte[1];
-                for (int i = 0; i < inputData.limit(); i++) {
-                    BitUtils.nextI8le(inputData, sm_le);
-                    BitUtils.cnvI8leToF32le(sm_le,float_le);
-                    data.put(float_le);
-                }
-                break;
-            }
-            case 16: {
-                byte sm_le[] = new byte[2];
-                for (int i = 0; i < inputData.limit(); i += 2) {
-                    BitUtils.nextI16le(inputData, sm_le,1);
-                    BitUtils.cnvI16leToF32le(sm_le,float_le);
-                    data.put(float_le);
-                }
-                break;
-            }
-            case 24: {
-                byte sm_le[] = new byte[3];
-                for (int i = 0; i < inputData.limit(); i += 3) {
-                    BitUtils.nextI24le(inputData, sm_le,1);
-                    BitUtils.cnvI24leToF32le(sm_le,float_le);
-                    data.put(float_le);                    
-                }
-                break;
-            }
-            }
+            AudioDataConverter converter = AudioDataConverterFactory.getConverter(bufferBitsPerSample);
+            converter.convertData(inputData, data);
+
             inputData.rewind();
             data.rewind();
         } else if (ad instanceof AudioStream) { // Handle audio stream
@@ -97,11 +68,7 @@ public class F32leAudioData {
             throw new UnsupportedOperationException("Unknown audio data " + ad.getClass());
         }
     }
-
-    public ByteBuffer getData() {
-        return data;
-    }
-
+    
     public F32leAudioData rewind() {
         data.rewind();
         return this;
@@ -111,13 +78,12 @@ public class F32leAudioData {
         return channels;
     }
 
-    public int getBitsPerSample() {
-        return 32;
-    }
-
-
     public int getSampleRate() {
         return sampleRate;
+    }
+
+    public int getBitsPerSample() {
+        return 32;
     }
 
     public F32leAudioData writeRaw(OutputStream os) throws IOException {

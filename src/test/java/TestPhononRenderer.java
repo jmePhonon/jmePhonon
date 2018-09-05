@@ -4,7 +4,7 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
-import com.jme3.phonon.F32leAudioData;
+import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.phonon.PhononChannel;
 import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.player.PhononPlayer;
@@ -30,8 +30,6 @@ public class TestPhononRenderer extends SimpleApplication {
         renderer.initialize();
 
         try {
-
-
 
         } catch (Exception e) {
             // TODO Auto-generated catch block
