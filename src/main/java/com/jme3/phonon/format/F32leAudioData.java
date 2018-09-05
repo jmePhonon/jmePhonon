@@ -85,26 +85,11 @@ public class F32leAudioData {
     public int getBitsPerSample() {
         return 32;
     }
-
-    public F32leAudioData writeRaw(OutputStream os) throws IOException {
-        data.rewind();
-        byte array[] = new byte[data.limit()];
-        data.get(array);
-        os.write(array);
-        data.rewind();
-        return this;
+    
+    public ByteBuffer getData() {
+        return data;
     }
+ 
 
-    public F32leAudioData readRaw(int channels, int sampleRate, InputStream is) throws IOException {
-        this.channels = channels;
-        this.sampleRate = sampleRate;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        int read;
-        byte part[]=new byte[1024];
-        while ((read = is.read(part)) != -1) {
-            bos.write(part, 0, read);
-        }
-        data = BufferUtils.createByteBuffer(bos.toByteArray()).order(ByteOrder.LITTLE_ENDIAN);        
-        return this;
-    }
+    
 }

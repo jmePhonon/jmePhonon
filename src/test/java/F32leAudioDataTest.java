@@ -11,7 +11,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioNode;
 import com.jme3.phonon.utils.BitUtils;
-import com.jme3.phonon.F32leAudioData;
+import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.system.AppSettings;
 
 public class F32leAudioDataTest extends SimpleApplication {
@@ -29,6 +29,13 @@ public class F32leAudioDataTest extends SimpleApplication {
         app.start();
     }
 
+    public void writeRaw(ByteBuffer data,OutputStream os) throws IOException {
+        data.rewind();
+        byte array[] = new byte[data.limit()];
+        data.get(array);
+        os.write(array);
+        data.rewind();
+    }
     @Override
     public void simpleInitApp() {
         try {
@@ -36,7 +43,7 @@ public class F32leAudioDataTest extends SimpleApplication {
             AudioData ad = assetManager.loadAudio("399354__romariogrande__eastandw_mono.ogg");
             F32leAudioData f32le = new F32leAudioData(ad);
             OutputStream fo=new FileOutputStream("/tmp/f32.raw");
-            f32le.writeRaw(fo);
+            writeRaw(f32le.getData(), fo);
             fo.close();
 
 

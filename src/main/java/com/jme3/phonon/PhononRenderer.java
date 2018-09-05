@@ -18,14 +18,12 @@ import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.phonon.player.PhononPlayer;
-import com.jme3.phonon.utils.Clock;
 import com.jme3.phonon.utils.DirectBufferUtils;
-import com.jme3.phonon.utils.Sleeper;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
  
 /**
- * PhononRenderer
+ * PhononRenderer 
  */
 public class PhononRenderer implements AudioRenderer {
 
