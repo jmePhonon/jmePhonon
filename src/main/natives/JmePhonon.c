@@ -15,13 +15,17 @@
         IPLVector3 listenerPosition;
         IPLQuaternion listenerRotation;
 
-        IPLHrtfParams hrtfParams;
+        IPLHrtfParams defaultHrtfParams;
         IPLhandle binauralRenderer;
-        IPLhandle binauralEffect;
 
         IPLAudioBuffer *mixerQueue;
     
-    } PhContext;
+    } PhSharedContext; // This context is shared between every source
+
+    struct PhContext { //nb for each source we need to create a new PhContext    
+        IPLhandle binauralEffect;
+    
+    } ;
 
 /** Adapted from jmonkeyengine's Quaternion.java */
 void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
@@ -50,80 +54,105 @@ void phSubVecVec(IPLVector3 *v1, IPLVector3 *v2,IPLVector3 *store){
 }
 
 void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
-    iplCreateContext(NULL, NULL, NULL, &PhContext.context);
-    PhContext.settings.samplingRate = settings->sampleRate;
-    PhContext.settings.frameSize =settings->inputFrameSize;
+    iplCreateContext(NULL, NULL, NULL, &PhSharedContext.context);
+    PhSharedContext.settings.samplingRate = settings->sampleRate;
+    PhSharedContext.settings.frameSize =settings->inputFrameSize;
 
-    PhContext.hrtfParams.type = IPL_HRTFDATABASETYPE_DEFAULT;
-    iplCreateBinauralRenderer(PhContext.context, PhContext.settings, PhContext.hrtfParams, &PhContext.binauralRenderer);     
+    PhSharedContext.defaultHrtfParams.type = IPL_HRTFDATABASETYPE_DEFAULT;
+    iplCreateBinauralRenderer(PhSharedContext.context, PhSharedContext.settings, PhSharedContext.defaultHrtfParams, &PhSharedContext.binauralRenderer);     
         
-    PhContext.inputFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
-    PhContext.inputFormat.channelLayout = IPL_CHANNELLAYOUT_MONO;
-    PhContext.inputFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
+    PhSharedContext.inputFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
+    PhSharedContext.inputFormat.channelLayout = IPL_CHANNELLAYOUT_MONO;
+    PhSharedContext.inputFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
 
-    PhContext.outputFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
-    PhContext.outputFormat.channelLayout = IPL_CHANNELLAYOUT_STEREO;
-    PhContext.outputFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
+    PhSharedContext.outputFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
+    PhSharedContext.outputFormat.channelLayout = IPL_CHANNELLAYOUT_STEREO;
+    PhSharedContext.outputFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
 
-    iplCreateBinauralEffect(PhContext.binauralRenderer, PhContext.inputFormat, PhContext.outputFormat, &PhContext.binauralEffect);
 
-    PhContext.inputBuffer.format = PhContext.inputFormat;
- 
+    PhSharedContext.inputBuffer.format = PhSharedContext.inputFormat;
+    PhSharedContext.outputBuffer.format = PhSharedContext.outputFormat;
 
-    PhContext.outputBuffer.format = PhContext.outputFormat;
-
-  
-    PhContext.inputBuffer.numSamples = PhContext.settings.frameSize ;
-
-    PhContext.outputBuffer.numSamples = PhContext.settings.frameSize ;
+    PhSharedContext.inputBuffer.numSamples = PhSharedContext.settings.frameSize ;
+    PhSharedContext.outputBuffer.numSamples = PhSharedContext.settings.frameSize ;
 
     phUpdateListener(settings,0, 0, 0,     0, 0, 0, 0);
 
-    PhContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
+
+
+    PhSharedContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
     for(jint i=0;i<mixerQueueSize;i++){
-        PhContext.mixerQueue[i].format = PhContext.outputFormat;
-        PhContext.mixerQueue[i].numSamples = PhContext.settings.frameSize ;
-        
+        PhSharedContext.mixerQueue[i].format = PhSharedContext.outputFormat;
+        PhSharedContext.mixerQueue[i].numSamples = PhSharedContext.settings.frameSize ;        
     }
 }
 
-void phProcessFrame(struct GlobalSettings *settings,jfloat *inFrame, jfloat *outFrame){
-    // for(jint i=0;i<PhContext.settings.frameSize;i++){
+void phDestroy(struct GlobalSettings *settings){
+    free(PhSharedContext.mixerQueue);
+    // TODO: properly destroy phonon
+}
+
+
+
+/**
+ * Allocates one PhContext for the audioSource
+ */
+void phInitializeSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+    struct PhContext *context = malloc(sizeof(struct PhContext));
+    iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.inputFormat, PhSharedContext.outputFormat, &context->binauralEffect);
+    audioSource->phononContext = context;
+
+}
+
+/**
+ * Deallocates the PhContext of the audioSource
+ */
+void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+    free(audioSource->phononContext);
+}
+
+void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+
+}
+
+void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *source,jfloat *inFrame, jfloat *outFrame){
+    // for(jint i=0;i<PhSharedContext.settings.frameSize;i++){
     //     outframe[i] = inframe[i];
     // }
+    struct PhContext *ctx=source->phononContext;
+    if(ctx==NULL){
+        printf("FIXME: PhContext is null for this source?\n");
+        return;
+    }
+
     IPLVector3 direction;
-    // phMultQtrVec(PhContext.listenerRotation, audiosourceposition,&direction
-    // phSubVecVec(direction,PhContext.listenerPosition,&direction);
+    // phMultQtrVec(PhSharedContext.listenerRotation, audiosourceposition,&direction
+    // phSubVecVec(direction,PhSharedContext.listenerPosition,&direction);
     direction.x = 1.0;
     direction.y = 1.0;
     direction.z = 1.0;
     
 
-    PhContext.inputBuffer.interleavedBuffer = inFrame;
-    PhContext.outputBuffer.interleavedBuffer = outFrame;
+    PhSharedContext.inputBuffer.interleavedBuffer = inFrame;
+    PhSharedContext.outputBuffer.interleavedBuffer = outFrame;
 
-    
-    iplApplyBinauralEffect(PhContext.binauralEffect, 
-    PhContext.inputBuffer, direction, IPL_HRTFINTERPOLATION_NEAREST,  PhContext.outputBuffer);
+    iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.inputBuffer, direction, IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
 }
 
-void phDestroy(struct GlobalSettings *settings){
-    free(PhContext.mixerQueue);
-}
 
 void phUpdateListener(struct GlobalSettings *settings,
 jfloat wposx,jfloat wposy, jfloat wposz,
 jfloat wrotx,jfloat wroty,jfloat wrotz,jfloat wrotw
 
 ){
-    PhContext.listenerPosition.x = wposx;
-    PhContext.listenerPosition.y = wposy;
-    PhContext.listenerPosition.z = wposz;
+    PhSharedContext.listenerPosition.x = wposx;
+    PhSharedContext.listenerPosition.y = wposy;
+    PhSharedContext.listenerPosition.z = wposz;
 
-    PhContext.listenerRotation.x = wrotx;
-    PhContext.listenerRotation.y = wroty;
-    PhContext.listenerRotation.z = wrotz;
-    PhContext.listenerRotation.w = wrotw;
+    PhSharedContext.listenerRotation.x = wrotx;
+    PhSharedContext.listenerRotation.y = wroty;
+    PhSharedContext.listenerRotation.z = wrotz;
+    PhSharedContext.listenerRotation.w = wrotw;
 
 }
 
@@ -132,8 +161,8 @@ jfloat wrotx,jfloat wroty,jfloat wrotz,jfloat wrotw
  */
 void phMixOutputBuffers(jfloat **input,jint numInputs,jfloat *output){
     for(jint i=0;i<numInputs;i++){
-        PhContext.mixerQueue[i].interleavedBuffer = input[i];
+        PhSharedContext.mixerQueue[i].interleavedBuffer = input[i];
     }
-    PhContext.outputBuffer.interleavedBuffer = output;
-    iplMixAudioBuffers(numInputs, PhContext.mixerQueue, PhContext.outputBuffer);
+    PhSharedContext.outputBuffer.interleavedBuffer = output;
+    iplMixAudioBuffers(numInputs, PhSharedContext.mixerQueue, PhSharedContext.outputBuffer);
 }

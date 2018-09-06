@@ -16,6 +16,8 @@ void asInit(struct GlobalSettings *settings, struct AudioSource *source){
     source->pitch = 1;
 
     source->connectedLine = NULL;
+    source->phononContext = NULL;
+
 }
 
 struct AudioSource* asNew(struct GlobalSettings *settings,jint n){
@@ -25,6 +27,10 @@ struct AudioSource* asNew(struct GlobalSettings *settings,jint n){
         asInit(settings, &out[i]);
     }
     return out;
+}
+
+void asDestroy(struct GlobalSettings *settings,struct AudioSource *source,jint n){
+    free(source);
 }
 
 jboolean asIsConnected(struct GlobalSettings *settings,struct AudioSource *source){
@@ -58,5 +64,6 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
     if(source->lastReadFrameIndex>=source->numFrames){
         source->lastReadFrameIndex = 0;
     }
+
     return hasReachedEnd;
 }

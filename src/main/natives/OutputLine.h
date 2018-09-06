@@ -20,9 +20,15 @@ struct OutputLine {
 
 
 /**
- * Create one or more OutputLines
+ * Allocates one or more OutputLines
  */
 struct OutputLine *olNew(struct GlobalSettings *settings, jint n);
+
+/**
+ * Deallocates one or more OutputLines
+ * This function undoes olNew
+ */
+void olDestroy(struct GlobalSettings *settings, struct OutputLine *chan,jint n);
 
 /**
  * Initialize the output line
@@ -34,7 +40,6 @@ jboolean olIsInitialized(struct GlobalSettings *settings, struct OutputLine *lin
 /**
  *
  */
-void olDestroy(struct GlobalSettings *settings, struct OutputLine *chan);
 
 /**
  * Connect one audio source to the best audio line

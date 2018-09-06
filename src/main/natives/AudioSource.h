@@ -19,10 +19,21 @@ struct AudioSource {
     jboolean loop;
 
     void *connectedLine; // Pointer to the line to which the source is connected
+    void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
 };
 
 void asInit(struct GlobalSettings *settings, struct AudioSource *source);
+
+/**
+ * Allocates one or more AudioSources
+ */
 struct AudioSource *asNew(struct GlobalSettings *settings, jint n);
+
+/**
+ * Deallocates one or more AudioSources
+ * This function undoes asNew
+ */
+void asDestroy(struct GlobalSettings *settings, struct AudioSource *source, jint n);
 
 jboolean asIsConnected(struct GlobalSettings *settings, struct AudioSource *source);
 /**

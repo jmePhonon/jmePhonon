@@ -16,12 +16,17 @@ struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
 }
 
 
-void olInit(struct GlobalSettings *settings,struct OutputLine *line,jfloat *outputBuffer){
-    line->outputBuffer = outputBuffer;    
+
+
+void olDestroy(struct GlobalSettings *settings,struct OutputLine *lines,jint nOutputLines){
+    for(int i=0;i<nOutputLines;i++){
+        asDestroy(settings, lines[i].sourcesSlots,settings->nSourcesPerLine);
+    }
+    free(lines);
 }
 
-void olDestroy(struct GlobalSettings *settings,struct OutputLine *line){
-    free(line->sourcesSlots);
+void olInit(struct GlobalSettings *settings,struct OutputLine *line,jfloat *outputBuffer){
+    line->outputBuffer = outputBuffer;    
 }
 
 jboolean olIsInitialized(struct GlobalSettings *settings, struct OutputLine *line){
