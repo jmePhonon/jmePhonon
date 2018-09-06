@@ -1,13 +1,13 @@
-package com.jme3.phonon.player.converter;
+package com.jme3.phonon.format.decoder;
 
 import com.jme3.phonon.utils.BitUtils;
 
-class F32toI24PlayerConverter implements PlayerConverter {
-    private static F32toI24PlayerConverter instance;
+class Int24AudioDataDecoder implements AudioDataDecoder {
+    private static Int24AudioDataDecoder instance;
 
-    public static F32toI24PlayerConverter instance() {
+    public static Int24AudioDataDecoder instance() {
         if(instance == null)
-            instance = new F32toI24PlayerConverter();
+            instance = new Int24AudioDataDecoder();
         
         return instance;
     }
@@ -15,12 +15,13 @@ class F32toI24PlayerConverter implements PlayerConverter {
     final byte[] partInputBuffer;
     final byte[] partOutputBuffer;
 
-    private F32toI24PlayerConverter() {
+    private Int24AudioDataDecoder() {
         partInputBuffer = new byte[4];
         partOutputBuffer = new byte[3];
     }
 
-    public void convert(byte[] inputBuffer, byte[] outputBuffer) {
+    @Override
+    public void decode(byte[] inputBuffer, byte[] outputBuffer) {
         for (int i = 0; i < inputBuffer.length; i += 4) {
             for(int j = 0; j < partInputBuffer.length; ++j) {
                 partInputBuffer[j] = inputBuffer[i + j];

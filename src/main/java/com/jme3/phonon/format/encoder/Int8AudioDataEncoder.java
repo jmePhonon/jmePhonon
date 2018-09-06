@@ -1,15 +1,15 @@
-package com.jme3.phonon.format.converter;
+package com.jme3.phonon.format.encoder;
 
 import java.nio.ByteBuffer;
 
 import com.jme3.phonon.utils.BitUtils;
 
-class Int8AudioDataConverter implements AudioDataConverter {
+class Int8AudioDataEncoder implements AudioDataEncoder {
     byte float_le[] = new byte[4];
     byte sm_le[] = new byte[1];
 
     /**
-     * Converts input 8-bit audio data to float32 audio data.
+     * Encode 8-bit input audio data to float32 audio data.
      * 
      * @param input Input audio data.
      * @param output Output buffer;
@@ -17,7 +17,7 @@ class Int8AudioDataConverter implements AudioDataConverter {
      * @author aegroto, riccardobl
      */
 
-    public void convertData(ByteBuffer input, ByteBuffer output) {
+    public void encodeData(ByteBuffer input, ByteBuffer output) {
         for (int i = 0; i < input.limit(); i++) {
             BitUtils.nextI8le(input, sm_le);
             BitUtils.cnvI8leToF32le(sm_le, float_le);

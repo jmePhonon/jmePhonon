@@ -6,12 +6,13 @@ import java.io.InputStream;
 
 import com.jme3.phonon.PhononChannel;
 import com.jme3.phonon.PhononChannel.ChannelStatus;
-import com.jme3.phonon.player.converter.PlayerConverter;
-import com.jme3.phonon.player.converter.PlayerConverterManager;
+import com.jme3.phonon.format.decoder.AudioDataDecoder;
+import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
 
 /**
  * PhononChanneInputStream
  */
+
 public class PhononChannelIntInputStream extends InputStream {
     ChannelStatus lastStat;
     PhononChannel chan;
@@ -20,7 +21,7 @@ public class PhononChannelIntInputStream extends InputStream {
     int tmpBufferI = 0;
     int sampleSize;
 
-    private PlayerConverter converter;
+    private AudioDataDecoder decoder;
 
     public PhononChannelIntInputStream(PhononChannel chan,int sampleSize) {
         this.chan = chan;
@@ -28,7 +29,7 @@ public class PhononChannelIntInputStream extends InputStream {
         floatBuffer = new byte[chan.getFrameSize() * 4];
         tmpBuffer = new byte[chan.getFrameSize() * (sampleSize/8)];
 
-        converter = PlayerConverterManager.getPlayerConverter(sampleSize);
+        decoder = AudioDataDecoderFactory.getAudioDataDecoder(sampleSize);
     }
 
     @Override
@@ -41,7 +42,7 @@ public class PhononChannelIntInputStream extends InputStream {
                 return -1;
             }
 
-            converter.convert(floatBuffer, tmpBuffer);
+            decoder.decode(floatBuffer, tmpBuffer);
 
             tmpBufferI = 0;
         }
