@@ -72,7 +72,15 @@ then
     cp -Rf bin/* lib/
     safeRm bin
 
-    wget "https://ci-deploy.frk.wf/mirrors/phonon3d_api_1.7.pdf" -O "doc/obsolete_phonon3d_api_1.7.pdf"
+    cd docs
+    git clone https://github.com/ValveSoftware/steam-audio.git
+    cd steam-audio 
+    git branch gh-pages
+    git reset --hard ec6acfd41f18664fe9726e090d05217f6e2bfaf2
+    cp -Rf doc/capi ../steamaudio_api_html
+    cd .. 
+    safeRm steam-audio
+
     cd ../../
 
 
