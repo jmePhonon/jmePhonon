@@ -41,6 +41,7 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
     jboolean hasReachedEnd = false;
     for (jint i = 0; i < frameSize; i++) {
         jint sampleIndex = frameSize * source->lastReadFrameIndex + i;
+        sampleIndex *= source->pitch;
         jfloat v;
         if (sampleIndex >= sourceSamples) {  // Write 0s if the frame size exceed the remaining source's bytes
             // printf("Phonon: trying to read sample n%d but source contains only %d samples. A zero sample will be returned instead.\n ", sampleIndex, sourceSamples);
@@ -49,7 +50,7 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
         } else {
             v = data[sampleIndex];
         }
-        store[i] = v;
+        store[i] = v*source->volume;
     }
     source->lastReadFrameIndex++;
 
