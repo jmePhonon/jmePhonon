@@ -22,7 +22,7 @@ public class PhononPlayer {
     int preloadBytes = 0;
 
     boolean isRunning;
-
+    byte tmp[];
     public PhononPlayer(PhononChannel chan, int sampleRate,
             int outputChannels,int outputSampleSize) throws LineUnavailableException {
         channel = chan;
@@ -44,9 +44,12 @@ public class PhononPlayer {
        
        preloadBytes = (int)(((1000000l * 50l) / nsPerSample)*bytesPerSample);
        if (output.getBufferSize() < preloadBytes)
-           preloadBytes = output.getBufferSize();
+            preloadBytes = output.getBufferSize();
+           
+
            int preloadedSamplesNum = preloadBytes / bytesPerSample;
 
+           tmp= new byte[output.getBufferSize()];
         System.out.println("Delay playback for " +( (preloadedSamplesNum *nsPerSample )/1000000l )+ " ms / " + preloadedSamplesNum
                 + " samples / " + preloadBytes + " bytes");
     }
@@ -74,7 +77,7 @@ public class PhononPlayer {
             
             writableBytes= output.available();
             
-            byte tmp[] = new byte[writableBytes];
+            
             read = input.read(tmp);
             
             if (read > 0) {
