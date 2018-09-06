@@ -12,6 +12,7 @@
 #include "JmePhonon.h"
 #include "OutputLine.h"
 #include "AudioSource.h"
+#include "UList.h"
 
 
 struct GlobalSettings SETTINGS;
@@ -91,26 +92,33 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jboolean loop = false;
 
         jint mixerQueueSize = 0;
-        for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
+        
+        /*for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
             struct AudioSource *audioSource = &line->sourcesSlots[j];
-            if(asIsConnected(&SETTINGS,audioSource)){
-                if(asReadNextFrame(&SETTINGS,audioSource,Temp.inputFrame)){
-                    // Reached end
-                    if(loop){
+            if(asIsConnected(&SETTINGS,audioSource)){*/
 
-                    }else{
+        struct UListNode* unode = UList.head->next;
+        while(!ulistIsTail(unode)) {
+            if(asReadNextFrame(&SETTINGS, unode->audioSource, Temp.inputFrame)){
+                // Reached end
+                if(loop){
 
-                    }
+                } else {
+
                 }
-
-                if(SETTINGS.isPassthrough){
-                    passThrough(Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
-                }else{
-                    phProcessFrame(&SETTINGS,audioSource,Temp.inputFrame,Temp.mixerQueue[mixerQueueSize++]);
-                }
-
             }
+
+            if(SETTINGS.isPassthrough) {
+                passThrough(Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+            } else {
+                phProcessFrame(&SETTINGS, unode->audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+            }
+
+            unode = unode->next;
         }
+        /*
+            }
+        }*/
 
             jfloat *output = Temp.outputFrame;
             if(mixerQueueSize==1){
@@ -161,7 +169,7 @@ jboolean isPassthrough
         Temp.mixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
     }
 
-
+    ulistInit();
   
     phInit(&SETTINGS,nSourcesPerLine);
     for(jint i=0;i<SETTINGS.nOutputLines;i++){

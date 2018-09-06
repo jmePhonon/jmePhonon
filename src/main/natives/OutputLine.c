@@ -1,7 +1,4 @@
-#define __OUTPUT_LINE_INTERNAL__
 #include "OutputLine.h"
- 
-
 
 struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
     struct OutputLine *lines= malloc(sizeof(struct OutputLine) * nOutputLines);

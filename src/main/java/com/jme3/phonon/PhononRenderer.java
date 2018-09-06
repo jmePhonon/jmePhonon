@@ -215,7 +215,7 @@ public class PhononRenderer implements AudioRenderer {
 			for (PhononPlayer player : PLAYERS) {
 				byte res = player.playLoop();
 			}
-		
+
 		} while (!THREAD_MODE.isNative||THREAD_MODE.isDecoupled);
 		
 	}
