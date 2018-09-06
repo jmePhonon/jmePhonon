@@ -1,17 +1,12 @@
 package com.jme3.phonon.format;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import com.jme3.audio.AudioBuffer;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioStream;
-import com.jme3.phonon.format.converter.AudioDataConverter;
-import com.jme3.phonon.format.converter.AudioDataConverterFactory;
+import com.jme3.phonon.format.converter.AudioDataEncoder;
+import com.jme3.phonon.format.converter.AudioDataEncoderFactory;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 
@@ -57,8 +52,8 @@ public class F32leAudioData {
             inputData.rewind();
             dataAddress = DirectBufferUtils.getAddr(data);
 
-            AudioDataConverter converter = AudioDataConverterFactory.getConverter(bufferBitsPerSample);
-            converter.convertData(inputData, data);
+            AudioDataEncoder converter = AudioDataEncoderFactory.getEncoder(bufferBitsPerSample);
+            converter.encodeData(inputData, data);
 
             inputData.rewind();
             data.rewind();
