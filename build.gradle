@@ -90,6 +90,5 @@ task prepareWorkspace(type:Exec){
     commandLine 'bash','prepare.sh','getSteamAudio',"true"
 }
 prepareWorkspace.dependsOn(downloadResources)
-prepareWorkspace.finalizedBy(buildNatives)
 
 build.dependsOn(buildNatives)

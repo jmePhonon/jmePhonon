@@ -72,7 +72,7 @@ then
     cp -Rf bin/* lib/
     safeRm bin
 
-    cd docs
+    cd doc
     git clone https://github.com/ValveSoftware/steam-audio.git
     cd steam-audio 
     git branch gh-pages
