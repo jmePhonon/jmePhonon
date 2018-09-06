@@ -79,7 +79,7 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
 
     phUpdateListener(settings,0, 0, 0,     0, 0, 0, 0);
 
-    PhContext.mixerQueue = malloc(sizeof(IPLAudioFormat)*mixerQueueSize);
+    PhContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
     for(jint i=0;i<mixerQueueSize;i++){
         PhContext.mixerQueue[i].format = PhContext.outputFormat;
         PhContext.mixerQueue[i].numSamples = PhContext.settings.frameSize ;
