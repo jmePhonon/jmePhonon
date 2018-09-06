@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 import com.jme3.audio.AudioBuffer;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioStream;
-import com.jme3.phonon.format.converter.AudioDataEncoder;
-import com.jme3.phonon.format.converter.AudioDataEncoderFactory;
+import com.jme3.phonon.format.encoder.AudioDataEncoder;
+import com.jme3.phonon.format.encoder.AudioDataEncoderFactory;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 
@@ -15,6 +15,7 @@ import com.jme3.util.BufferUtils;
  * 
  * Audio data ready to be processed by phonon
  */
+
 public class F32leAudioData {
     protected int sampleRate;
     protected int channels;

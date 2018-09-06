@@ -1,6 +1,6 @@
-package com.jme3.phonon.player.converter;
+package com.jme3.phonon.format.decoder;
 
-public interface PlayerConverter {
+public interface AudioDataDecoder {
     /**
      * Auxiliary method to decode multiple floats to ints.
      * 
@@ -10,6 +10,6 @@ public interface PlayerConverter {
      * @author aegroto
      */
 
-    public abstract void convert(byte[] input, byte[] output);
+    public abstract void decode(byte[] input, byte[] output);
 
 }

@@ -1,4 +1,4 @@
-package com.jme3.phonon.format.converter;
+package com.jme3.phonon.format.encoder;
 
 public class AudioDataEncoderFactory {
 
