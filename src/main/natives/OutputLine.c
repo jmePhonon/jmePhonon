@@ -69,11 +69,7 @@ void olDisconnectSource(struct GlobalSettings *settings,struct AudioSource *sour
     line->numConnectedSources--; 
     source->data = NULL;
     source->connectedLine = NULL;
-
 }
-
-
-
 
 void olSetLastProcessedFrameId(struct GlobalSettings *settings,struct OutputLine *line, jint v) {
     ((jint *)line->outputBuffer)[olHeader(LAST_PROCESSED_FRAME)] = v;

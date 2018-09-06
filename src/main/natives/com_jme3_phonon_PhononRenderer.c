@@ -104,7 +104,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 if(loop){
 
                 } else {
-
+                    ulistRemove(unode);
                 }
             }
 

@@ -23,8 +23,8 @@ void ulistRemove(struct UListNode* node) {
     node->prev->next = node->next;
     node->next->prev = node->prev;
 
-    node->next = NULL;
-    node->prev = NULL;
+    // node->next = NULL;
+    // node->prev = NULL;
 }
 
 jboolean ulistIsTail(struct UListNode* node) {

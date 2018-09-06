@@ -18,6 +18,10 @@ void asInit(struct GlobalSettings *settings, struct AudioSource *source){
     source->connectedLine = NULL;
     source->phononContext = NULL;
 
+    source->unode = (struct UListNode*) malloc(sizeof(struct UListNode));
+    source->unode->audioSource = source;
+    source->unode->next = NULL;
+    source->unode->prev = NULL;
 }
 
 struct AudioSource* asNew(struct GlobalSettings *settings,jint n){

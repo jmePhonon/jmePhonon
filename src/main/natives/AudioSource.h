@@ -1,9 +1,11 @@
 #ifndef __SOURCE_BIND__
 #define __SOURCE_BIND__ 1
+
 #include <jni.h>          
 #include <stdlib.h>
 #include "types.h"
 #include "Settings.h"
+#include "UList.h"
 
 struct AudioSource {
     jfloat *data; // float 32 little endian, multiple sources can share the same audio data
@@ -17,6 +19,8 @@ struct AudioSource {
     jfloat pitch; //source pitch
 
     jboolean loop;
+
+    struct UListNode* unode; // U-List node
 
     void *connectedLine; // Pointer to the line to which the source is connected
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
