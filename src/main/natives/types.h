@@ -1,5 +1,9 @@
+#ifndef __TYPES__
+#define __TYPES__
 #define true 1
 #define false 0
+
+
 
 // #define bool error_use_jni_type
 // #define char error_use_jni_type
@@ -11,3 +15,6 @@
 // #define unsigned error_use_jni_type
 // #define signed error_use_jni_type
 
+
+
+#endif

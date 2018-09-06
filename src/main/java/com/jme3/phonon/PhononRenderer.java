@@ -48,24 +48,26 @@ public class PhononRenderer implements AudioRenderer {
 	private final PhononChannel[] OUTPUT_LINES;
 	// Output channels, 1=mono, 2=stereo ..
 	private final int OUTPUT_CHANNELS_NUM;
+	private final int SOURCES_PER_OUTPUT_LINE;
 	// How many samples per frame
 	private final int FRAME_SIZE;
 	// How many frames per buffer
 	private final int BUFFER_SIZE;
 	// Samplerate (eg 44100)
 	private final int SAMPLE_RATE;
-
+	
 
 	private final Collection<PhononPlayer> PLAYERS = new ConcurrentLinkedQueue<>();
 
 
 	public final PhononEffects effects=new PhononEffects();
 
-	ThreadMode THREAD_MODE = ThreadMode.NATIVE_DECOUPLED;
+	ThreadMode THREAD_MODE = ThreadMode.JAVA;
 
-	public PhononRenderer(int sampleRate, int nOutputLines, int nOutputChannels, int frameSize,
+	public PhononRenderer(int sampleRate, int nOutputLines,int nSourcesPerLine, int nOutputChannels, int frameSize,
 			int bufferSize) {
 		OUTPUT_LINES = new PhononChannel[nOutputLines];
+		SOURCES_PER_OUTPUT_LINE = nSourcesPerLine;
 		OUTPUT_CHANNELS_NUM = nOutputChannels;
 		SAMPLE_RATE = sampleRate;
 		FRAME_SIZE = frameSize;
@@ -82,7 +84,12 @@ public class PhononRenderer implements AudioRenderer {
 	void preInit() {
 		
 		// DELTA_S=  1./(44100 / FRAME_SIZE) ;
-		initNative(SAMPLE_RATE, OUTPUT_LINES.length, OUTPUT_CHANNELS_NUM, FRAME_SIZE, BUFFER_SIZE,
+		initNative(SAMPLE_RATE, 
+				OUTPUT_LINES.length,
+				SOURCES_PER_OUTPUT_LINE,
+				OUTPUT_CHANNELS_NUM, 
+				FRAME_SIZE, 
+				BUFFER_SIZE,
 				THREAD_MODE.isNative,
 				THREAD_MODE.isDecoupled,
 				
@@ -92,7 +99,7 @@ public class PhononRenderer implements AudioRenderer {
 		);
 		for (int i = 0; i < OUTPUT_LINES.length; i++) {
 			OUTPUT_LINES[i] = new PhononChannel(FRAME_SIZE*OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
-			loadChannelNative(i, OUTPUT_LINES[i].getAddress());
+			initLineNative(i, OUTPUT_LINES[i].getAddress());
 		}
 	}
 
@@ -121,43 +128,66 @@ public class PhononRenderer implements AudioRenderer {
 		destroyNative();
 	}
 
-	native void initNative(int sampleRate, int nOutputLines, int nOutputChannels, int frameSize
-	,int bufferSize,boolean nativeThread,boolean decoupledNativeThread,
-	// effects
-	boolean isPassThrough
-	);
-	native void updateNative();
-	native void destroyNative();
-	native void connectSourceNative(int lineID, int length, long sourceAddr);
-	native void disconnectSourceNative(int lineID);
+	/**
+	 * Connect a source to an outputline
+	 * @param length Lenght of the source measured in samples
+	 * @param sourceAddr Address of the source
+	 * @return 64 bit memory address of the source
+	 */
+	native long connectSourceNative(int length, long sourceAddr);
 	
 	/**
+	 * Disconnect source from an output line
+	 * @param addr The memory address of the source
+	 */
+	native void disconnectSourceNative(long addr);
+
+	/**
+	 * Initialize an output line
 	 * @param addr Output buffer address
 	 * @param frameSize samples per frame
 	 * @param bufferSize total number of frames in this buffer
 	 */
-	native void loadChannelNative(int id,long addr);
+	native void initLineNative(int id,long addr);
+
+	native void updateNative();
 
 
-	public void connectSource(F32leAudioData audioData, int lineID) {
-		System.out.println("Connect source [" + audioData.getAddress() + "] of size " + audioData.getSizeInSamples()
-				+ " samples, to channel " + lineID);
+
+	native void initNative(
+			int sampleRate, 
+			int nOutputLines,
+			int nSourcesPerLine,
+			int nOutputChannels, 
+			int frameSize,
+			int bufferSize,
+			boolean nativeThread,
+			boolean decoupledNativeThread,
+			// effects
+			boolean isPassThrough
+	);
+
+	native void destroyNative();
+	
+	
+
+	public long connectSource(F32leAudioData audioData) {
+		System.out.println("Connect source [" + audioData.getAddress() + "] of size " + audioData.getSizeInSamples());
 		int length = audioData.getSizeInSamples();
 		long addr = audioData.getAddress();
 
-		OUTPUT_LINES[lineID].reset();
-		connectSourceNative(lineID, length,addr);
+		// OUTPUT_LINES[lineID].reset();
+		return connectSourceNative( length,addr);
 	}
 
 	
-	public void connectSourceRaw(int lineID, int length, ByteBuffer source) {
+	public long connectSourceRaw( int length, ByteBuffer source) {
 		long addr = DirectBufferUtils.getAddr(source);
-		connectSourceNative(lineID, length, addr);
-		OUTPUT_LINES[lineID].reset();
+		return connectSourceNative( length, addr);
 	}
 
-	public void disconnectSourceRaw(int lineID) {
-		disconnectSourceNative(lineID);
+	public void disconnectSourceRaw(long addr) {
+		disconnectSourceNative(addr);
 	}
 
 	public void attachPlayer(PhononPlayer player) {

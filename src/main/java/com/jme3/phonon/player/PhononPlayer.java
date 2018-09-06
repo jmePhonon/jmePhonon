@@ -86,7 +86,7 @@ public class PhononPlayer {
                     preloadBytes -= written;
                 }
             } else {
-                System.out.println("FIXME: Phonon is lagging behind");
+                // System.out.println("FIXME: Phonon is lagging behind");
                 out=1;
                 // no data available
             }

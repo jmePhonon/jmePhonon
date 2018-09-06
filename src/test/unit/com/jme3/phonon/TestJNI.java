@@ -22,11 +22,11 @@ public class TestJNI extends TestCase {
             bbf.putFloat((float) Math.random());
         }
 
-        PhononRenderer renderer = new PhononRenderer(44100, 1, 1, frameSize, bufferSize);
+        PhononRenderer renderer = new PhononRenderer(44100, 1, 1,1, frameSize, bufferSize);
         renderer.effects.passThrough = true;
         
         renderer.preInit();        
-        renderer.connectSourceRaw(0, bbf.limit()/4, bbf);
+        renderer.connectSourceRaw(bbf.limit()/4, bbf);
 
 
         PhononChannel chan = renderer.getLine(0);
@@ -41,9 +41,13 @@ public class TestJNI extends TestCase {
             tmpout_cnv.put(tmpout);
             tmpout_cnv.rewind();
             for (int j = 0; j < frameSize; j++) {
+
                 float result = tmpout_cnv.getFloat();
-                bbf.position((i*frameSize+j)*4);
+                bbf.position((i * frameSize + j) * 4);
+
                 float expected_result = bbf.getFloat();
+                // System.out
+                //         .println(expected_result + " was expected but got " + result + " instead.");
                 assertEquals(expected_result + " was expected but got " + result + " instead.", expected_result,
                 result);
             }

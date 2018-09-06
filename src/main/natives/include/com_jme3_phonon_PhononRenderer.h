@@ -9,11 +9,27 @@ extern "C" {
 #endif
 /*
  * Class:     com_jme3_phonon_PhononRenderer
- * Method:    initNative
- * Signature: (IIIIIZZZ)V
+ * Method:    connectSourceNative
+ * Signature: (IJ)J
  */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jboolean, jboolean, jboolean);
+JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
+  (JNIEnv *, jobject, jint, jlong);
+
+/*
+ * Class:     com_jme3_phonon_PhononRenderer
+ * Method:    disconnectSourceNative
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative
+  (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     com_jme3_phonon_PhononRenderer
+ * Method:    initLineNative
+ * Signature: (IJ)V
+ */
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initLineNative
+  (JNIEnv *, jobject, jint, jlong);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
@@ -25,35 +41,19 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
+ * Method:    initNative
+ * Signature: (IIIIIIZZZ)V
+ */
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
+  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jboolean, jboolean, jboolean);
+
+/*
+ * Class:     com_jme3_phonon_PhononRenderer
  * Method:    destroyNative
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative
   (JNIEnv *, jobject);
-
-/*
- * Class:     com_jme3_phonon_PhononRenderer
- * Method:    connectSourceNative
- * Signature: (IIJ)V
- */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
-  (JNIEnv *, jobject, jint, jint, jlong);
-
-/*
- * Class:     com_jme3_phonon_PhononRenderer
- * Method:    disconnectSourceNative
- * Signature: (I)V
- */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative
-  (JNIEnv *, jobject, jint);
-
-/*
- * Class:     com_jme3_phonon_PhononRenderer
- * Method:    loadChannelNative
- * Signature: (IJ)V
- */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_loadChannelNative
-  (JNIEnv *, jobject, jint, jlong);
 
 #ifdef __cplusplus
 }

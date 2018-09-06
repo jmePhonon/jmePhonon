@@ -1,11 +1,27 @@
-
-
-
-
+#define __JMEPHONON_INTERNAL__
 #include "JmePhonon.h"
 
 #include "types.h"
 
+  struct {
+        IPLhandle context;
+        IPLRenderingSettings settings;
+
+        IPLAudioFormat inputFormat;
+        IPLAudioFormat outputFormat;
+        IPLAudioBuffer inputBuffer;
+        IPLAudioBuffer outputBuffer;
+
+        IPLVector3 listenerPosition;
+        IPLQuaternion listenerRotation;
+
+        IPLHrtfParams hrtfParams;
+        IPLhandle binauralRenderer;
+        IPLhandle binauralEffect;
+
+        IPLAudioBuffer *mixerQueue;
+    
+    } PhContext;
 
 /** Adapted from jmonkeyengine's Quaternion.java */
 void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
@@ -33,7 +49,7 @@ void phSubVecVec(IPLVector3 *v1, IPLVector3 *v2,IPLVector3 *store){
     store->z = z-v2->z;
 }
 
-void phInit(struct GlobalSettings *settings){
+void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
     iplCreateContext(NULL, NULL, NULL, &PhContext.context);
     PhContext.settings.samplingRate = settings->sampleRate;
     PhContext.settings.frameSize =settings->inputFrameSize;
@@ -52,14 +68,24 @@ void phInit(struct GlobalSettings *settings){
     iplCreateBinauralEffect(PhContext.binauralRenderer, PhContext.inputFormat, PhContext.outputFormat, &PhContext.binauralEffect);
 
     PhContext.inputBuffer.format = PhContext.inputFormat;
+ 
+
     PhContext.outputBuffer.format = PhContext.outputFormat;
 
+  
     PhContext.inputBuffer.numSamples = PhContext.settings.frameSize ;
+
     PhContext.outputBuffer.numSamples = PhContext.settings.frameSize ;
 
     phUpdateListener(settings,0, 0, 0,     0, 0, 0, 0);
-}
 
+    PhContext.mixerQueue = malloc(sizeof(IPLAudioFormat)*mixerQueueSize);
+    for(jint i=0;i<mixerQueueSize;i++){
+        PhContext.mixerQueue[i].format = PhContext.outputFormat;
+        PhContext.mixerQueue[i].numSamples = PhContext.settings.frameSize ;
+        
+    }
+}
 
 void phProcessFrame(struct GlobalSettings *settings,jfloat *inFrame, jfloat *outFrame){
     // for(jint i=0;i<PhContext.settings.frameSize;i++){
@@ -82,7 +108,7 @@ void phProcessFrame(struct GlobalSettings *settings,jfloat *inFrame, jfloat *out
 }
 
 void phDestroy(struct GlobalSettings *settings){
-
+    free(PhContext.mixerQueue);
 }
 
 void phUpdateListener(struct GlobalSettings *settings,
@@ -99,4 +125,15 @@ jfloat wrotx,jfloat wroty,jfloat wrotz,jfloat wrotw
     PhContext.listenerRotation.z = wrotz;
     PhContext.listenerRotation.w = wrotw;
 
+}
+
+/**
+ * Mix multiple outputBuffers
+ */
+void phMixOutputBuffers(jfloat **input,jint numInputs,jfloat *output){
+    for(jint i=0;i<numInputs;i++){
+        PhContext.mixerQueue[i].interleavedBuffer = input[i];
+    }
+    PhContext.outputBuffer.interleavedBuffer = output;
+    iplMixAudioBuffers(numInputs, PhContext.mixerQueue, PhContext.outputBuffer);
 }
