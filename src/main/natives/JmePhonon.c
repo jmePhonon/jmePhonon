@@ -197,17 +197,20 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *source,j
     sourcePosition.z = 0;
 
     IPLVector3 *listenerPos = phGetListenerPosition();
-        IPLVector3 *listenerUp = phGetListenerUp();
-        IPLVector3 *listenerDirection = phGetListenerDirection();
+    IPLVector3 *listenerUp = phGetListenerUp();
+    IPLVector3 *listenerDirection = phGetListenerDirection();
 
     IPLVector3 direction= iplCalculateRelativeDirection(sourcePosition, (*listenerPos),
-        (*listenerDirection), (*listenerUp));       
+        (*listenerDirection), (*listenerUp));      
+
+
    
 
     PhSharedContext.inputBuffer.interleavedBuffer = inFrame;
     PhSharedContext.outputBuffer.interleavedBuffer = outFrame;
 
     iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.inputBuffer, direction, IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
+
 }
 
 

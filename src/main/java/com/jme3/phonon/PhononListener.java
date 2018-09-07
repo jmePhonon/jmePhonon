@@ -15,13 +15,13 @@ public class PhononListener {
     public volatile boolean needNativeUpdate = false;
     private final ByteBuffer MEMORY;
 
-    public volatile boolean posUpdate = true;
+    public volatile boolean posUpdate = false;
     public volatile float posX=0, posY=0, posZ=0;
-    public volatile boolean rotUpdate = true;
+    public volatile boolean rotUpdate = false;
     public volatile float dirX=0, dirY=0, dirZ=0, upX=0,upY=0,upZ=0;
-    public volatile boolean velUpdate = true;
+    public volatile boolean velUpdate = false;
     public volatile float velX=0, velY=0, velZ=0;
-    public volatile boolean volumeUpdate = true;
+    public volatile boolean volumeUpdate = false;
     public volatile float volume=0;
 
     public PhononListener() {

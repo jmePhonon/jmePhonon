@@ -18,9 +18,11 @@ public class PhononOutputLine {
 
     protected final ByteBuffer buffer;
     private final int bufferSize;    // Buffersize in frames
-    private final int frameSize;    // Frame size in samples
     private final long bufferAddress;
-    
+
+    private final int CHANNELS;
+    private final int FRAMESIZE;    // Frame size in samples, total framesize is CHANNELS*FRAMESIZE
+
     public static enum ChannelStatus {
         OVER, NODATA, READY
     }
@@ -41,11 +43,12 @@ public class PhononOutputLine {
      * @param bufferedFrames How many frames should this queue contain
      * @param samplesPerFrame 
      */
-    public PhononOutputLine(int frameSize, int bufferSize) {
+    public PhononOutputLine(int frameSize, int channels,int bufferSize) {
         this.bufferSize = bufferSize;
-        // this.channels = channels;
+        CHANNELS = channels;
+        FRAMESIZE = frameSize;
         // Allocate direct buffer, the first 8+ 4 + 4 bytes contain the source id and two int indices
-        this.frameSize = frameSize;
+        frameSize*=channels;
         buffer = BufferUtils.createByteBuffer(HEADER_size + frameSize * _SAMPLE_SIZE * bufferSize).order(ByteOrder.LITTLE_ENDIAN);
         buffer.position(HEADER_size);
 
@@ -55,12 +58,16 @@ public class PhononOutputLine {
     }
 
 
+    public int getChannels() {
+        return CHANNELS;
+    }
+
    
     /**
      * How many samples per frame
      */
     public int getFrameSize() {
-        return frameSize;
+        return FRAMESIZE;
     }
     
     /**
@@ -136,7 +143,7 @@ public class PhononOutputLine {
         // If we reached the end of the buffer, restart from the begin
         int readindex = rawIndex % bufferSize;  
 
-        int frameSize = getFrameSize();
+        int frameSize = getFrameSize()*getChannels();
 
         // Move buffer cursor to the correct position
         buffer.position(BODY + readindex * frameSize * _SAMPLE_SIZE);

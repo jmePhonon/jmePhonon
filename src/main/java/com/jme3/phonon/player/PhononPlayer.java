@@ -18,7 +18,6 @@ public class PhononPlayer {
     InputStream input;
     SourceDataLine output;
     AudioFormat audioFormat;
-    int dataLineSampleSize;    
     int preloadBytes = 0;
 
     boolean isRunning;
@@ -26,23 +25,23 @@ public class PhononPlayer {
     public PhononPlayer(PhononOutputLine chan, int sampleRate,
             int outputChannels,int outputSampleSize,int maxPreBuffering) throws LineUnavailableException {
         channel = chan;
-        dataLineSampleSize = outputSampleSize;
-
 
         int bytesPerSample = (outputSampleSize / 8);
 
-        input = new PhononOutputLineIntInputStream(channel,outputSampleSize);
+        input = new PhononOutputLineIntInputStream(channel, outputSampleSize);
+        
         audioFormat = new AudioFormat(sampleRate, outputSampleSize, outputChannels, true, false);
         output = AudioSystem.getSourceDataLine(audioFormat);
         output.open(audioFormat);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
 
    
-      //preloadedSamplesNum * bytesPerSample;
 
 
         long nsPerSample= 1000000000l / sampleRate;
        
-       preloadBytes = (int)(((1000000l * maxPreBuffering) / nsPerSample)*bytesPerSample);
+        preloadBytes = (int) (((1000000l * maxPreBuffering) / nsPerSample) * bytesPerSample);
+       
+
        if (output.getBufferSize() < preloadBytes)
             preloadBytes = output.getBufferSize();
            

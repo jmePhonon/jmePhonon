@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.sound.sampled.LineUnavailableException;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioParam;
 import com.jme3.audio.AudioRenderer;
@@ -29,7 +30,7 @@ import com.jme3.system.Platform;
  */
 public class PhononRenderer implements AudioRenderer {
 
-	private final Map<AudioData, F32leAudioData> conversionCache =
+	private final Map<AudioData, F32leAudioData> CONVERSION_CACHE =
 			new WeakHashMap<AudioData, F32leAudioData>();
 	// private final List<PhononPlayer> enqueuedPlayers = new LinkedList<>();
 
@@ -49,6 +50,8 @@ public class PhononRenderer implements AudioRenderer {
 
 	// Mixer lines
 	private final PhononOutputLine[] OUTPUT_LINES;
+	private final PhononPlayer[] PLAYERS;
+
 	// Output channels, 1=mono, 2=stereo ..
 	private final int OUTPUT_CHANNELS_NUM;
 	private final int SOURCES_PER_OUTPUT_LINE;
@@ -58,29 +61,67 @@ public class PhononRenderer implements AudioRenderer {
 	private final int BUFFER_SIZE;
 	// Samplerate (eg 44100)
 	private final int SAMPLE_RATE;
+	private final int OUTPUT_SAMPLE_SIZE;
+	private final int MAX_PLAYER_PREBUFFERING;
 
 	private final PhononListener PHONON_LISTENER;
-	private final Collection<PhononPlayer> PLAYERS = new ConcurrentLinkedQueue<>();
-	public final PhononEffects effects = new PhononEffects();
 
 	private Listener jmeListener;
 
-	ThreadMode THREAD_MODE = ThreadMode.JAVA;
+	final ThreadMode THREAD_MODE;
+	
 
-	Object MONITOR = new Object();
-	boolean USE_SYNCHRONIZER = true;
 
-	public PhononRenderer(int sampleRate, int nOutputLines, int nSourcesPerLine,
-			int nOutputChannels, int frameSize, int bufferSize) {
+	public PhononRenderer(
+			int sampleRate,
+			int nOutputLines,
+	  		int nSourcesPerLine,
+			int nOutputChannels, 
+			int frameSize,
+			int bufferSize,
+			int outputSampleSize,
+			int maxPrebufferingMS,
+			ThreadMode threadMode,PhononEffects effects		 
+	) throws LineUnavailableException {
+		SAMPLE_RATE = sampleRate;
 		OUTPUT_LINES = new PhononOutputLine[nOutputLines];
-		PHONON_LISTENER = new PhononListener();
 		SOURCES_PER_OUTPUT_LINE = nSourcesPerLine;
 		OUTPUT_CHANNELS_NUM = nOutputChannels;
-		SAMPLE_RATE = sampleRate;
 		FRAME_SIZE = frameSize;
 		BUFFER_SIZE = bufferSize;
+		MAX_PLAYER_PREBUFFERING = maxPrebufferingMS;
+		THREAD_MODE = threadMode;
+
+		PHONON_LISTENER = new PhononListener();
+		PLAYERS = new PhononPlayer[nOutputLines];
+		OUTPUT_SAMPLE_SIZE = outputSampleSize;
+
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
+
+
+
+		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
+		initNative(
+			SAMPLE_RATE, 
+				OUTPUT_LINES.length, 
+				SOURCES_PER_OUTPUT_LINE, 
+				OUTPUT_CHANNELS_NUM,
+				FRAME_SIZE, 
+				BUFFER_SIZE, 
+				THREAD_MODE.isNative, 
+				THREAD_MODE.isDecoupled,
+				PHONON_LISTENER.getAddress()	,			// Effects
+				effects.passThrough
+		);
+
+		for (int i = 0; i < OUTPUT_LINES.length; i++) {
+			OUTPUT_LINES[i] = new PhononOutputLine(FRAME_SIZE, OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
+			initLineNative(i, OUTPUT_LINES[i].getAddress());
+
+			PLAYERS[i] = new PhononPlayer(OUTPUT_LINES[i], SAMPLE_RATE, OUTPUT_CHANNELS_NUM,
+					OUTPUT_SAMPLE_SIZE, MAX_PLAYER_PREBUFFERING);
+		}
 	}
 
 
@@ -88,27 +129,10 @@ public class PhononRenderer implements AudioRenderer {
 		return OUTPUT_LINES[i];
 	}
 
-	void preInit() {
-
-		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
-		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
-				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
-				PHONON_LISTENER.getAddress(),
-				// Effects
-				effects.passThrough
-
-		);
-		for (int i = 0; i < OUTPUT_LINES.length; i++) {
-			OUTPUT_LINES[i] = new PhononOutputLine(FRAME_SIZE * OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
-			initLineNative(i, OUTPUT_LINES[i].getAddress());
-		}
-	}
 
 	@Override
 	public void initialize() {
-
-		preInit();
-
+	
 
 		if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
 			Thread decoderThread = new Thread(() -> runDecoder());
@@ -188,11 +212,6 @@ public class PhononRenderer implements AudioRenderer {
 		disconnectSourceNative(addr);
 	}
 
-	public void attachPlayer(PhononPlayer player) {
-		PLAYERS.add(player);
-	}
-
-
 
 	// long UPDATE_RATE = 50* 1000000l;
 	public void runDecoder() {
@@ -206,6 +225,7 @@ public class PhononRenderer implements AudioRenderer {
 				}
 			}
 			PHONON_LISTENER.updateNative();
+
 			if (!THREAD_MODE.isNative)
 				updateNative();
 			for (PhononPlayer player : PLAYERS) {
@@ -219,10 +239,10 @@ public class PhononRenderer implements AudioRenderer {
 
 
 	private F32leAudioData toF32leData(AudioData d) {
-		F32leAudioData o = conversionCache.get(d);
+		F32leAudioData o = CONVERSION_CACHE.get(d);
 		if (o == null) {
 			o = new F32leAudioData(d);
-			conversionCache.put(d, o);
+			CONVERSION_CACHE.put(d, o);
 		}
 		return o;
 	}
@@ -249,7 +269,7 @@ public class PhononRenderer implements AudioRenderer {
 	@Override
 	public void playSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
-
+		this.connectSource(data);
 
 	}
 
@@ -297,6 +317,7 @@ public class PhononRenderer implements AudioRenderer {
 				PHONON_LISTENER.setVolumeUpdateNeeded();
 			}
 		}
+
 	}
 
 	@Override

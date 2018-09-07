@@ -15,7 +15,7 @@ import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
 
 public class PhononOutputLineIntInputStream extends InputStream {
     ChannelStatus lastStat;
-    PhononOutputLine chan;
+    PhononOutputLine line;
     byte floatBuffer[];
     byte tmpBuffer[];
     int tmpBufferI = 0;
@@ -23,11 +23,11 @@ public class PhononOutputLineIntInputStream extends InputStream {
  
     private AudioDataDecoder decoder;
 
-    public PhononOutputLineIntInputStream(PhononOutputLine chan,int sampleSize) {
-        this.chan = chan;
+    public PhononOutputLineIntInputStream(PhononOutputLine line,int sampleSize) {
+        this.line = line;
         this.sampleSize = sampleSize;
-        floatBuffer = new byte[chan.getFrameSize() * 4];
-        tmpBuffer = new byte[chan.getFrameSize() * (sampleSize/8)];
+        floatBuffer = new byte[line.getFrameSize() *line.getChannels()* 4];
+        tmpBuffer = new byte[line.getFrameSize() *line.getChannels()* (sampleSize/8)];
 
         decoder = AudioDataDecoderFactory.getAudioDataDecoder(sampleSize);
     }
@@ -37,7 +37,7 @@ public class PhononOutputLineIntInputStream extends InputStream {
         if (tmpBufferI == tmpBuffer.length) {
             if (lastStat == ChannelStatus.OVER)
                 throw new EOFException(lastStat.toString());
-            lastStat = chan.readNextFrameForPlayer(floatBuffer);
+            lastStat = line.readNextFrameForPlayer(floatBuffer);
             if (lastStat == ChannelStatus.NODATA) {
                 return -1;
             }

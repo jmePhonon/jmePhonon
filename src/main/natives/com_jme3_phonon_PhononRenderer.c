@@ -82,9 +82,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS,line);
         jint lineBufferSize = SETTINGS.bufferSize;
 
-        jint maxPhononFrameAdvantage = 2;
         // Processing is too fast, skip.
-        if(frameIndex-lastPlayedFrameIndex>maxPhononFrameAdvantage){
+        if(frameIndex-lastPlayedFrameIndex>lineBufferSize-1){
             continue;
         }
         
@@ -152,7 +151,6 @@ jboolean isPassthrough
     // SETTINGS.outputFrameSize = frameSize * nOutputChannels;
     SETTINGS.sampleRate = sampleRate;
     SETTINGS.bufferSize = bufferSize;
-
     SETTINGS.isPassthrough = isPassthrough;
 
     OUTPUT_LINES = olNew(&SETTINGS,nOutputLines);
