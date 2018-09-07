@@ -25,7 +25,7 @@ void ulistInit(struct UList*);
  * Creates a new U-List node.
  */
 
-struct UListNode* ulistCreateNode(struct AudioSource*);
+struct UListNode* ulistInitNode(struct UListNode*, struct AudioSource*);
 
 /**
  * Add a given node to the U-List.
@@ -40,9 +40,21 @@ void ulistAdd(struct UList*, struct UListNode*);
 void ulistRemove(struct UListNode*);
 
 /**
- * Check if a given node is the U-List's tail comparing its address to the tail's one.
+ * Check if the given node is the given U-List's tail comparing its address to the tail's one.
  */
 
 jboolean ulistIsTail(struct UList*, struct UListNode*);
+
+/**
+ * Destroy a U-List.
+ */
+
+void ulistDestroy(struct UList*);
+
+/**
+ * Destroy a U-List node.
+ */
+
+void ulistDestroyNode(struct UListNode*);
 
 #endif

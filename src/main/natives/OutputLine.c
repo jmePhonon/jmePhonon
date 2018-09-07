@@ -21,6 +21,7 @@ struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
 void olDestroy(struct GlobalSettings *settings,struct OutputLine *lines,jint nOutputLines){
     for(int i=0;i<nOutputLines;i++){
         asDestroy(settings, lines[i].sourcesSlots,settings->nSourcesPerLine);
+        ulistDestroy(lines[i].uList);
     }
     free(lines);
 }
@@ -51,7 +52,7 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
             bestLine->sourcesSlots[i].data = data;
             bestLine->sourcesSlots[i].numSamples = sourceSamples;
             bestLine->sourcesSlots[i].connectedLine = bestLine;
-            ulistAdd(bestLine->uList, bestLine->sourcesSlots[i].unode);
+            ulistAdd(bestLine->uList, bestLine->sourcesSlots[i].uNode);
 
             bestLine->numConnectedSources++;
             printf("Connect source to slot %d \n",i);
@@ -73,7 +74,7 @@ void olDisconnectSource(struct GlobalSettings *settings,struct AudioSource *sour
     line->numConnectedSources--; 
     source->data = NULL;
     source->connectedLine = NULL;
-    ulistRemove(source->unode);
+    ulistRemove(source->uNode);
 }
 
 void olSetLastProcessedFrameId(struct GlobalSettings *settings,struct OutputLine *line, jint v) {

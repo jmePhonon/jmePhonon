@@ -11,8 +11,7 @@ void ulistInit(struct UList* uList) {
     uList->tail->prev = uList->head;
 }
 
-struct UListNode* ulistCreateNode(struct AudioSource* source) {
-    struct UListNode* node = (struct UListNode*) malloc(sizeof(struct UListNode));
+struct UListNode* ulistInitNode(struct UListNode* node, struct AudioSource* source) {
     node->audioSource = source;
     node->next = NULL;
     node->prev = NULL;
@@ -43,4 +42,15 @@ void ulistRemove(struct UListNode* node) {
 
 jboolean ulistIsTail(struct UList* uList, struct UListNode* node) {
     return node == uList->tail;
+}
+
+void ulistDestroy(struct UList* uList) {
+    ulistDestroyNode(uList->head);
+    ulistDestroyNode(uList->tail);
+
+    free(uList);
+}
+
+void ulistDestroyNode(struct UListNode* node) {
+    free(node);
 }

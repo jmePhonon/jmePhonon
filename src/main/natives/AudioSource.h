@@ -23,7 +23,7 @@ struct AudioSource {
     void *connectedLine; // Pointer to the line to which the source is connected
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
 
-    struct UListNode* unode; // U-List node
+    struct UListNode* uNode; // U-List node
 };
 
 void asInit(struct GlobalSettings *settings, struct AudioSource *source);

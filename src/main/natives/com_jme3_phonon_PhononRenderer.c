@@ -95,22 +95,16 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jint mixerQueueSize = 0;
 
         struct UList* uList = line->uList;
-        struct UListNode* unode = uList->head->next;
+        struct UListNode* uNode = uList->head->next;
 
-        // printf("unode is: %p, tail is: %p\n", unode, uList->tail);
-
-        while(!ulistIsTail(uList, unode)) {
-
-        // for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
-            struct AudioSource *audioSource = unode->audioSource;
-
-            // if(asIsConnected(audioSource)) {            
+        while(!ulistIsTail(uList, uNode)) {
+            struct AudioSource *audioSource = uNode->audioSource;
                 if(asReadNextFrame(&SETTINGS, audioSource, Temp.inputFrame)) {
                     // Reached end
                     if(loop){
 
                     } else {
-                        // ulistRemove(unode);
+                        ulistRemove(uNode);
                     }
                 }
 
@@ -120,26 +114,22 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                     phProcessFrame(&SETTINGS, audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
                 }
 
-                unode = unode->next;
-
-                // printf("finished update, now unode is: %p, tail is: %p\n", unode, uList->tail);
-            // }
-        //    }
+                uNode = uNode->next;
         }
 
-            jfloat *output = Temp.outputFrame;
-            if(mixerQueueSize==1){
-                output = Temp.mixerQueue[0];
-            } else {
-                if(SETTINGS.isPassthrough){
-                    passThroughMixer(Temp.mixerQueue,mixerQueueSize, output);
-                }else{
-                    phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
-                }
+        jfloat *output = Temp.outputFrame;
+        if(mixerQueueSize==1){
+            output = Temp.mixerQueue[0];
+        } else {
+            if(SETTINGS.isPassthrough){
+                passThroughMixer(Temp.mixerQueue,mixerQueueSize, output);
+            }else{
+                phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
             }
+        }
 
-            olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);
-            olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+        olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);
+        olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
     }
 }
 
