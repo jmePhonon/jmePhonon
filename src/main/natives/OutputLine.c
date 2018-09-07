@@ -48,7 +48,8 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
             bestLine->sourcesSlots[i].data = data;
             bestLine->sourcesSlots[i].numSamples = sourceSamples;
             bestLine->sourcesSlots[i].connectedLine = bestLine;
-        
+            ulistAdd(bestLine->sourcesSlots[i].unode);
+
             bestLine->numConnectedSources++;
             printf("Connect source to slot %d \n",i);
 
