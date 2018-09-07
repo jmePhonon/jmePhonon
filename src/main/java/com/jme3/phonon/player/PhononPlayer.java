@@ -9,7 +9,6 @@ import javax.sound.sampled.SourceDataLine;
 import com.jme3.phonon.PhononOutputLine;
 import com.jme3.phonon.PhononOutputLine.ChannelStatus;
 import com.jme3.phonon.utils.BitUtils;
-import javafx.beans.value.WritableBooleanValue;
 
 public class PhononPlayer {
 

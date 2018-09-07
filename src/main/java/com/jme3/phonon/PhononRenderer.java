@@ -43,7 +43,16 @@ public class PhononRenderer implements AudioRenderer {
 				"linux-x86/libjmephonon.so");
 		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux64,
 				"linux-x86-64/libjmephonon.so");
-		// TODO: Windows
+
+		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Windows32,
+				"windows-x86/phonon.dll");
+		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Windows64,
+				"windows-x86-64/phonon.dll");
+		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Windows32,
+				"windows-x86/jmephonon.dll");
+		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Windows64,
+				"windows-x86-64/jmephonon.dll");
+		
 		// TODO: OSX
 		// MAYBE TODO: Android
 	}
@@ -75,7 +84,7 @@ public class PhononRenderer implements AudioRenderer {
 
 	public PhononRenderer(int sampleRate, int nOutputLines, int nSourcesPerLine,
 			int nOutputChannels, int frameSize, int bufferSize, int outputSampleSize,
-			int maxPrebufferingS, ThreadMode threadMode, PhononEffects effects)
+			int maxPrebufferingS, ThreadMode threadMode, PhononSettings settings)
 			throws LineUnavailableException {
 		SAMPLE_RATE = sampleRate;
 		OUTPUT_LINES = new PhononOutputLine[nOutputLines];
@@ -99,14 +108,15 @@ public class PhononRenderer implements AudioRenderer {
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
 				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
 				PHONON_LISTENER.getAddress(), // Effects
-				effects.passThrough);
+				settings.passThrough);
 
 		for (int i = 0; i < OUTPUT_LINES.length; i++) {
 			OUTPUT_LINES[i] = new PhononOutputLine(FRAME_SIZE, OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
 			initLineNative(i, OUTPUT_LINES[i].getAddress());
-
-			PLAYERS[i] = new PhononPlayer(OUTPUT_LINES[i], SAMPLE_RATE, OUTPUT_CHANNELS_NUM,
-					OUTPUT_SAMPLE_SIZE, MAX_PLAYER_PREBUFFERING);
+			if (settings.initPlayers) {
+				PLAYERS[i] = new PhononPlayer(OUTPUT_LINES[i], SAMPLE_RATE, OUTPUT_CHANNELS_NUM,
+						OUTPUT_SAMPLE_SIZE, MAX_PLAYER_PREBUFFERING);
+			}
 		}
 	}
 

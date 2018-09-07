@@ -21,8 +21,9 @@ public class TestJNI extends TestCase {
         for (int i = 0; i < frameSize*bufferSize; i++) {
             bbf.putFloat((float) Math.random());
         }
-        PhononEffects effects = new PhononEffects();
+        PhononSettings effects = new PhononSettings();
         effects.passThrough = true;
+        effects.initPlayers = false;
         PhononRenderer renderer =
                 new PhononRenderer(44100, 
         1, 1,1, frameSize, bufferSize,16,1,ThreadMode.JAVA,effects);

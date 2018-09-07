@@ -1,3 +1,5 @@
+package tests;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import javax.sound.sampled.AudioFormat;
@@ -14,7 +16,7 @@ import com.jme3.material.Material;
 import com.jme3.material.MaterialList;
 import com.jme3.math.ColorRGBA;
 import com.jme3.phonon.format.F32leAudioData;
-import com.jme3.phonon.PhononEffects;
+import com.jme3.phonon.PhononSettings;
 import com.jme3.phonon.PhononOutputLine;
 import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.ThreadMode;
@@ -74,7 +76,7 @@ public class TestPhononRenderer extends SimpleApplication {
         if (audioRenderer == null) {
             double latency = ((double) 1000 / 44100) * frameSize * frameBuffer + maxPreBuffering;
             System.out.println("Expected Latency " + latency);
-            PhononEffects effects = new PhononEffects();
+            PhononSettings effects = new PhononSettings();
             try {
                 audioRenderer = new PhononRenderer(44100, outputLines, 16, channels, frameSize,
                         frameBuffer, 24, maxPreBuffering, ThreadMode.JAVA, effects);

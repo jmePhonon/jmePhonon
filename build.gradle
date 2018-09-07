@@ -32,7 +32,7 @@ dependencies {
     compile jmerepo + ':jme3-lwjgl:' + jmeversion
     compile jmerepo + ':jme3-jogg:' + jmeversion
     testCompile 'junit:junit:4.11'
-
+ 
 }
 
 sourceSets{
@@ -58,15 +58,17 @@ task downloadResources(type: Exec){
     commandLine 'bash','prepare.sh',"downloadResources"
 }    
 
-
-task getSteamAudio(type :Exec){
-    commandLine 'bash','prepare.sh',"getSteamAudio"
+task prepareWorkspace(type:Exec){
+    commandLine 'bash','prepare.sh','prepareWorkspace'
 }
+
+downloadResources.dependsOn(prepareWorkspace)
+
 
 task buildNativeTests(type :Exec){
     commandLine 'bash','prepare.sh',"buildNativeTests"
 }
-buildNativeTests.dependsOn(getSteamAudio)
+buildNativeTests.dependsOn(prepareWorkspace)
 
 task updateJNIHeaders(type:Exec) {
     def javapth=project.sourceSets.main.java.outputDir
@@ -84,11 +86,28 @@ deepClean.dependsOn(clean);
 task buildNatives(type :Exec){
     commandLine 'bash','prepare.sh',"buildNatives"
 }
-buildNatives.dependsOn(getSteamAudio)
+buildNatives.dependsOn(prepareWorkspace)
 
-task prepareWorkspace(type:Exec){
-    commandLine 'bash','prepare.sh','getSteamAudio',"true"
-}
-prepareWorkspace.dependsOn(downloadResources)
 
 build.dependsOn(buildNatives)
+
+task buildStandaloneTests(type: Jar) {
+
+    from sourceSets.test.output
+    manifest {
+        attributes 'Main-Class': 'tests.TestPhononRenderer'
+    }
+    from {
+        configurations.testCompile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.testRuntime.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    baseName = project.name + '-testFat'
+      with jar 
+}
+
+task deploy (type :Exec) {
+        commandLine 'bash','prepare.sh',"deploy"
+
+}
+deploy.dependsOn(build);
