@@ -82,11 +82,12 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS,line);
         jint lineBufferSize = SETTINGS.bufferSize;
 
+
         // Processing is too fast, skip.
-        if(frameIndex-lastPlayedFrameIndex>lineBufferSize-1){
+        if(frameIndex-lastPlayedFrameIndex>SETTINGS.bufferSize-1){
             continue;
         }
-        
+
         jboolean loop = false;
 
         jint mixerQueueSize = 0;

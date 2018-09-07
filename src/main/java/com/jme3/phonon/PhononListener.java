@@ -24,12 +24,13 @@ public class PhononListener {
     public volatile boolean volumeUpdate = false;
     public volatile float volume=0;
 
+    boolean LIVE_ON_THE_EDGE = false;
     public PhononListener() {
         MEMORY=BufferUtils.createByteBuffer(LISTENER_size);
     }
 
     public void updateNative() {
-        if (needNativeUpdate) {
+        if (LIVE_ON_THE_EDGE||needNativeUpdate) {
             // System.out.println("JListener position "+posX+" "+posY+" "+posZ);
             // if (posUpdate) {
                 MEMORY.putFloat(POSX, posX);
@@ -62,36 +63,36 @@ public class PhononListener {
     }
 
     public void update(Listener listener) {
-        if (!needNativeUpdate) {
+        if (LIVE_ON_THE_EDGE || !needNativeUpdate) {
             // if (posUpdate) {
-                Vector3f pos = listener.getLocation();
-                posX = pos.x;
-                posY = pos.y;
-                posZ = pos.z;
+            Vector3f pos = listener.getLocation();
+            posX = pos.x;
+            posY = pos.y;
+            posZ = pos.z;
             // }
 
             // if (rotUpdate) {
-                Vector3f dir = listener.getDirection();
-                dirX = dir.x;
-                dirY = dir.y;
-                dirZ = dir.z;
-                
-                Vector3f up = listener.getUp();
-                upX = up.x;
-                upY = up.y;
-                upZ = up.z;
-        
+            Vector3f dir = listener.getDirection();
+            dirX = dir.x;
+            dirY = dir.y;
+            dirZ = dir.z;
+
+            Vector3f up = listener.getUp();
+            upX = up.x;
+            upY = up.y;
+            upZ = up.z;
+
             // }
 
             // if (velUpdate) {
-                Vector3f vel = listener.getVelocity();
-                velX = vel.x;
-                velY = vel.y;
-                velZ = vel.z;
+            Vector3f vel = listener.getVelocity();
+            velX = vel.x;
+            velY = vel.y;
+            velZ = vel.z;
             // }
 
             // if (volumeUpdate) {
-                volume = listener.getVolume();
+            volume = listener.getVolume();
             // }
             needNativeUpdate = true;
         }

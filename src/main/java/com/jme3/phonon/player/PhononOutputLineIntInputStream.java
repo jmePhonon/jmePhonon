@@ -19,13 +19,11 @@ public class PhononOutputLineIntInputStream extends InputStream {
     byte floatBuffer[];
     byte tmpBuffer[];
     int tmpBufferI = 0;
-    int sampleSize;
  
     private AudioDataDecoder decoder;
 
     public PhononOutputLineIntInputStream(PhononOutputLine line,int sampleSize) {
         this.line = line;
-        this.sampleSize = sampleSize;
         floatBuffer = new byte[line.getFrameSize() *line.getChannels()* 4];
         tmpBuffer = new byte[line.getFrameSize() *line.getChannels()* (sampleSize/8)];
 

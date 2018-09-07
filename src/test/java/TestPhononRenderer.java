@@ -2,6 +2,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;
+import javax.swing.JOptionPane;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioData;
@@ -27,14 +28,19 @@ import com.jme3.util.BufferUtils;
 public class TestPhononRenderer extends SimpleApplication {
 
     static  int outputLines = 16;
-    static int frameSize = 1024;
-    static int frameBuffer = 2;
-    static int maxPreBuffering = 10; //ms
+    static int frameSize = 1024;// samples
+    static int frameBuffer = 3;
+    static int maxPreBuffering = 1024*2*4; //2 frame preload
     static int channels = 2;
-    
     public static void main(String[] args) {
-        AppSettings settings = new AppSettings(true);     
-        settings.setAudioRenderer(null);
+        AppSettings settings = new AppSettings(true);
+        
+        // phonon  
+        int dialogResult =JOptionPane.showConfirmDialog(null, "Do you want to run the test with phonon? (Press No to run with jme renderer)");
+        if (dialogResult == JOptionPane.YES_OPTION) {
+            settings.setAudioRenderer(null);
+        }
+        settings.setFrameRate(60);
         TestPhononRenderer app = new TestPhononRenderer();
         app.setSettings(settings);
 
@@ -65,23 +71,25 @@ public class TestPhononRenderer extends SimpleApplication {
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
       
-        double latency=((double)1000/44100)*frameSize*frameBuffer+maxPreBuffering;
-        System.out.println("Expected Latency "+latency);
-        PhononEffects effects=new PhononEffects();
-        try {
-            audioRenderer = new PhononRenderer(44100, outputLines, 16, channels, frameSize,
-                    frameBuffer, 24, maxPreBuffering, ThreadMode.JAVA,effects);
-        } catch (Exception e1) {
-            e1.printStackTrace();
+        if (audioRenderer == null) {
+            double latency = ((double) 1000 / 44100) * frameSize * frameBuffer + maxPreBuffering;
+            System.out.println("Expected Latency " + latency);
+            PhononEffects effects = new PhononEffects();
+            try {
+                audioRenderer = new PhononRenderer(44100, outputLines, 16, channels, frameSize,
+                        frameBuffer, 24, maxPreBuffering, ThreadMode.JAVA, effects);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
+
+
+            audioRenderer.initialize();
+
+            AudioContext.setAudioRenderer(audioRenderer);
+            listener = new Listener();
+            listener.setRenderer(audioRenderer);
+            audioRenderer.setListener(listener);
         }
-
-
-        audioRenderer.initialize();
-    
-        AudioContext.setAudioRenderer(audioRenderer);
-        listener = new Listener();
-        audioRenderer.setListener(listener);
-         
 
         Geometry audioSourceGeom = new Geometry("AudioSource", new Box(2, 2, 2));
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
