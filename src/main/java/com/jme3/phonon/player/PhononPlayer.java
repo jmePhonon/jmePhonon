@@ -77,7 +77,7 @@ public class PhononPlayer {
             writableBytes= output.available();
             
             
-            read = input.read(tmp);
+            read = input.read(tmp,0,writableBytes);
             
             if (read > 0) {
                 // System.out.println("Write "+read);
