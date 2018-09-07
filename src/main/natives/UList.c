@@ -1,32 +1,46 @@
 #include "UList.h"
 
-void ulistInit() {
-    UList.head = (struct UListNode*) malloc(sizeof(struct UListNode));
-    UList.tail = (struct UListNode*) malloc(sizeof(struct UListNode));
+void ulistInit(struct UList* uList) {
+    uList->head = (struct UListNode*) malloc(sizeof(struct UListNode));
+    uList->tail = (struct UListNode*) malloc(sizeof(struct UListNode));
     
-    UList.head->next = UList.tail;
-    UList.head->prev = NULL;
+    uList->head->next = uList->tail;
+    uList->head->prev = NULL;
     
-    UList.tail->next = NULL;
-    UList.tail->prev = UList.head;
+    uList->tail->next = NULL;
+    uList->tail->prev = uList->head;
 }
 
-void ulistAdd(struct UListNode* node ) {
-    node->prev = UList.tail->prev;
-    UList.tail->prev->next = node;
+struct UListNode* ulistCreateNode(struct AudioSource* source) {
+    struct UListNode* node = (struct UListNode*) malloc(sizeof(struct UListNode));
+    node->audioSource = source;
+    node->next = NULL;
+    node->prev = NULL;
+    node->connected = false;
 
-    UList.tail->prev = node;
-    node->next = UList.tail;
+    return node;
+}
+
+void ulistAdd(struct UList* uList, struct UListNode* node) {
+    node->prev = uList->tail->prev;
+    uList->tail->prev->next = node;
+
+    uList->tail->prev = node;
+    node->next = uList->tail;
+
+    node->connected = true;
 }
 
 void ulistRemove(struct UListNode* node) {
     node->prev->next = node->next;
     node->next->prev = node->prev;
 
+    node->connected = false;
+
     // node->next = NULL;
     // node->prev = NULL;
 }
 
-jboolean ulistIsTail(struct UListNode* node) {
-    return node == UList.tail;
+jboolean ulistIsTail(struct UList* uList, struct UListNode* node) {
+    return node == uList->tail;
 }

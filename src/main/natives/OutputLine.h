@@ -15,6 +15,7 @@
 struct OutputLine {
     jfloat *outputBuffer;  /*where to store processed audio. Readable and writable.*/
     struct AudioSource *sourcesSlots;
+    struct UList* uList;
     jint numConnectedSources;
 };
 

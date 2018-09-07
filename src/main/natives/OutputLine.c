@@ -3,7 +3,10 @@
 struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
     struct OutputLine *lines= malloc(sizeof(struct OutputLine) * nOutputLines);
     for(int i=0;i<nOutputLines;i++){
-        printf("Phonon: Initialize line id %d\n", i);
+        // printf("Phonon: Initialize line id %d\n", i);
+        lines[i].uList = (struct UList*) malloc(sizeof(struct UList));
+        ulistInit(lines[i].uList);
+
         lines[i].sourcesSlots = asNew(settings, settings->nSourcesPerLine);
         lines[i].outputBuffer = NULL;
         lines[i].numConnectedSources = 0;
@@ -43,12 +46,12 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
     for (i = 0; i < settings->nSourcesPerLine; i++) {
         // find an empty source slot
     
-        if (!asIsConnected(settings,&bestLine->sourcesSlots[i])) {
-
+        if (!asIsConnected(&bestLine->sourcesSlots[i])) {
+        
             bestLine->sourcesSlots[i].data = data;
             bestLine->sourcesSlots[i].numSamples = sourceSamples;
             bestLine->sourcesSlots[i].connectedLine = bestLine;
-            ulistAdd(bestLine->sourcesSlots[i].unode);
+            ulistAdd(bestLine->uList, bestLine->sourcesSlots[i].unode);
 
             bestLine->numConnectedSources++;
             printf("Connect source to slot %d \n",i);
@@ -70,6 +73,7 @@ void olDisconnectSource(struct GlobalSettings *settings,struct AudioSource *sour
     line->numConnectedSources--; 
     source->data = NULL;
     source->connectedLine = NULL;
+    ulistRemove(source->unode);
 }
 
 void olSetLastProcessedFrameId(struct GlobalSettings *settings,struct OutputLine *line, jint v) {

@@ -39,6 +39,7 @@ void passThrough(jfloat *input, jfloat *output) {
         inputIndex++;
     }
 }
+
 void  passThroughMixer(jfloat** inputs,jint nInputs,jfloat *output){
     for (jint i = 0; i < SETTINGS.inputFrameSize * SETTINGS.nOutputChannels; i++) {
         jfloat res = 0;
@@ -92,33 +93,39 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jboolean loop = false;
 
         jint mixerQueueSize = 0;
-        
-        /*for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
-            struct AudioSource *audioSource = &line->sourcesSlots[j];
-            if(asIsConnected(&SETTINGS,audioSource)){*/
 
-        struct UListNode* unode = UList.head->next;
-        while(!ulistIsTail(unode)) {
-            if(asReadNextFrame(&SETTINGS, unode->audioSource, Temp.inputFrame)){
-                // Reached end
-                if(loop){
+        struct UList* uList = line->uList;
+        struct UListNode* unode = uList->head->next;
 
-                } else {
-                    ulistRemove(unode);
+        // printf("unode is: %p, tail is: %p\n", unode, uList->tail);
+
+        while(!ulistIsTail(uList, unode)) {
+
+        // for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
+            struct AudioSource *audioSource = unode->audioSource;
+
+            // if(asIsConnected(audioSource)) {            
+                if(asReadNextFrame(&SETTINGS, audioSource, Temp.inputFrame)) {
+                    // Reached end
+                    if(loop){
+
+                    } else {
+                        // ulistRemove(unode);
+                    }
                 }
-            }
 
-            if(SETTINGS.isPassthrough) {
-                passThrough(Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
-            } else {
-                phProcessFrame(&SETTINGS, unode->audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
-            }
+                if(SETTINGS.isPassthrough) {
+                    passThrough(Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+                } else {
+                    phProcessFrame(&SETTINGS, audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+                }
 
-            unode = unode->next;
+                unode = unode->next;
+
+                // printf("finished update, now unode is: %p, tail is: %p\n", unode, uList->tail);
+            // }
+        //    }
         }
-        
-        /*    }
-        }*/
 
             jfloat *output = Temp.outputFrame;
             if(mixerQueueSize==1){
@@ -168,8 +175,6 @@ jboolean isPassthrough
     for(jint i=0;i<SETTINGS.nSourcesPerLine;i++){
         Temp.mixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
     }
-
-    ulistInit();
   
     phInit(&SETTINGS,nSourcesPerLine);
     for(jint i=0;i<SETTINGS.nOutputLines;i++){

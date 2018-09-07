@@ -20,10 +20,10 @@ struct AudioSource {
 
     jboolean loop;
 
-    struct UListNode* unode; // U-List node
-
     void *connectedLine; // Pointer to the line to which the source is connected
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
+
+    struct UListNode* unode; // U-List node
 };
 
 void asInit(struct GlobalSettings *settings, struct AudioSource *source);
@@ -39,7 +39,7 @@ struct AudioSource *asNew(struct GlobalSettings *settings, jint n);
  */
 void asDestroy(struct GlobalSettings *settings, struct AudioSource *source, jint n);
 
-jboolean asIsConnected(struct GlobalSettings *settings, struct AudioSource *source);
+jboolean asIsConnected(struct AudioSource *source);
 /**
  * Read the next frame from the audio source, restart from the beginning when the end is reached
  * @return true if the end of the source has been reached
