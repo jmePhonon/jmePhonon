@@ -7,16 +7,13 @@
 #include "Settings.h"
 #include "types.h"
 #include <stdlib.h>
+#include <math.h>
 #include "AudioSource.h"
+#include "memory_layout/LISTENER_LAYOUT.h" 
 
-void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize);
+void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize,float *listenerData);
 void phProcessFrame(struct GlobalSettings *settings, struct AudioSource *source,jfloat *inFrame, jfloat *outFrame);
 void phDestroy(struct GlobalSettings *settings);
-void phUpdateListener(struct GlobalSettings *settings,
-jfloat wposx,jfloat wposy,jfloat wposz,
-jfloat wrotx,jfloat wroty,jfloat wrotz,jfloat wrotw
-
-);
 
 
 /**

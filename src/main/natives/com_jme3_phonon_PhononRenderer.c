@@ -82,9 +82,9 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS,line);
         jint lineBufferSize = SETTINGS.bufferSize;
 
-
+        jint maxPhononFrameAdvantage = 2;
         // Processing is too fast, skip.
-        if(frameIndex-lastPlayedFrameIndex>2){
+        if(frameIndex-lastPlayedFrameIndex>maxPhononFrameAdvantage){
             continue;
         }
         
@@ -129,7 +129,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 }
 
 
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, jobject obj, 
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, 
+jobject obj, 
 jint sampleRate,
 jint nOutputLines,
 jint nSourcesPerLine,
@@ -138,6 +139,8 @@ jint frameSize,
 jint bufferSize,
  jboolean nativeThread,
  jboolean decoupledNativeThread,
+
+ jlong listenerDataPointer,
 // effects
 jboolean isPassthrough
 ) {
@@ -161,9 +164,9 @@ jboolean isPassthrough
         Temp.mixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
     }
 
+    float *listenerData = (float*)(intptr_t)listenerDataPointer;
 
-  
-    phInit(&SETTINGS,nSourcesPerLine);
+    phInit(&SETTINGS,nSourcesPerLine,listenerData);
     for(jint i=0;i<SETTINGS.nOutputLines;i++){
         for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
             phInitializeSource(&SETTINGS,&OUTPUT_LINES[i].sourcesSlots[j]);

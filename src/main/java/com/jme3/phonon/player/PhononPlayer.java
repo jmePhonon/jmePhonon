@@ -6,15 +6,15 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import com.jme3.phonon.PhononChannel;
-import com.jme3.phonon.PhononChannel.ChannelStatus;
+import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.PhononOutputLine.ChannelStatus;
 import com.jme3.phonon.utils.BitUtils;
 
 public class PhononPlayer {
 
 
 
-    PhononChannel channel;
+    PhononOutputLine channel;
     InputStream input;
     SourceDataLine output;
     AudioFormat audioFormat;
@@ -23,15 +23,15 @@ public class PhononPlayer {
 
     boolean isRunning;
     byte tmp[];
-    public PhononPlayer(PhononChannel chan, int sampleRate,
-            int outputChannels,int outputSampleSize) throws LineUnavailableException {
+    public PhononPlayer(PhononOutputLine chan, int sampleRate,
+            int outputChannels,int outputSampleSize,int maxPreBuffering) throws LineUnavailableException {
         channel = chan;
         dataLineSampleSize = outputSampleSize;
 
 
         int bytesPerSample = (outputSampleSize / 8);
 
-        input = new PhononChannelIntInputStream(channel,outputSampleSize);
+        input = new PhononOutputLineIntInputStream(channel,outputSampleSize);
         audioFormat = new AudioFormat(sampleRate, outputSampleSize, outputChannels, true, false);
         output = AudioSystem.getSourceDataLine(audioFormat);
         output.open(audioFormat);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
@@ -42,11 +42,10 @@ public class PhononPlayer {
 
         long nsPerSample= 1000000000l / sampleRate;
        
-       preloadBytes = (int)(((1000000l * 50l) / nsPerSample)*bytesPerSample);
+       preloadBytes = (int)(((1000000l * maxPreBuffering) / nsPerSample)*bytesPerSample);
        if (output.getBufferSize() < preloadBytes)
             preloadBytes = output.getBufferSize();
            
-
            int preloadedSamplesNum = preloadBytes / bytesPerSample;
 
            tmp= new byte[output.getBufferSize()];

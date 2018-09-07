@@ -2,8 +2,8 @@
 #ifndef __OUTPUT_LINE__
 #define __OUTPUT_LINE__
 
-#include "LINE_LAYOUT.h"
-#include "Settings.h"
+#include "memory_layout/OUTPUT_LINE_LAYOUT.h"
+#include "Settings.h" 
 #include <stdint.h>
 #include "types.h"
 #include "AudioSource.h"

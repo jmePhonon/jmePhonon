@@ -4,10 +4,17 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.LineUnavailableException;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioData;
+import com.jme3.audio.ListenerParam;
+import com.jme3.material.Material;
+import com.jme3.material.MaterialList;
+import com.jme3.math.ColorRGBA;
 import com.jme3.phonon.format.F32leAudioData;
-import com.jme3.phonon.PhononChannel;
+import com.jme3.phonon.PhononOutputLine;
 import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.player.PhononPlayer;
+import com.jme3.renderer.RenderManager;
+import com.jme3.scene.Geometry;
+import com.jme3.scene.shape.Box;
 import com.jme3.util.BufferUtils;
 
 public class TestPhononRenderer extends SimpleApplication {
@@ -17,14 +24,45 @@ public class TestPhononRenderer extends SimpleApplication {
         app.start();
     }
 
+    @Override
+    public void simpleRender(RenderManager rm) {
+        super.simpleRender(rm);
+        listener.setLocation(cam.getLocation());
+        listener.setRotation(cam.getRotation());
+        renderer.update(0);
+        renderer.updateListenerParam(listener, ListenerParam.Position);
+        renderer.updateListenerParam(listener, ListenerParam.Rotation);
+      
+      
+    }
+    @Override
+    public void simpleUpdate(float tpf) {
+      
+    
+    }
+
+    PhononRenderer renderer;
     ArrayList<F32leAudioData> loadedSound = new ArrayList<F32leAudioData>();
     @Override
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
 
-        int outputLines = 16;
+        Geometry audioSourceGeom = new Geometry("AudioSource", new Box(2, 2, 2));
+        Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
+        audioSourceGeom.setMaterial(audioSourceGeomMat);
+        audioSourceGeomMat.setColor("Color",ColorRGBA.Red);
+        rootNode.attachChild(audioSourceGeom);
+        flyCam.setMoveSpeed(10f);
 
-        PhononRenderer renderer = new PhononRenderer(44100, outputLines,32, 2, 1024, 64);
+
+
+        int outputLines = 16;
+        int frameSize = 1024;
+        int frameBuffer = 64;
+        int maxPreBuffering = 50; //ms
+
+        renderer = new PhononRenderer(44100, outputLines, 32, 2, frameSize, frameBuffer);
+        renderer.setListener(listener);
         // renderer.effects.passThrough = true;
 
         renderer.initialize();
@@ -39,7 +77,7 @@ public class TestPhononRenderer extends SimpleApplication {
         try {
 
             for (int k = 0; k < outputLines; k++) {
-                PhononPlayer songPlayer = new PhononPlayer(renderer.getLine(k), 44100, 2, 16);
+                PhononPlayer songPlayer = new PhononPlayer(renderer.getLine(k), 44100, 2, 16,maxPreBuffering);
                 renderer.attachPlayer(songPlayer);
             }
 
@@ -56,9 +94,9 @@ public class TestPhononRenderer extends SimpleApplication {
             // renderer.attachPlayer(songPlayer);
             // loadedSound.add(audio);
 
-            audio = new F32leAudioData(assetManager.loadAudio("mono/awesomeness.wav"));
-            renderer.connectSource(audio);
-            loadedSound.add(audio);
+            // audio = new F32leAudioData(assetManager.loadAudio("mono/awesomeness.wav"));
+            // renderer.connectSource(audio);
+            // loadedSound.add(audio);
         } catch (Exception e) {
             e.printStackTrace();
         }

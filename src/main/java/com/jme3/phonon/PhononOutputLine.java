@@ -6,13 +6,14 @@ import java.nio.ByteOrder;
 import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
+import static com.jme3.phonon.memory_layout.OUTPUT_LINE_LAYOUT.*;
 
 /**
  * PhononFrameBuffer
  * 
  * This class stores processed data
  */
-public class PhononChannel {
+public class PhononOutputLine {
     private static final int _SAMPLE_SIZE = 4;//Always 4 byte (float32) sample
 
     protected final ByteBuffer buffer;
@@ -40,13 +41,13 @@ public class PhononChannel {
      * @param bufferedFrames How many frames should this queue contain
      * @param samplesPerFrame 
      */
-    public PhononChannel(int frameSize, int bufferSize) {
+    public PhononOutputLine(int frameSize, int bufferSize) {
         this.bufferSize = bufferSize;
         // this.channels = channels;
         // Allocate direct buffer, the first 8+ 4 + 4 bytes contain the source id and two int indices
         this.frameSize = frameSize;
-        buffer = BufferUtils.createByteBuffer(CHANNEL_LAYOUT.HEADER_size + frameSize * _SAMPLE_SIZE * bufferSize).order(ByteOrder.LITTLE_ENDIAN);
-        buffer.position(CHANNEL_LAYOUT.HEADER_size);
+        buffer = BufferUtils.createByteBuffer(HEADER_size + frameSize * _SAMPLE_SIZE * bufferSize).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.position(HEADER_size);
 
         reset();
 
@@ -87,14 +88,14 @@ public class PhononChannel {
 
   
     protected void setLastProcessedFrameId(int v) {
-        buffer.putInt(CHANNEL_LAYOUT.LAST_PROCESSED_FRAME, v);
+        buffer.putInt(LAST_PROCESSED_FRAME, v);
     }
 
     /**
      * Get id of the latest frame processed by phonon
      */
     public int getLastProcessedFrameId() {
-        int n = buffer.getInt(CHANNEL_LAYOUT.LAST_PROCESSED_FRAME);
+        int n = buffer.getInt(LAST_PROCESSED_FRAME);
         if (n < 0)
             n = -n;
         return n;
@@ -104,7 +105,7 @@ public class PhononChannel {
      * Returns true if the entire audio has been processed, will always return false for loops.
      */
     public boolean isProcessingCompleted() {
-        return buffer.getInt(CHANNEL_LAYOUT.LAST_PROCESSED_FRAME) < 0;
+        return buffer.getInt(LAST_PROCESSED_FRAME) < 0;
     }
 
 
@@ -112,14 +113,14 @@ public class PhononChannel {
      * Set id of last played frame, internal use only
      */
     private void setLastPlayedFrameId(int v) {
-        buffer.putInt(CHANNEL_LAYOUT.LAST_PLAYED_FRAME, v);
+        buffer.putInt(LAST_PLAYED_FRAME, v);
     }
 
     /**
      * Get id of latest played frame
      */
     public int getLastPlayedFrameId() {
-        int n = buffer.getInt(CHANNEL_LAYOUT.LAST_PLAYED_FRAME);
+        int n = buffer.getInt(LAST_PLAYED_FRAME);
         return n;
     }
 
@@ -138,7 +139,7 @@ public class PhononChannel {
         int frameSize = getFrameSize();
 
         // Move buffer cursor to the correct position
-        buffer.position(CHANNEL_LAYOUT.BODY + readindex * frameSize * _SAMPLE_SIZE);
+        buffer.position(BODY + readindex * frameSize * _SAMPLE_SIZE);
         // System.out.println("Read from position " + buffer.position()+" buffer length "+buffer.limit()+" frame size "+frameSize);
 
         // Read next frame at once

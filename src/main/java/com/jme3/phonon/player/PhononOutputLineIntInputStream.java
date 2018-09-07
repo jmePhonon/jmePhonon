@@ -4,8 +4,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.jme3.phonon.PhononChannel;
-import com.jme3.phonon.PhononChannel.ChannelStatus;
+import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.PhononOutputLine.ChannelStatus;
 import com.jme3.phonon.format.decoder.AudioDataDecoder;
 import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
 
@@ -13,17 +13,17 @@ import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
  * PhononChanneInputStream
  */
 
-public class PhononChannelIntInputStream extends InputStream {
+public class PhononOutputLineIntInputStream extends InputStream {
     ChannelStatus lastStat;
-    PhononChannel chan;
+    PhononOutputLine chan;
     byte floatBuffer[];
     byte tmpBuffer[];
     int tmpBufferI = 0;
     int sampleSize;
-
+ 
     private AudioDataDecoder decoder;
 
-    public PhononChannelIntInputStream(PhononChannel chan,int sampleSize) {
+    public PhononOutputLineIntInputStream(PhononOutputLine chan,int sampleSize) {
         this.chan = chan;
         this.sampleSize = sampleSize;
         floatBuffer = new byte[chan.getFrameSize() * 4];
