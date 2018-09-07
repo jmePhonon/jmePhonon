@@ -18,23 +18,27 @@ void asInit(struct GlobalSettings *settings, struct AudioSource *source){
     source->connectedLine = NULL;
     source->phononContext = NULL;
 
+    source->uNode = (struct UListNode*) malloc(sizeof(struct UListNode));
+    ulistInitNode(source->uNode, source); 
 }
 
-struct AudioSource* asNew(struct GlobalSettings *settings,jint n){
+struct AudioSource* asNew(struct GlobalSettings *settings, jint n){
     struct AudioSource *out = malloc(sizeof(struct AudioSource)*n);
     for (jint i = 0; i < n; i++) {
-        printf("Initialize source %d\n", i);
+        // printf("Initialize source %d\n", i);
         asInit(settings, &out[i]);
     }
     return out;
 }
 
 void asDestroy(struct GlobalSettings *settings,struct AudioSource *source,jint n){
+    ulDestroyNode(source->uNode);
     free(source);
 }
 
-jboolean asIsConnected(struct GlobalSettings *settings,struct AudioSource *source){
-    return source->connectedLine != NULL && source->data != NULL;
+jboolean asIsConnected(struct AudioSource *source){
+    // return source->connectedLine != NULL && source->data != NULL;
+    return source->uNode->connected;
 }
 /**
  * Read the next frame from the audio source, restart from the beginning when the end is reached

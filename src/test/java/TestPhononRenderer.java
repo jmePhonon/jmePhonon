@@ -25,7 +25,7 @@ public class TestPhononRenderer extends SimpleApplication {
         int outputLines = 16;
 
         PhononRenderer renderer = new PhononRenderer(44100, outputLines,32, 2, 1024, 64);
-        // renderer.effects.passThrough = true;
+        renderer.effects.passThrough = true;
 
         renderer.initialize();
 

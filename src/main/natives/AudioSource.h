@@ -1,9 +1,11 @@
 #ifndef __SOURCE_BIND__
 #define __SOURCE_BIND__ 1
+
 #include <jni.h>          
 #include <stdlib.h>
 #include "types.h"
 #include "Settings.h"
+#include "UList.h"
 
 struct AudioSource {
     jfloat *data; // float 32 little endian, multiple sources can share the same audio data
@@ -20,6 +22,8 @@ struct AudioSource {
 
     void *connectedLine; // Pointer to the line to which the source is connected
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
+
+    struct UListNode* uNode; // U-List node
 };
 
 void asInit(struct GlobalSettings *settings, struct AudioSource *source);
@@ -35,7 +39,7 @@ struct AudioSource *asNew(struct GlobalSettings *settings, jint n);
  */
 void asDestroy(struct GlobalSettings *settings, struct AudioSource *source, jint n);
 
-jboolean asIsConnected(struct GlobalSettings *settings, struct AudioSource *source);
+jboolean asIsConnected(struct AudioSource *source);
 /**
  * Read the next frame from the audio source, restart from the beginning when the end is reached
  * @return true if the end of the source has been reached
