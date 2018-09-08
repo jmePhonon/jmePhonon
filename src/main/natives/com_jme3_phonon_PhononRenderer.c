@@ -12,6 +12,7 @@
 #include "JmePhonon.h"
 #include "OutputLine.h"
 #include "AudioSource.h"
+#include "UList.h"
 
 
 struct GlobalSettings SETTINGS;
@@ -38,6 +39,7 @@ void passThrough(jfloat *input, jfloat *output) {
         inputIndex++;
     }
 }
+
 void  passThroughMixer(jfloat** inputs,jint nInputs,jfloat *output){
     for (jint i = 0; i < SETTINGS.inputFrameSize * SETTINGS.nOutputChannels; i++) {
         jfloat res = 0;
@@ -91,40 +93,43 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jboolean loop = false;
 
         jint mixerQueueSize = 0;
-        for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
-            struct AudioSource *audioSource = &line->sourcesSlots[j];
-            if(asIsConnected(&SETTINGS,audioSource)){
-                if(asReadNextFrame(&SETTINGS,audioSource,Temp.inputFrame)){
+
+        struct UList* uList = line->uList;
+        struct UListNode* uNode = uList->head->next;
+
+        while(!ulistIsTail(uList, uNode)) {
+            struct AudioSource *audioSource = uNode->audioSource;
+                if(asReadNextFrame(&SETTINGS, audioSource, Temp.inputFrame)) {
                     // Reached end
                     if(loop){
 
-                    }else{
-
+                    } else {
+                        ulistRemove(uNode);
                     }
                 }
 
-                if(SETTINGS.isPassthrough){
+                if(SETTINGS.isPassthrough) {
                     passThrough(Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
-                }else{
-                    phProcessFrame(&SETTINGS,audioSource,Temp.inputFrame,Temp.mixerQueue[mixerQueueSize++]);
+                } else {
+                    phProcessFrame(&SETTINGS, audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
                 }
 
+                uNode = uNode->next;
+        }
+
+        jfloat *output = Temp.outputFrame;
+        if(mixerQueueSize==1){
+            output = Temp.mixerQueue[0];
+        } else {
+            if(SETTINGS.isPassthrough){
+                passThroughMixer(Temp.mixerQueue,mixerQueueSize, output);
+            }else{
+                phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
             }
         }
 
-            jfloat *output = Temp.outputFrame;
-            if(mixerQueueSize==1){
-                output = Temp.mixerQueue[0];
-            } else {
-                if(SETTINGS.isPassthrough){
-                    passThroughMixer(Temp.mixerQueue,mixerQueueSize, output);
-                }else{
-                    phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
-                }
-            }
-
-            olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);
-            olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+        olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);
+        olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
     }
 }
 
@@ -180,6 +185,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     }*/
 
     phInit(&SETTINGS,nSourcesPerLine, listenerData);
+
     for(jint i=0;i<SETTINGS.nOutputLines;i++){
         for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
             float* audioSourceData = (float*)(intptr_t) audioSourcesDataArray[i * nSourcesPerLine + j];

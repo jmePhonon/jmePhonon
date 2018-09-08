@@ -1,11 +1,12 @@
 #include "OutputLine.h"
- 
-
 
 struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
     struct OutputLine *lines= malloc(sizeof(struct OutputLine) * nOutputLines);
     for(int i=0;i<nOutputLines;i++){
-        printf("Phonon: Initialize line id %d\n", i);
+        // printf("Phonon: Initialize line id %d\n", i);
+        lines[i].uList = (struct UList*) malloc(sizeof(struct UList));
+        ulistInit(lines[i].uList);
+
         lines[i].sourcesSlots = asNew(settings, settings->nSourcesPerLine);
         lines[i].outputBuffer = NULL;
         lines[i].numConnectedSources = 0;
@@ -20,6 +21,7 @@ struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
 void olDestroy(struct GlobalSettings *settings,struct OutputLine *lines,jint nOutputLines){
     for(int i=0;i<nOutputLines;i++){
         asDestroy(settings, lines[i].sourcesSlots,settings->nSourcesPerLine);
+        ulistDestroy(lines[i].uList);
     }
     free(lines);
 }
@@ -45,12 +47,13 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
     for (i = 0; i < settings->nSourcesPerLine; i++) {
         // find an empty source slot
     
-        if (!asIsConnected(settings,&bestLine->sourcesSlots[i])) {
-
+        if (!asIsConnected(&bestLine->sourcesSlots[i])) {
+        
             bestLine->sourcesSlots[i].data = data;
             bestLine->sourcesSlots[i].numSamples = sourceSamples;
             bestLine->sourcesSlots[i].connectedLine = bestLine;
-        
+            ulistAdd(bestLine->uList, bestLine->sourcesSlots[i].uNode);
+
             bestLine->numConnectedSources++;
             printf("Connect source to slot %d \n",i);
 
@@ -71,11 +74,8 @@ void olDisconnectSource(struct GlobalSettings *settings,struct AudioSource *sour
     line->numConnectedSources--; 
     source->data = NULL;
     source->connectedLine = NULL;
-
+    ulistRemove(source->uNode);
 }
-
-
-
 
 void olSetLastProcessedFrameId(struct GlobalSettings *settings,struct OutputLine *line, jint v) {
     ((jint *)line->outputBuffer)[olHeader(LAST_PROCESSED_FRAME)] = v;

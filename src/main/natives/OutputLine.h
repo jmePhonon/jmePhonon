@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "types.h"
 #include "AudioSource.h"
+#include "UList.h"
 #include <stdlib.h>
 
 
@@ -14,6 +15,7 @@
 struct OutputLine {
     jfloat *outputBuffer;  /*where to store processed audio. Readable and writable.*/
     struct AudioSource *sourcesSlots;
+    struct UList* uList;
     jint numConnectedSources;
 };
 
