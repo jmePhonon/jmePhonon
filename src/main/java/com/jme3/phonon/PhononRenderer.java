@@ -218,7 +218,6 @@ public class PhononRenderer implements AudioRenderer {
 
 	// long UPDATE_RATE = 50* 1000000l;
 	public void runDecoder() {
-
 		do {
 			if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
 				try {
@@ -227,7 +226,6 @@ public class PhononRenderer implements AudioRenderer {
 
 				}
 			}
-
 
 			PHONON_LISTENER.updateNative();
 			if (SIMULATE_LOAD) {
@@ -301,7 +299,9 @@ public class PhononRenderer implements AudioRenderer {
 	}
 
 	@Override
-	public void updateSourceParam(AudioSource src, AudioParam param) {}
+	public void updateSourceParam(AudioSource src, AudioParam param) {
+
+	}
 
 
 	@Override

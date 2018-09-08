@@ -269,7 +269,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,
         printf("FIXME: PhContext is null for this source?\n");
         return;
     }
-   IPLVector3 sourcePosition;
+
+    IPLVector3 sourcePosition;
     sourcePosition.x = 0;
     sourcePosition.y = 0;
     sourcePosition.z = 0;
