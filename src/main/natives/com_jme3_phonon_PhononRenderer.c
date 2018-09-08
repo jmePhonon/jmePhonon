@@ -130,19 +130,21 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, 
-jobject obj, 
-jint sampleRate,
-jint nOutputLines,
-jint nSourcesPerLine,
-jint nOutputChannels,
-jint frameSize,
-jint bufferSize,
- jboolean nativeThread,
- jboolean decoupledNativeThread,
+    jobject obj, 
+    jint sampleRate,
+    jint nOutputLines,
+    jint nSourcesPerLine,
+    jint nOutputChannels,
+    jint frameSize,
+    jint bufferSize,
+    jboolean nativeThread,
+    jboolean decoupledNativeThread,
 
- jlong listenerDataPointer,
-// effects
-jboolean isPassthrough
+    jlong listenerDataPointer,
+    jlongArray audioSourcesDataArrayPointer,
+
+    // effects
+    jboolean isPassthrough
 ) {
 
     SETTINGS.nOutputLines = nOutputLines;
@@ -165,7 +167,19 @@ jboolean isPassthrough
 
     float *listenerData = (float*)(intptr_t)listenerDataPointer;
 
-    phInit(&SETTINGS,nSourcesPerLine,listenerData);
+    // jsize audioSourcesDataCount = (*env)->GetArrayLength(env, audioSourcesDataArrayPointer);
+    jlong* audioSourcesDataArray = (*env)->GetLongArrayElements(env, audioSourcesDataArrayPointer, 0);
+
+    float ***audioSourcesData = (float***) malloc(sizeof(float**) * nOutputLines); 
+
+    for(int i = 0; i < nOutputLines; i++) {
+        audioSourcesData[i] = (float**) malloc(sizeof(float*) * nSourcesPerLine);
+        for(int j = 0; j < nSourcesPerLine; j++) {
+            audioSourcesData[i][j] = audioSourcesDataArray[i * nSourcesPerLine + j];
+        }
+    }
+
+    phInit(&SETTINGS,nSourcesPerLine, listenerData, audioSourcesData);
     for(jint i=0;i<SETTINGS.nOutputLines;i++){
         for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
             phInitializeSource(&SETTINGS,&OUTPUT_LINES[i].sourcesSlots[j]);

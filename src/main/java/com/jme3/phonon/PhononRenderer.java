@@ -74,6 +74,7 @@ public class PhononRenderer implements AudioRenderer {
 	private final int MAX_PLAYER_PREBUFFERING;
 
 	private final PhononListener PHONON_LISTENER;
+	private final PhononAudioSourcesData PHONON_AUDIOSOURCES_DATA;
 
 	private Listener jmeListener;
 
@@ -96,6 +97,7 @@ public class PhononRenderer implements AudioRenderer {
 		THREAD_MODE = threadMode;
 
 		PHONON_LISTENER = new PhononListener();
+		PHONON_AUDIOSOURCES_DATA = new PhononAudioSourcesData(nOutputLines, nSourcesPerLine);
 		PLAYERS = new PhononPlayer[nOutputLines];
 		OUTPUT_SAMPLE_SIZE = outputSampleSize;
 
@@ -107,7 +109,9 @@ public class PhononRenderer implements AudioRenderer {
 		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
 				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
-				PHONON_LISTENER.getAddress(), // Effects
+				PHONON_LISTENER.getAddress(),
+				PHONON_AUDIOSOURCES_DATA.getAddresses(),
+				// Effects
 				settings.passThrough);
 
 		for (int i = 0; i < OUTPUT_LINES.length; i++) {
@@ -183,7 +187,7 @@ public class PhononRenderer implements AudioRenderer {
 
 	native void initNative(int sampleRate, int nOutputLines, int nSourcesPerLine,
 			int nOutputChannels, int frameSize, int bufferSize, boolean nativeThread,
-			boolean decoupledNativeThread, long listenerDataPointer,
+			boolean decoupledNativeThread, long listenerDataPointer, long[] audioSourcesDataArrayPointer,
 			// effects
 			boolean isPassThrough);
 

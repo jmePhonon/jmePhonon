@@ -3,71 +3,34 @@
 
 #include "types.h"
 
-  struct {
-        IPLhandle context;
-        IPLRenderingSettings settings;
-        IPLSimulationSettings simulationSettings;
 
-        IPLAudioFormat monoFormat;
-        IPLAudioBuffer monoBuffer1;
-        IPLAudioBuffer monoBuffer2;
-        jfloat *auxMonoFrame;
+/** Adapted from jmonkeyengine's Quaternion.java */
+void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
+    jfloat vx = v->x, vy = v->y, vz = v->z;
+    if (vx == 0.f && vy == 0.f && vz == 0.f) {
+        store->x = 0;
+        store->y = 0;
+        store->z = 0;
+    } else {
+        jfloat x = qtr->x;
+        jfloat y = qtr->y;
+        jfloat z = qtr->z;
+        jfloat w = qtr->w;
 
-
-        IPLAudioFormat outputFormat;
-        IPLAudioBuffer outputBuffer;
-
-        IPLVector3 listenerPosition;
-        IPLVector3 listenerDirection;
-        IPLVector3 listenerUp;
-
-        IPLhandle scene;
-        IPLMaterial *materials;
-
-        IPLhandle environment;
-        IPLhandle environmentalRenderer;
-
-        IPLHrtfParams defaultHrtfParams;
-        IPLhandle binauralRenderer;
-
-        IPLAudioBuffer *mixerQueue;
-
-        jfloat *listenerData;
-
-    } PhSharedContext; // This context is shared between every source
-
-    struct PhContext { //nb for each source we need to create a new PhContext    
-        IPLhandle binauralEffect;
-        IPLhandle directSoundEffect;
-        IPLDirectSoundEffectOptions directSoundEffectOptions;
-    };
-
-    /** Adapted from jmonkeyengine's Quaternion.java */
-    void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
-        jfloat vx = v->x, vy = v->y, vz = v->z;
-        if (vx == 0.f && vy == 0.f && vz == 0.f) {
-            store->x = 0;
-            store->y = 0;
-            store->z = 0;
-        } else {
-            jfloat x = qtr->x;
-            jfloat y = qtr->y;
-            jfloat z = qtr->z;
-            jfloat w = qtr->w;
-
-            store->x = w * w * vx + 2 * y * w * vz - 2 * z * w * vy + x * x * vx + 2 * y * x * vy + 2 * z * x * vz - z * z * vx - y * y * vx;
-            store->y = 2 * x * y * vx + y * y * vy + 2 * z * y * vz + 2 * w * z * vx - z * z * vy + w * w * vy - 2 * x * w * vz - x * x * vy;
-            store->z = 2 * x * z * vx + 2 * y * z * vy + z * z * vz - 2 * w * y * vx - y * y * vz + 2 * w * x * vy - x * x * vz + w * w * vz;
-        }
-}
-  jfloat phQtrNorm(IPLQuaternion *qtr) {
-      jfloat x = qtr->x;
-      jfloat y = qtr->y;
-      jfloat z = qtr->z;
-      jfloat w = qtr->w;
-      
-      return w * w + x * x + y * y + z * z;
+        store->x = w * w * vx + 2 * y * w * vz - 2 * z * w * vy + x * x * vx + 2 * y * x * vy + 2 * z * x * vz - z * z * vx - y * y * vx;
+        store->y = 2 * x * y * vx + y * y * vy + 2 * z * y * vz + 2 * w * z * vx - z * z * vy + w * w * vy - 2 * x * w * vz - x * x * vy;
+        store->z = 2 * x * z * vx + 2 * y * z * vy + z * z * vz - 2 * w * y * vx - y * y * vz + 2 * w * x * vy - x * x * vz + w * w * vz;
     }
+}
+
+jfloat phQtrNorm(IPLQuaternion *qtr) {
+    jfloat x = qtr->x;
+    jfloat y = qtr->y;
+    jfloat z = qtr->z;
+    jfloat w = qtr->w;
+    
+    return w * w + x * x + y * y + z * z;
+}
 
 void phQtrInverse(IPLQuaternion *qtr,IPLQuaternion *out){
     jfloat x = qtr->x;
@@ -111,7 +74,7 @@ void phVecNormalize(IPLVector3 *v1,IPLVector3 *store){
 
 
 
-void phInit(struct GlobalSettings *settings,jint mixerQueueSize,float *listenerData){
+void phInit(struct GlobalSettings *settings,jint mixerQueueSize,float *listenerData, float ***audioSourceData){
     PhSharedContext.scene = NULL;
 
     /** TODO : make this configurable **/
