@@ -82,7 +82,6 @@ public class PhononRenderer implements AudioRenderer {
 
 	boolean SIMULATE_LOAD = false;
 
-
 	public PhononRenderer(int sampleRate, int nOutputLines, int nSourcesPerLine,
 			int nOutputChannels, int frameSize, int bufferSize, int outputSampleSize,
 			int maxPrebufferingS, ThreadMode threadMode, PhononSettings settings)
@@ -104,8 +103,6 @@ public class PhononRenderer implements AudioRenderer {
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
 
-
-
 		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
 				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
@@ -124,16 +121,12 @@ public class PhononRenderer implements AudioRenderer {
 		}
 	}
 
-
 	public PhononOutputLine getLine(int i) {
 		return OUTPUT_LINES[i];
 	}
 
-
 	@Override
 	public void initialize() {
-
-
 		if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
 			Thread decoderThread = new Thread(() -> runDecoder());
 			decoderThread.setName("Phonon Java Thread");
@@ -141,6 +134,7 @@ public class PhononRenderer implements AudioRenderer {
 			decoderThread.setDaemon(true);
 			decoderThread.start();
 		}
+
 		// playeThread = new Thread(() -> runPlayer());
 
 		// playeThread.setDaemon(true);
@@ -182,8 +176,6 @@ public class PhononRenderer implements AudioRenderer {
 	native void initLineNative(int id, long addr);
 
 	native void updateNative();
-
-
 
 	native void initNative(int sampleRate, int nOutputLines, int nSourcesPerLine,
 			int nOutputChannels, int frameSize, int bufferSize, boolean nativeThread,
@@ -300,7 +292,20 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void updateSourceParam(AudioSource src, AudioParam param) {
+		System.out.println("Received update param request from source " + src);
 
+		if(src.getChannel() < 0) {
+			return;
+		}
+		
+		switch(param) {
+			case Position:
+				PHONON_AUDIOSOURCES_DATA.updateSourcePosition(src);
+				break;
+			default:
+				System.err.println("Unrecognized param while updating audio source.");
+				return;	
+		}
 	}
 
 

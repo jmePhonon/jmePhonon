@@ -1,9 +1,11 @@
 package com.jme3.phonon;
 
 import java.nio.ByteBuffer;
-import com.jme3.util.BufferUtils;
+
+import com.jme3.audio.AudioSource;
 import com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT;
 import com.jme3.phonon.utils.DirectBufferUtils;
+import com.jme3.util.BufferUtils;
 
 public class PhononAudioSourcesData {
     private final ByteBuffer[] MEMORIES;
@@ -21,6 +23,10 @@ public class PhononAudioSourcesData {
         for(int i = 0; i < nTotalSource; ++i) {
             ADDRESSES[i] = DirectBufferUtils.getAddr(MEMORIES[i]);
         }
+    }
+
+    public void updateSourcePosition(AudioSource src) {
+
     }
 
 
