@@ -3,6 +3,43 @@
 
 #include "types.h"
 
+struct {
+    IPLhandle context;
+    IPLRenderingSettings settings;
+    IPLSimulationSettings simulationSettings;
+
+    IPLAudioFormat monoFormat;
+    IPLAudioBuffer monoBuffer1;
+    IPLAudioBuffer monoBuffer2;
+    jfloat *auxMonoFrame;
+
+
+    IPLAudioFormat outputFormat;
+    IPLAudioBuffer outputBuffer;
+
+    IPLVector3 listenerPosition;
+    IPLVector3 listenerDirection;
+    IPLVector3 listenerUp;
+
+    IPLhandle scene;
+    IPLMaterial *materials;
+
+    IPLhandle environment;
+    IPLhandle environmentalRenderer;
+
+    IPLHrtfParams defaultHrtfParams;
+    IPLhandle binauralRenderer;
+
+    IPLAudioBuffer *mixerQueue;
+
+    jfloat *listenerData;
+} PhSharedContext; // This context is shared between every source
+
+struct PhContext { //nb for each source we need to create a new PhContext    
+    IPLhandle binauralEffect;
+    IPLhandle directSoundEffect;
+    IPLDirectSoundEffectOptions directSoundEffectOptions;
+};
 
 /** Adapted from jmonkeyengine's Quaternion.java */
 void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
@@ -74,7 +111,7 @@ void phVecNormalize(IPLVector3 *v1,IPLVector3 *store){
 
 
 
-void phInit(struct GlobalSettings *settings,jint mixerQueueSize,float *listenerData, float ***audioSourceData){
+void phInit(struct GlobalSettings *settings,jint mixerQueueSize,float *listenerData){
     PhSharedContext.scene = NULL;
 
     /** TODO : make this configurable **/
@@ -172,7 +209,7 @@ void phDestroy(struct GlobalSettings *settings){
 /**
  * Allocates one PhContext for the audioSource
  */
-void phInitializeSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceData){
     struct PhContext *context = malloc(sizeof(struct PhContext));
 
     // TODO make this configurable
@@ -185,11 +222,8 @@ void phInitializeSource(struct GlobalSettings *settings,struct AudioSource *audi
     iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer, 
     PhSharedContext.monoFormat,PhSharedContext.monoFormat, &context->directSoundEffect);
 
-
     iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, PhSharedContext.outputFormat, &context->binauralEffect);
     audioSource->phononContext = context;
-
-
 }
 
 /**

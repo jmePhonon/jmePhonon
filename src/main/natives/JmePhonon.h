@@ -11,46 +11,9 @@
 #include "AudioSource.h"
 #include "memory_layout/LISTENER_LAYOUT.h" 
 
-struct {
-    IPLhandle context;
-    IPLRenderingSettings settings;
-    IPLSimulationSettings simulationSettings;
-
-    IPLAudioFormat monoFormat;
-    IPLAudioBuffer monoBuffer1;
-    IPLAudioBuffer monoBuffer2;
-    jfloat *auxMonoFrame;
 
 
-    IPLAudioFormat outputFormat;
-    IPLAudioBuffer outputBuffer;
-
-    IPLVector3 listenerPosition;
-    IPLVector3 listenerDirection;
-    IPLVector3 listenerUp;
-
-    IPLhandle scene;
-    IPLMaterial *materials;
-
-    IPLhandle environment;
-    IPLhandle environmentalRenderer;
-
-    IPLHrtfParams defaultHrtfParams;
-    IPLhandle binauralRenderer;
-
-    IPLAudioBuffer *mixerQueue;
-
-    jfloat *listenerData;
-    jfloat ***audioSourceData;
-} PhSharedContext; // This context is shared between every source
-
-struct PhContext { //nb for each source we need to create a new PhContext    
-    IPLhandle binauralEffect;
-    IPLhandle directSoundEffect;
-    IPLDirectSoundEffectOptions directSoundEffectOptions;
-};
-
-void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize,float *listenerData, float ***audioSourcesData);
+void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize,float *listenerData);
 void phProcessFrame(struct GlobalSettings *settings, struct AudioSource *source,jfloat *inFrame, jfloat *outFrame);
 void phDestroy(struct GlobalSettings *settings);
 
@@ -58,7 +21,7 @@ void phDestroy(struct GlobalSettings *settings);
 /**
  * Allocates one PhContext for the audioSource
  */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceData);
 
 
 /**
