@@ -88,7 +88,7 @@ public class TestPhononRenderer extends SimpleApplication {
 
         Node audioSourceNode = new Node();
 
-        Geometry audioSourceGeom = new Geometry("AudioSource", new Box(2, 2, 2));
+        Geometry audioSourceGeom = new Geometry("AudioSource", new Box(.5f, .5f, .5f));
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         audioSourceGeom.setMaterial(audioSourceGeomMat);
         audioSourceGeomMat.setColor("Color",ColorRGBA.Red);
@@ -100,7 +100,5 @@ public class TestPhononRenderer extends SimpleApplication {
         an.play();
 
         rootNode.attachChild(audioSourceNode);
-
-        audioSourceNode.setLocalTranslation(0, 4, 0);
     }
 }

@@ -10,8 +10,7 @@
 #include <math.h>
 #include "AudioSource.h"
 #include "memory_layout/LISTENER_LAYOUT.h" 
-
-
+#include "memory_layout/AUDIOSOURCE_LAYOUT.h" 
 
 void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize,float *listenerData);
 void phProcessFrame(struct GlobalSettings *settings, struct AudioSource *source,jfloat *inFrame, jfloat *outFrame);

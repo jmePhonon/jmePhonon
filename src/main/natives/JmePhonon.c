@@ -260,6 +260,49 @@ IPLVector3 *phGetListenerUp(){
     return &PhSharedContext.listenerUp;
 }
 
+IPLVector3* phGetSourcePosition(IPLVector3* position, float *sourceData) {
+    position->x = sourceData[phSourceField(POSX)];
+    position->y = sourceData[phSourceField(POSY)];
+    position->z = sourceData[phSourceField(POSZ)];
+
+    return position;
+}
+
+IPLVector3* phGetSourceAhead(IPLVector3* ahead, float *sourceData) {
+    ahead->x = sourceData[phSourceField(AHEADX)];
+    ahead->y = sourceData[phSourceField(AHEADY)];
+    ahead->z = sourceData[phSourceField(AHEADZ)];
+
+    return ahead;
+}
+
+IPLVector3* phGetSourceUp(IPLVector3* up, float *sourceData) {
+    up->x = sourceData[phSourceField(UPX)];
+    up->y = sourceData[phSourceField(UPY)];
+    up->z = sourceData[phSourceField(UPZ)];
+
+    return up;
+}
+
+IPLVector3* phGetSourceRight(IPLVector3* right, float *sourceData) {
+    right->x = sourceData[phSourceField(RIGHTX)];
+    right->y = sourceData[phSourceField(RIGHTY)];
+    right->z = sourceData[phSourceField(RIGHTZ)];
+
+    return right;
+}
+
+IPLDirectivity* phGetSourceDirectivity(IPLDirectivity* directivity, float* sourceData) {
+    directivity->dipoleWeight = sourceData[phSourceField(DIPOLEWEIGHT)];
+    directivity->dipolePower = sourceData[phSourceField(DIPOLEPOWER)];
+
+    // TODO: retrieve those directivity fields
+    directivity->callback = NULL;
+    directivity->userData = NULL;
+
+    return directivity;
+}
+
 void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame){
     // for(jint i=0;i<PhSharedContext.settings.frameSize;i++){
     //     outframe[i] = inframe[i];
@@ -269,29 +312,13 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,
         printf("FIXME: PhContext is null for this source?\n");
         return;
     }
-
-    IPLVector3 sourcePosition;
-    sourcePosition.x = 0;
-    sourcePosition.y = 0;
-    sourcePosition.z = 0;
-
-// get this data from sourcedata
-    IPLSource source;
-    source.position = sourcePosition;
-    source.ahead.x = 0;
-    source.ahead.y = 0;
-    source.ahead.z = 1;
-    source.up.x = 0;
-    source.up.y = 1;
-    source.up.z = 0;
-    source.right.x = 1;
-    source.right.y = 0;
-    source.right.z = 0;
-    source.directivity.dipoleWeight = 0.0;
-    source.directivity.dipolePower = 1.0;
-    source.directivity.callback = NULL;
-    source.directivity.userData = NULL;
     
+    IPLSource source;
+    phGetSourcePosition(&source.position, asource->sceneData);
+    phGetSourceAhead(&source.ahead, asource->sceneData);
+    phGetSourceUp(&source.up, asource->sceneData);
+    phGetSourceRight(&source.right, asource->sceneData);
+    phGetSourceDirectivity(&source.directivity, asource->sceneData);    
 
     ///>>??????
     ///
@@ -302,7 +329,7 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,
     IPLVector3 *listenerUp = phGetListenerUp();
     IPLVector3 *listenerDirection = phGetListenerDirection();
 
-    IPLVector3 direction= iplCalculateRelativeDirection(sourcePosition, (*listenerPos),
+    IPLVector3 direction= iplCalculateRelativeDirection(source.position, (*listenerPos),
         (*listenerDirection), (*listenerUp));
 
     
