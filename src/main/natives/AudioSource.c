@@ -1,4 +1,5 @@
 #include "AudioSource.h"
+
 void asInit(struct GlobalSettings *settings, struct AudioSource *source){
     source->data = NULL;
     source->lastReadFrameIndex = 0;

@@ -209,7 +209,7 @@ void phDestroy(struct GlobalSettings *settings){
 /**
  * Allocates one PhContext for the audioSource
  */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceData){
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceSceneData){
     struct PhContext *context = malloc(sizeof(struct PhContext));
 
     // TODO make this configurable
@@ -224,6 +224,7 @@ void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *aud
 
     iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, PhSharedContext.outputFormat, &context->binauralEffect);
     audioSource->phononContext = context;
+    audioSource->sceneData = audioSourceSceneData;
 }
 
 /**

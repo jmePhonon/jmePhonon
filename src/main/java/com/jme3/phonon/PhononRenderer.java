@@ -187,7 +187,7 @@ public class PhononRenderer implements AudioRenderer {
 
 	native void initNative(int sampleRate, int nOutputLines, int nSourcesPerLine,
 			int nOutputChannels, int frameSize, int bufferSize, boolean nativeThread,
-			boolean decoupledNativeThread, long listenerDataPointer, long[] audioSourcesDataArrayPointer,
+			boolean decoupledNativeThread, long listenerDataPointer, long[] audioSourcesSceneDataArrayPointer,
 			// effects
 			boolean isPassThrough);
 
