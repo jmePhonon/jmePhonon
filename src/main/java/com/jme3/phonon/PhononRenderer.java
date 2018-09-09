@@ -7,6 +7,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.sound.sampled.LineUnavailableException;
 import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioParam;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
@@ -104,11 +105,18 @@ public class PhononRenderer implements AudioRenderer {
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
 
+		ByteBuffer[] audioSourceDataMemories = PHONON_AUDIOSOURCES_DATA.getMemoryBuffers();
+		long audioSourceDataAddresses[] = new long[audioSourceDataMemories.length];
+
+		for(int i = 0; i < audioSourceDataAddresses.length; i++) {
+			audioSourceDataAddresses[i] = DirectBufferUtils.getAddr(audioSourceDataMemories[i]);
+		}
+
 		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
 				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
 				PHONON_LISTENER.getAddress(),
-				PHONON_AUDIOSOURCES_DATA.getAddresses(),
+				audioSourceDataAddresses,
 				// Effects
 				settings.passThrough);
 
@@ -279,31 +287,39 @@ public class PhononRenderer implements AudioRenderer {
 	public void playSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
 		src.setChannel(connectSource(data));
+		src.setStatus(AudioSource.Status.Playing);
 		System.out.println("Channel: " + src.getChannel());
 	}
 
 	@Override
 	public void pauseSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
+		src.setStatus(AudioSource.Status.Paused);
 	}
 
 	@Override
 	public void stopSource(AudioSource src) {
-
+		src.setStatus(AudioSource.Status.Stopped);
+		src.setChannel(0);
 	}
 
 	@Override
 	public void updateSourceParam(AudioSource src, AudioParam param) {
-		System.out.println("Received update param request from source " + src);
-
 		if(src.getChannel() < 0) {
 			return;
 		}
 		
 		switch(param) {
 			case Position:
-				PHONON_AUDIOSOURCES_DATA.updateSourcePosition(src);
+				if(src.isPositional()) {
+					PHONON_AUDIOSOURCES_DATA.updateSourcePosition(src);
+				}
 				break;
+			case Direction:
+				if(src.isDirectional()) {
+					PHONON_AUDIOSOURCES_DATA.updateSourceDirection(src);
+				}
+
 			default:
 				System.err.println("Unrecognized param while updating audio source.");
 				return;	
