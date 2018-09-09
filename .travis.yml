@@ -14,5 +14,4 @@ deploy:
   file: deploy/*
   on:
     repo: riccardobl/sa4jme
-    tag: true
-    all_branches: true
+    tags: true
