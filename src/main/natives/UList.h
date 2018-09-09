@@ -1,9 +1,8 @@
 #ifndef __UPDATE_LIST__
 #define __UPDATE_LIST__
 
-#include <jni.h>
-#include <stdlib.h>
-#include "types.h"
+#include "Common.h" 
+
 
 struct UListNode {
     struct UListNode *next, *prev;

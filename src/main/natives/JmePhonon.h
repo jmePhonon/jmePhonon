@@ -2,23 +2,22 @@
 #ifndef __JMEPHONON_H__
 #define __JMEPHONON_H__
 
-#include <jni.h>
 #include "phonon.h"
-#include "Settings.h"
-#include "types.h"
-#include <stdlib.h>
-#include <math.h>
+
+#include "Common.h"
 #include "AudioSource.h"
-#include "memory_layout/LISTENER_LAYOUT.h" 
-#include "memory_layout/AUDIOSOURCE_LAYOUT.h" 
 
-void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize,float *listenerData);
-void phProcessFrame(struct GlobalSettings *settings, struct AudioSource *source,jfloat *inFrame, jfloat *outFrame);
+#include "Listener.h"
+
+
+
+void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize);
+void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener , struct AudioSource *source,jfloat *inFrame, jfloat *outFrame);
 void phDestroy(struct GlobalSettings *settings);
-
-
-/**
- * Allocates one PhContext for the audioSource
+ 
+ 
+/** 
+ * Allocates one PhContext for the audioSour ce
  */
 void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceSceneData);
 

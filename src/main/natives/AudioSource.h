@@ -1,10 +1,7 @@
 #ifndef __SOURCE_BIND__
 #define __SOURCE_BIND__ 1
 
-#include <jni.h>          
-#include <stdlib.h>
-#include "types.h"
-#include "Settings.h"
+#include "Common.h"
 #include "UList.h"
 
 struct AudioSource {
@@ -22,7 +19,6 @@ struct AudioSource {
 
     void *connectedLine; // Pointer to the line to which the source is connected
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
-
     struct UListNode* uNode; // U-List node
 
 

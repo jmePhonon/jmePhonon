@@ -78,6 +78,7 @@ public class TestPhononRenderer extends SimpleApplication {
             AudioContext.setAudioRenderer(audioRenderer);
             listener = new Listener();
             listener.setRenderer(audioRenderer);
+            listener.setVolume(2);
             audioRenderer.setListener(listener);
         }
 
@@ -87,6 +88,7 @@ public class TestPhononRenderer extends SimpleApplication {
         audioSourceNode = new Node();
 
         Geometry audioSourceGeom = new Geometry("AudioSource", new Box(.5f, .5f, .5f));
+
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         audioSourceGeom.setMaterial(audioSourceGeomMat);
         audioSourceGeomMat.setColor("Color",ColorRGBA.Red);

@@ -1,4 +1,5 @@
 #include "OutputLine.h"
+#include "memory_layout/OUTPUT_LINE_LAYOUT.h"
 
 struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
     struct OutputLine *lines= malloc(sizeof(struct OutputLine) * nOutputLines);
@@ -122,9 +123,9 @@ jint olGetLastPlayedFrameId(struct GlobalSettings *settings,struct OutputLine *l
 // }
 
 
-void olWriteFrame(struct GlobalSettings *settings,struct OutputLine *line, jint frameIndex, jfloat *frame,jint frameSize) {
+void olWriteFrame(struct GlobalSettings *settings,struct OutputLine *line, jint frameIndex, jfloat *frame,jint frameSize,jfloat volume) {
     for (jint i = 0; i < frameSize; i++) {
-        line->outputBuffer[olHeader(BODY) + frameSize * frameIndex + i] = frame[i];
+        line->outputBuffer[olHeader(BODY) + frameSize * frameIndex + i] = frame[i]*volume;
     }
 }
 

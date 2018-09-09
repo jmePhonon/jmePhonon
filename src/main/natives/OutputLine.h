@@ -2,13 +2,10 @@
 #ifndef __OUTPUT_LINE__
 #define __OUTPUT_LINE__
 
-#include "memory_layout/OUTPUT_LINE_LAYOUT.h"
-#include "Settings.h" 
-#include <stdint.h>
-#include "types.h"
+#include "Common.h" 
+
 #include "AudioSource.h"
 #include "UList.h"
-#include <stdlib.h>
 
 
 
@@ -74,6 +71,6 @@ jint olGetLastPlayedFrameId(struct GlobalSettings *settings, struct OutputLine *
 /**
 *   Write one frame to the output buffer
 */
-void olWriteFrame(struct GlobalSettings *settings, struct OutputLine *line, jint frameIndex, jfloat *frame, jint frameSize);
+void olWriteFrame(struct GlobalSettings *settings, struct OutputLine *line, jint frameIndex, jfloat *frame, jint frameSize,jfloat volume);
 
 #endif
