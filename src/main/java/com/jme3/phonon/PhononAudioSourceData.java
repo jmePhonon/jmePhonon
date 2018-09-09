@@ -48,13 +48,13 @@ public class PhononAudioSourceData {
     }
 
     public void positionUpdate(AudioSource src) {
-        POS.updateFrom(src.getPosition());
         POS.setUpdateNeeded();
+        POS.updateFrom(src.getPosition());
     }
 
     public void directionUpdate(AudioSource src) {
-        AHEAD.updateFrom(src.getDirection());
         AHEAD.setUpdateNeeded();
+        AHEAD.updateFrom(src.getDirection());
         
         if(src instanceof AudioNode) {
             AudioNode node = (AudioNode) src;
@@ -68,8 +68,8 @@ public class PhononAudioSourceData {
     }
         
     public void volumeUpdate(AudioSource src) {
-        VOL.updateFrom(src.getVolume());
         VOL.setUpdateNeeded();
+        VOL.updateFrom(src.getVolume());
     }
 
     public long getAddress() {
