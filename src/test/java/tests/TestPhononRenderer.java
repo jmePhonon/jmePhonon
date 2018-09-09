@@ -92,11 +92,12 @@ public class TestPhononRenderer extends SimpleApplication {
             AudioContext.setAudioRenderer(audioRenderer);
             listener = new Listener();
             listener.setRenderer(audioRenderer);
+            listener.setVolume(2);
             audioRenderer.setListener(listener);
         }
 
         // Generic env
-        audioRenderer.setEnvironment(Environment.Cavern);
+        // audioRenderer.setEnvironment(Environment.Cavern);
         Geometry audioSourceGeom = new Geometry("AudioSource", new Box(2, 2, 2));
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         audioSourceGeom.setMaterial(audioSourceGeomMat);

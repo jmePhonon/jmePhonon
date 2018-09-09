@@ -1,7 +1,7 @@
 #define __JMEPHONON_INTERNAL__
 #include "JmePhonon.h"
+#include "memory_layout/LISTENER_LAYOUT.h" 
 
-#include "types.h"
 
   struct {
         IPLhandle context;
@@ -17,10 +17,7 @@
         IPLAudioFormat outputFormat;
         IPLAudioBuffer outputBuffer;
 
-        IPLVector3 listenerPosition;
-        IPLVector3 listenerDirection;
-        IPLVector3 listenerUp;
-
+   
         IPLhandle scene;
         IPLMaterial *materials;
 
@@ -32,8 +29,6 @@
 
         IPLAudioBuffer *mixerQueue;
 
-        jfloat *listenerData;
-
     } PhSharedContext; // This context is shared between every source
 
     struct PhContext { //nb for each source we need to create a new PhContext    
@@ -42,76 +37,11 @@
         IPLDirectSoundEffectOptions directSoundEffectOptions;
     };
 
-    /** Adapted from jmonkeyengine's Quaternion.java */
-    void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
-        jfloat vx = v->x, vy = v->y, vz = v->z;
-        if (vx == 0.f && vy == 0.f && vz == 0.f) {
-            store->x = 0;
-            store->y = 0;
-            store->z = 0;
-        } else {
-            jfloat x = qtr->x;
-            jfloat y = qtr->y;
-            jfloat z = qtr->z;
-            jfloat w = qtr->w;
-
-            store->x = w * w * vx + 2 * y * w * vz - 2 * z * w * vy + x * x * vx + 2 * y * x * vy + 2 * z * x * vz - z * z * vx - y * y * vx;
-            store->y = 2 * x * y * vx + y * y * vy + 2 * z * y * vz + 2 * w * z * vx - z * z * vy + w * w * vy - 2 * x * w * vz - x * x * vy;
-            store->z = 2 * x * z * vx + 2 * y * z * vy + z * z * vz - 2 * w * y * vx - y * y * vz + 2 * w * x * vy - x * x * vz + w * w * vz;
-        }
-}
-  jfloat phQtrNorm(IPLQuaternion *qtr) {
-      jfloat x = qtr->x;
-      jfloat y = qtr->y;
-      jfloat z = qtr->z;
-      jfloat w = qtr->w;
-      
-      return w * w + x * x + y * y + z * z;
-    }
-
-void phQtrInverse(IPLQuaternion *qtr,IPLQuaternion *out){
-    jfloat x = qtr->x;
-    jfloat y = qtr->y;
-    jfloat z = qtr->z;
-    jfloat w = qtr->w;
-    jfloat norm = phQtrNorm(qtr);
-    if (norm > 0.0) {
-        jfloat invNorm = 1.0f / norm;
-        out->x *= -invNorm;
-        out->y *= -invNorm;
-        out->z *= -invNorm;
-        out->w *= invNorm;
-    }
-    out->x = x;
-    out->y = y;
-    out->z = z;
-    out->w = w;       
-}
-
-void phSubVecVec(IPLVector3 *v1, IPLVector3 *v2,IPLVector3 *store){
-    jfloat x = v1->x, y = v1->y, z = v1->z;
-    store->x = x-v2->x;
-    store->y = y-v2->y;
-    store->z = z-v2->z;
-}
-
-void phVecNormalize(IPLVector3 *v1,IPLVector3 *store){
-    jfloat x = v1->x, y = v1->y, z = v1->z;
-    jfloat length = x * x + y * y + z * z;
-    if (length != 1.f && length != 0.f){
-        length = 1.0f / sqrtf(length);
-        store->x = x * length;
-        store->y = y * length;
-        store->z= z * length;
-    }
-    store->x = x;
-    store->y = y;
-    store->z = z;    
-}
 
 
 
-void phInit(struct GlobalSettings *settings,jint mixerQueueSize,float *listenerData){
+
+void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
     PhSharedContext.scene = NULL;
 
     /** TODO : make this configurable **/
@@ -187,7 +117,6 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize,float *listenerD
   
 
 
-    PhSharedContext.listenerData = listenerData;
 
 
     PhSharedContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
@@ -240,29 +169,8 @@ void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSour
 
 }
 
-IPLVector3 *phGetListenerPosition(){ 
-    PhSharedContext.listenerPosition.x=PhSharedContext.listenerData[phListenerField(POSX)];
-    PhSharedContext.listenerPosition.y=PhSharedContext.listenerData[phListenerField(POSY)];
-    PhSharedContext.listenerPosition.z=PhSharedContext.listenerData[phListenerField(POSZ)];
-    return &PhSharedContext.listenerPosition;
-}
 
-
-IPLVector3 *phGetListenerDirection(){ 
-    PhSharedContext.listenerDirection.x=PhSharedContext.listenerData[phListenerField(DIRX)];
-    PhSharedContext.listenerDirection.y=PhSharedContext.listenerData[phListenerField(DIRY)];
-    PhSharedContext.listenerDirection.z=PhSharedContext.listenerData[phListenerField(DIRZ)];
-    return &PhSharedContext.listenerDirection;
-}
-
-IPLVector3 *phGetListenerUp(){ 
-    PhSharedContext.listenerUp.x=PhSharedContext.listenerData[phListenerField(UPX)];
-    PhSharedContext.listenerUp.y=PhSharedContext.listenerData[phListenerField(UPY)];
-    PhSharedContext.listenerUp.z=PhSharedContext.listenerData[phListenerField(UPZ)];
-    return &PhSharedContext.listenerUp;
-}
-
-void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame){
+void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame){
     // for(jint i=0;i<PhSharedContext.settings.frameSize;i++){
     //     outframe[i] = inframe[i];
     // }
@@ -299,9 +207,9 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,
 
     jfloat sourceRadius = 1;
 
-    IPLVector3 *listenerPos = phGetListenerPosition();
-    IPLVector3 *listenerUp = phGetListenerUp();
-    IPLVector3 *listenerDirection = phGetListenerDirection();
+    IPLVector3 *listenerPos = (IPLVector3 *)lsGetPosition(settings,listener);
+    IPLVector3 *listenerUp = (IPLVector3 *)lsGetUp(settings,listener);
+    IPLVector3 *listenerDirection =  (IPLVector3 *)lsGetDirection(settings,listener);
 
     IPLVector3 direction= iplCalculateRelativeDirection(sourcePosition, (*listenerPos),
         (*listenerDirection), (*listenerUp));

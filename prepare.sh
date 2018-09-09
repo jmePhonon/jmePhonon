@@ -188,7 +188,7 @@ function build {
     -fpermissive 
     -O0 -fno-rtti -shared
     -fPIC  
-    -Wall 
+    -Wall -Werror=implicit-function-declaration 
     -Lsrc/steamaudio/lib/$platform/$arch
     -Isrc/steamaudio/include
     -Isrc/ext

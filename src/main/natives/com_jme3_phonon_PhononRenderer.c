@@ -1,18 +1,18 @@
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     #error This implementation runs only on little endian machines
 #endif
+#include "Common.h" 
 
-#include <jni.h>
-#include <math.h>
-#include <stdint.h>
-#include <stdlib.h>
+
+
 #include "com_jme3_phonon_PhononRenderer.h"
-#include "Settings.h"
-#include "types.h"
+
 #include "JmePhonon.h"
 #include "OutputLine.h"
 #include "AudioSource.h"
 #include "UList.h"
+#include "Listener.h"
+#include "Passthrough.h"
 
 #ifdef INCLUDE_SIMPLE_REVERB
     #include "ext/ext_SimpleReverb.h"
@@ -20,8 +20,9 @@
 
 struct GlobalSettings SETTINGS;
 struct OutputLine *OUTPUT_LINES;
+struct Listener *GLOBAL_LISTENER;
 
-struct  {
+struct {
     jfloat *outputFrame1;
     jfloat *outputFrame2;
     jfloat *inputFrame;
@@ -31,29 +32,6 @@ struct  {
 #if defined(__linux__)
     #include "platform/linux/NativeUpdate.h"
 #endif
-
-
-void passThrough(jfloat *input, jfloat *output) {
-    int inputIndex = 0;
-    int outputIndex = 0;
-    while(inputIndex<SETTINGS.inputFrameSize){
-        for(int j=0;j<SETTINGS.nOutputChannels;j++){
-            output[outputIndex++] = input[inputIndex];
-        }
-        inputIndex++;
-    }
-}
-
-void  passThroughMixer(jfloat** inputs,jint nInputs,jfloat *output){
-    for (jint i = 0; i < SETTINGS.inputFrameSize * SETTINGS.nOutputChannels; i++) {
-        jfloat res = 0;
-        for (jint j = 0; j < nInputs; j++) {
-            res += inputs[j][i];
-        }
-        res /= nInputs;
-        output[i] = res;
-    }
-}
 
 
 
@@ -120,9 +98,9 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 }
 
                 if(SETTINGS.isPassthrough) {
-                    passThrough(Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+                    passThrough(&SETTINGS,Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
                 } else {
-                    phProcessFrame(&SETTINGS, audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+                    phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
                 }
 
                 uNode = uNode->next;
@@ -134,7 +112,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 output = Temp.mixerQueue[0];
             } else {
                 if(SETTINGS.isPassthrough){
-                    passThroughMixer(Temp.mixerQueue,mixerQueueSize, output);
+                    passThroughMixer(&SETTINGS,Temp.mixerQueue,mixerQueueSize, output);
                 }else{
                     phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
                 }
@@ -148,9 +126,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                     output = Temp.outputFrame2;
                 }
             #endif
+                jfloat *masterVolume = lsGetVolume(&SETTINGS,GLOBAL_LISTENER);
 
-            olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);
-            olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+                olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels, (*masterVolume));
+                olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
     }
 }
 
@@ -180,8 +159,9 @@ jboolean isPassthrough
     SETTINGS.bufferSize = bufferSize;
     SETTINGS.isPassthrough = isPassthrough;
 
-    OUTPUT_LINES = olNew(&SETTINGS,nOutputLines);
- 
+    GLOBAL_LISTENER = lsNew(&SETTINGS, (jfloat*)(intptr_t)listenerDataPointer);
+    OUTPUT_LINES = olNew(&SETTINGS, nOutputLines);
+
     Temp.outputFrame1= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
         Temp.outputFrame2= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
 
@@ -192,9 +172,8 @@ jboolean isPassthrough
     }
 
 
-    float *listenerData = (float*)(intptr_t)listenerDataPointer;
 
-    phInit(&SETTINGS,nSourcesPerLine,listenerData);
+    phInit(&SETTINGS,nSourcesPerLine); 
     for(jint i=0;i<SETTINGS.nOutputLines;i++){
         for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
             phInitializeSource(&SETTINGS,&OUTPUT_LINES[i].sourcesSlots[j]);
@@ -217,7 +196,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv 
             phDestroySource(&SETTINGS,&OUTPUT_LINES[i].sourcesSlots[j]);
         }
     }
-    olDestroy(&SETTINGS,OUTPUT_LINES,SETTINGS.nOutputLines);    
+    lsDestroy(&SETTINGS, GLOBAL_LISTENER);
+    olDestroy(&SETTINGS, OUTPUT_LINES, SETTINGS.nOutputLines);
     phDestroy(&SETTINGS);
     #ifdef INCLUDE_SIMPLE_REVERB
         srDestroy(&SETTINGS);

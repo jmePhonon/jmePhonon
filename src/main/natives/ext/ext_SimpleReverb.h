@@ -1,7 +1,7 @@
 #ifndef __EXT_SIMPLE_REVERB__
 #define __EXT_SIMPLE_REVERB__
-#include <jni.h>
-#include "Settings.h"
+#include "Common.h" 
+
 
 /** 
  * Simple reverb extension
