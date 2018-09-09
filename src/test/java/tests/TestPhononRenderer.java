@@ -96,7 +96,7 @@ public class TestPhononRenderer extends SimpleApplication {
         }
 
         // Generic env
-
+        // audioRenderer.setEnvironment(Environment.Cavern);
         Geometry audioSourceGeom = new Geometry("AudioSource", new Box(2, 2, 2));
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         audioSourceGeom.setMaterial(audioSourceGeomMat);

@@ -134,8 +134,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
             }
 
             #ifdef INCLUDE_SIMPLE_REVERB 
-                srApplyReverb(&SETTINGS,output, Temp.outputFrame2);
-                output = Temp.outputFrame2;
+                if(srHasValidEnvironment(&SETTINGS)){
+                    srApplyReverb(&SETTINGS,output, Temp.outputFrame2);
+                    output = Temp.outputFrame2;
+                }
             #endif
 
             olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);

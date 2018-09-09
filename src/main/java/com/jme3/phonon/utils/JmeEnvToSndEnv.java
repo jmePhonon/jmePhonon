@@ -8,8 +8,10 @@ import com.jme3.audio.Environment;
 public class JmeEnvToSndEnv {
 
     public static float[] convert(Environment env) {
+
         // TODO: if possible, perform some sort of conversion for custom environments
         float envdata[] = new float[17];
+
         envdata[0] = 1;
         envdata[1] = .4f;
         envdata[2] = -.9f;
@@ -28,7 +30,9 @@ public class JmeEnvToSndEnv {
         envdata[15] = 3.2f;
         envdata[16] = 0.020f;
         
-        if (env == Environment.Closet) {
+        if (env == null) {
+            envdata[0] = -2;
+        } else if (env == Environment.Closet) {
             envdata[0] = -1;
             envdata[1] = 7;            
         }else if (env == Environment.Dungeon) {

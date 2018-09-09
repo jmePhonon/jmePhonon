@@ -22,6 +22,7 @@
 void srInit(struct GlobalSettings *settings);
 void srDestroy(struct GlobalSettings *settings);
 void srSetEnvironment(struct GlobalSettings *settings,jfloat *data);
+jboolean srHasValidEnvironment(struct GlobalSettings *settings);
 void srApplyReverb(struct GlobalSettings *settings, jfloat *inframe, jfloat *outframe);
 
 #endif
