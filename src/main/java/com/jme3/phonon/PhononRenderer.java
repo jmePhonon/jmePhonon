@@ -222,7 +222,7 @@ public class PhononRenderer implements AudioRenderer {
 				}
 			}
 
-			PHONON_LISTENER.updateNative();
+			PHONON_LISTENER.finalizeUpdate();
 			if (SIMULATE_LOAD) {
 				try {
 					Thread.sleep((int) (Math.random() * 10));
