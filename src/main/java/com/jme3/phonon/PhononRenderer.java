@@ -77,7 +77,7 @@ public class PhononRenderer implements AudioRenderer {
 	private final int MAX_PLAYER_PREBUFFERING;
 
 	private final PhononListener PHONON_LISTENER;
-	private final PhononAudioSourcesData PHONON_AUDIOSOURCES_DATA;
+	private final PhononAudioSourcesDataManager PHONON_ASDATA_MANAGER;
 
 	private Listener jmeListener;
 
@@ -99,7 +99,7 @@ public class PhononRenderer implements AudioRenderer {
 		THREAD_MODE = threadMode;
 
 		PHONON_LISTENER = new PhononListener();
-		PHONON_AUDIOSOURCES_DATA = new PhononAudioSourcesData(nOutputLines, nSourcesPerLine);
+		PHONON_ASDATA_MANAGER = new PhononAudioSourcesDataManager(nOutputLines, nSourcesPerLine);
 		PLAYERS = new PhononPlayer[nOutputLines];
 		OUTPUT_SAMPLE_SIZE = outputSampleSize;
 
@@ -109,7 +109,7 @@ public class PhononRenderer implements AudioRenderer {
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
 				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
 				PHONON_LISTENER.getAddress(),
-				PHONON_AUDIOSOURCES_DATA.memoryAddresses(),
+				PHONON_ASDATA_MANAGER.memoryAddresses(),
 				// Effects
 				settings.passThrough);
 
@@ -223,6 +223,8 @@ public class PhononRenderer implements AudioRenderer {
 			}
 
 			PHONON_LISTENER.finalizeUpdate();
+			PHONON_ASDATA_MANAGER.finalizeUpdates();
+
 			if (SIMULATE_LOAD) {
 				try {
 					Thread.sleep((int) (Math.random() * 10));
@@ -314,22 +316,16 @@ public class PhononRenderer implements AudioRenderer {
 		switch(param) {
 			case Position:
 				if(src.isPositional()) {
-					PHONON_AUDIOSOURCES_DATA.updateSourcePosition(src);
+					PHONON_ASDATA_MANAGER.updateSourcePosition(src);
 				}
 				break;
 			case Direction:
 				if(src.isDirectional()) {
-					PHONON_AUDIOSOURCES_DATA.updateSourceDirection(src);
+					PHONON_ASDATA_MANAGER.updateSourceDirection(src);
 				}
 				break;
 			case Volume:
-				PHONON_AUDIOSOURCES_DATA.updateSourceVolume(src);
-				break;
-			case IsDirectional:
-				PHONON_AUDIOSOURCES_DATA.updateSourceDirectionality(src);
-				break;
-			case InnerAngle:
-				PHONON_AUDIOSOURCES_DATA.updateSourceInnerAngle(src);
+				PHONON_ASDATA_MANAGER.updateSourceVolume(src);
 				break;
 			default:
 				System.err.println("Unrecognized param while updating audio source.");

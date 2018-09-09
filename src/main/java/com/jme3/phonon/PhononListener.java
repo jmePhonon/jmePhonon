@@ -60,7 +60,6 @@ public class PhononListener {
         VEL.updateFrom(listener.getVelocity());
         VOL.updateFrom(listener.getVolume());
         UP.updateFrom(listener.getUp());
-
     }
 
     public void setPosUpdateNeeded() {

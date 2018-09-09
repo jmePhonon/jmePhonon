@@ -182,8 +182,6 @@ IPLVector3* phGetSourceAhead(IPLVector3* ahead, float *sourceData) {
     ahead->y = sourceData[phSourceField(AHEADY)];
     ahead->z = sourceData[phSourceField(AHEADZ)];
 
-    printf("new source ahead: %f %f %f\n", ahead->x, ahead->y, ahead->z);
-
     return ahead;
 }
 

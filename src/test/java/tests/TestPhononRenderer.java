@@ -117,7 +117,7 @@ public class TestPhononRenderer extends SimpleApplication {
         listener.setLocation(cam.getLocation());
         listener.setRotation(cam.getRotation());
         
-        // audioSourceNode.setLocalTranslation(audioSourceNode.getLocalTranslation().add(0f, .025f, 0f));
+        audioSourceNode.setLocalTranslation(audioSourceNode.getLocalTranslation().add(0f, .025f, 0f));
         Vector3f angles = new Vector3f(currentAngle, 0f, 0f);
         // audioSourceNode.setLocalRotation(new Quaternion().fromAxes(angles.add(1f, 0f, 0f), angles.add(0f, 1f, 0f), angles));
         ((AudioNode) audioSourceNode.getChild("Audio Node")).setDirection(angles);
