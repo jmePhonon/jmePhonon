@@ -12,14 +12,15 @@ import com.jme3.audio.Listener;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Quaternion;
+import com.jme3.math.Vector3f;
 import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.PhononSettings;
 import com.jme3.phonon.ThreadMode;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Geometry;
-import com.jme3.scene.shape.Box;
 import com.jme3.scene.Node;
+import com.jme3.scene.shape.Box;
 import com.jme3.system.AppSettings;
 
 public class TestPhononRenderer extends SimpleApplication {
@@ -88,8 +89,10 @@ public class TestPhononRenderer extends SimpleApplication {
 
         AudioNode an = new AudioNode(assetManager, "mono/399354__romariogrande__eastandw.ogg", DataType.Buffer);
         audioSourceNode.attachChild(an);
+        an.setName("Audio Node");
         an.setPositional(true);
         an.setDirectional(true);
+        an.setInnerAngle(360f);
         an.play();
 
         rootNode.attachChild(audioSourceNode);
@@ -104,8 +107,10 @@ public class TestPhononRenderer extends SimpleApplication {
         listener.setRotation(cam.getRotation());
         
         // audioSourceNode.setLocalTranslation(audioSourceNode.getLocalTranslation().add(0f, .025f, 0f));
-        audioSourceNode.setLocalRotation(new Quaternion().fromAngles(0f, currentAngle, 0f));
-        currentAngle += .01f;
+        Vector3f angles = new Vector3f(currentAngle, 0f, 0f);
+        // audioSourceNode.setLocalRotation(new Quaternion().fromAxes(angles.add(1f, 0f, 0f), angles.add(0f, 1f, 0f), angles));
+        ((AudioNode) audioSourceNode.getChild("Audio Node")).setDirection(angles);
+        currentAngle = (currentAngle + .1f);
     }
 
     @Override
