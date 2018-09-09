@@ -10,9 +10,9 @@ extern "C" {
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    connectSourceNative
- * Signature: (IJ)J
+ * Signature: (IJ)I
  */
-JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
+JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
   (JNIEnv *, jobject, jint, jlong);
 
 /*

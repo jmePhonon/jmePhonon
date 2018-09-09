@@ -53,14 +53,16 @@ void  passThroughMixer(jfloat** inputs,jint nInputs,jfloat *output){
 
 
 
-JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj,jint size,jlong sourceAddr){
-    struct AudioSource* source= olConnectSourceToBestLine(&SETTINGS,OUTPUT_LINES,SETTINGS.nOutputLines,
-      (jfloat *)(intptr_t)sourceAddr,size);
-    phFlushSource(&SETTINGS,source);
+JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj,jint size,jlong sourceAddr){
+    struct AudioSource* source = olConnectSourceToBestLine(&SETTINGS, OUTPUT_LINES, SETTINGS.nOutputLines,
+      (jfloat *)(intptr_t)sourceAddr, size);
+
+    phFlushSource(&SETTINGS, source);
+
     if (source == NULL)
         return -1;
     else
-        return (intptr_t)source;
+        return source->sourceIndex;
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative(JNIEnv *env, jobject obj, jlong addr) {

@@ -14,6 +14,7 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
+import com.jme3.audio.openal.ALAudioRenderer;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
@@ -155,9 +156,9 @@ public class PhononRenderer implements AudioRenderer {
 	 * 
 	 * @param length     Lenght of the source measured in samples
 	 * @param sourceAddr Address of the source
-	 * @return 64 bit memory address of the source
+	 * @return Source data buffer index 
 	 */
-	native long connectSourceNative(int length, long sourceAddr);
+	native int connectSourceNative(int length, long sourceAddr);
 
 	/**
 	 * Disconnect source from an output line
@@ -187,13 +188,12 @@ public class PhononRenderer implements AudioRenderer {
 
 
 
-	public long connectSource(F32leAudioData audioData) {
+	public int connectSource(F32leAudioData audioData) {
 		System.out.println("Connect source [" + audioData.getAddress() + "] of size "
 				+ audioData.getSizeInSamples());
 		int length = audioData.getSizeInSamples();
 		long addr = audioData.getAddress();
 
-		// OUTPUT_LINES[lineID].reset();
 		return connectSourceNative(length, addr);
 	}
 
@@ -267,22 +267,24 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void playSourceInstance(AudioSource src) {
-		F32leAudioData data = toF32leData(src.getAudioData());
+		/*if(!PHONON_AUDIOSOURCES_DATA.hasSourceData(src)) {
+			F32leAudioData data = toF32leData(src.getAudioData());
 
-
+			long slotAddress = this.connectSource(data);
+			src.setChannel(1);
+		}*/
 	}
 
 	@Override
 	public void playSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
-		this.connectSource(data);
-
+		src.setChannel(connectSource(data));
+		System.out.println("Channel: " + src.getChannel());
 	}
 
 	@Override
 	public void pauseSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
-
 	}
 
 	@Override

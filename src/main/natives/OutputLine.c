@@ -36,12 +36,16 @@ jboolean olIsInitialized(struct GlobalSettings *settings, struct OutputLine *lin
 
 struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, struct OutputLine *lines,jint nLines,jfloat *data,jint sourceSamples){
     printf("Connect source to best line\n");
+    jint sourceIndex = 0;
     struct OutputLine *bestLine = &lines[0];
-    for(jint i=1;i<nLines;i++){
+    for(jint i=1;i<nLines;i++) {
         if(olIsInitialized(settings,&lines[i])&&lines[i].numConnectedSources<bestLine->numConnectedSources){
             bestLine = &lines[i];
+            sourceIndex = i;
         }
     }
+
+    sourceIndex *= settings->nSourcesPerLine;
 
     jint i=0;
     for (i = 0; i < settings->nSourcesPerLine; i++) {
@@ -52,11 +56,15 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
             bestLine->sourcesSlots[i].data = data;
             bestLine->sourcesSlots[i].numSamples = sourceSamples;
             bestLine->sourcesSlots[i].connectedLine = bestLine;
+
+            sourceIndex += i;
+            bestLine->sourcesSlots[i].sourceIndex = sourceIndex;
+
             ulistAdd(bestLine->uList, bestLine->sourcesSlots[i].uNode);
 
             bestLine->numConnectedSources++;
             printf("Connect source to slot %d \n",i);
-
+           
             return &bestLine->sourcesSlots[i];
         }else{
             printf("Source %d is connected\n", i);

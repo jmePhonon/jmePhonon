@@ -49,20 +49,10 @@ public class TestPhononRenderer extends SimpleApplication {
   
     }
 
-    @Override
-    public void simpleRender(RenderManager rm) {
-        super.simpleRender(rm);
-        listener.setLocation(cam.getLocation());
-        listener.setRotation(cam.getRotation());
-    }
 
-    @Override
-    public void simpleUpdate(float tpf) {
-      
-    
-    }
-
+    Node audioSourceNode;
     ArrayList<F32leAudioData> loadedSound = new ArrayList<F32leAudioData>();
+
     @Override
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
@@ -86,7 +76,7 @@ public class TestPhononRenderer extends SimpleApplication {
             audioRenderer.setListener(listener);
         }
 
-        Node audioSourceNode = new Node();
+        audioSourceNode = new Node();
 
         Geometry audioSourceGeom = new Geometry("AudioSource", new Box(.5f, .5f, .5f));
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
@@ -97,8 +87,21 @@ public class TestPhononRenderer extends SimpleApplication {
 
         AudioNode an = new AudioNode(assetManager, "mono/399354__romariogrande__eastandw.ogg", DataType.Buffer);
         audioSourceNode.attachChild(an);
+        an.setPositional(true);
         an.play();
 
         rootNode.attachChild(audioSourceNode);
     }
+
+    @Override
+    public void simpleRender(RenderManager rm) {
+        super.simpleRender(rm);
+        listener.setLocation(cam.getLocation());
+        listener.setRotation(cam.getRotation());
+        
+        audioSourceNode.setLocalTranslation(audioSourceNode.getLocalTranslation().add(0f, .025f, 0f));
+    }
+
+    @Override
+    public void simpleUpdate(float tpf) { }
 }

@@ -58,10 +58,10 @@ public class PhononPlayer {
                 isRunning = true;
                 output.start();
                 
-                System.out.println("Start");
+                // System.out.println("Start");
             }
         } else {
-            System.out.println("Preloading " + preloadBytes + " bytes");
+            // System.out.println("Preloading " + preloadBytes + " bytes");
         }
 
         byte out = 0;
@@ -80,7 +80,7 @@ public class PhononPlayer {
 
                 int written=output.write(tmp, 0, read);
                 if (preloadBytes > 0) {
-                    System.out.println("Loaded "+written+" bytes");
+                    // System.out.println("Loaded "+written+" bytes");
                     preloadBytes -= written;
                 }
             } else {
