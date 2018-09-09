@@ -19,7 +19,7 @@ function safeRm {
             if [ -f "$trashpath/$1" -o -d "$trashpath/$1" ];
             then
                 trashpath="$trashpath-`date +%s`"
-                sleep 1
+                sleep 2
             fi
             mkdir -p "$trashpath"
             echo "safeRm: Move $1 to Trash $trashpath"   

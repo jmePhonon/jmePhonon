@@ -1,7 +1,18 @@
 sudo: required
 services:
-  - docker
+- docker
 git:
   lfs_skip_smudge: true
 script:
-  - NO_CACHE=true ./make.sh updateJNIHeaders build
+  - ./make.sh OS_LINUX=1,OS_WINDOWS=1,NO_CACHE=1 clean downloadResources updateJNIHeaders build buildStandaloneTests deploy
+deploy:
+  provider: releases
+  skip_cleanup: true
+  file_glob: true
+  api_key:
+    secure: fymbh0U4T1Lpjwa6IT8f/S/vRpRAHFWsSdlQRqIm1ZSfvEBaWhLHYmmlRwpAzgtz6IAsnAA8Zupj7Uyv0wFbbvkQhU/F99IXNycgt4g6LEHp45y4QDBBCvwn5it6WPRIzEMTcpRlduYycjh6yqJSsyOAi8q2LX+en/SxNlMCRX1KxGXYl80vR2irQxJFfZUlcqGMsLzN5Z6Jk5S05LWEgxYSLkEnWMVqRgdJEZZZQsiBqh+jg0BYSMklkKwGEcrMcPbUdfgsdlOPeQt5a27RaeIoOzfZoZgQ5OwF1e8ZGd5yKqfuUCiyMqiGh9LQ4knkLiCo9x4ggSSekmDu/mj0hT/pwdhq7fh1gHnXk1uq9tma5KU0Jxj5kIxOvdDSwi/pH+o1MBKkzHiuyhgwbcFRsMomKN2xwjC7w2Lclb0wZIxAD+P1hpzHKiaYjNlOxGENgBHwvgKUtH07yV4uyGlSORnHIt9I8LfSzDZ+P5WlXG7d7JjZNOma868Ot7q+eND6WBBEbbeRHguwOxRJob/cHyhfMa1IFzg9wqt1fMOSi0E3D75HA7Nyb54W6Ub7s/i7euagsnVwaCE9Of4QKwszIhbjHUVoWi237r0i4o69RVw6hTyhhvwuiuDhOQWV6c3Jgtt4MSyExkKPlKukmTycTZ0rUxb90+DwR2bIhdPvQ/E=
+  file: deploy/*
+  on:
+    repo: riccardobl/sa4jme
+    tag: true
+    all_branches: true

@@ -1,10 +1,10 @@
-package com.jme3.phonon;
+package com.jme3.phonon.memory_layout;
 
 /**
  * CHANNEL_LAYOUT
  * Layout of output channel,
  */
-public class CHANNEL_LAYOUT {
+public class OUTPUT_LINE_LAYOUT {
     public static final boolean JNIEXPORT = true;
 
     /** Size in bytes of every field */

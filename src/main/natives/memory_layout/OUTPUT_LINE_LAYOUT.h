@@ -1,15 +1,15 @@
-#ifndef __CHANNEL_LAYOUT__
-#define __CHANNEL_LAYOUT__
-        #include "com_jme3_phonon_CHANNEL_LAYOUT.h"
-        /**
+#ifndef __OUTPUT_LINE_LAYOUT__
+#define __OUTPUT_LINE_LAYOUT__
+        #include "com_jme3_phonon_memory_layout_OUTPUT_LINE_LAYOUT.h"
+        /** 
          * Returns position of first byte of the field
          */
-        #define olHeaderB(field) com_jme3_phonon_CHANNEL_LAYOUT_##field
+        #define olHeaderB(field) com_jme3_phonon_memory_layout_OUTPUT_LINE_LAYOUT_##field
 
         /**
          * Returns field length in bytes
          */
-        #define olHeaderSizeB(field) com_jme3_phonon_CHANNEL_LAYOUT_##field##_fieldsize
+        #define olHeaderSizeB(field) com_jme3_phonon_memory_layout_OUTPUT_LINE_LAYOUT_##field##_fieldsize
 
         /**
          * Returns position of first 4bytes of the field

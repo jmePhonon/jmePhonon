@@ -10,7 +10,7 @@ then
     export USE_IMAGE=""
 fi
 
-if [ "$INSTALL_LOCAL_IMAGE" = "true" -o "$INSTALL_LOCAL_IMAGE" = "" ];
+if [ "$INSTALL_LOCAL_IMAGE" = "1" -o "$INSTALL_LOCAL_IMAGE" = "" ];
 then
     export INSTALL_LOCAL_IMAGE="build.dep/dockerBuilder"
 fi
@@ -18,7 +18,7 @@ fi
 if [ "$USE_IMAGE" = "" ];
 then
     availablelocalimg="`docker image ls localjmephononbuilder -q`"
-    if [ "$availablelocalimg" = "" -o "$REBUILD_LOCAL_IMAGE" = "true" ];
+    if [ "$availablelocalimg" = "" -o "$REBUILD_LOCAL_IMAGE" = "1" ];
     then
         echo "Install local image $INSTALL_LOCAL_IMAGE"
         curdir="$PWD"
@@ -42,5 +42,15 @@ else
     export RUN_AS=""
 fi
 
+DENVS=""
+OIFS="$IFS"
+IFS=',' 
+for i in $1;
+do
+    DENVS="$DENVS -e$i"
+done
+echo "$DENVS"
+
+IFS="$OIFS"
 echo "Launch $USE_IMAGE as $RUN_AS"
-docker run --rm  -it $RUN_AS -eNO_CACHE="$NO_CACHE" -v"$PWD:/workspace" $USE_IMAGE gradle $@
+docker run --rm $DENVS -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE gradle ${@:2}

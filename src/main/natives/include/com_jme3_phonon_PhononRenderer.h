@@ -9,6 +9,14 @@ extern "C" {
 #endif
 /*
  * Class:     com_jme3_phonon_PhononRenderer
+ * Method:    setEnvironmentNative
+ * Signature: ([F)V
+ */
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setEnvironmentNative
+  (JNIEnv *, jobject, jfloatArray);
+
+/*
+ * Class:     com_jme3_phonon_PhononRenderer
  * Method:    connectSourceNative
  * Signature: (IJ)J
  */
@@ -42,10 +50,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    initNative
- * Signature: (IIIIIIZZZ)V
+ * Signature: (IIIIIIZZJZ)V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jboolean, jboolean, jboolean);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jboolean, jboolean, jlong, jboolean);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer

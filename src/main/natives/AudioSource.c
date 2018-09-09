@@ -32,7 +32,7 @@ struct AudioSource* asNew(struct GlobalSettings *settings, jint n){
 }
 
 void asDestroy(struct GlobalSettings *settings,struct AudioSource *source,jint n){
-    ulDestroyNode(source->uNode);
+    ulistDestroyNode(source->uNode);
     free(source);
 }
 

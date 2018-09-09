@@ -87,7 +87,7 @@ jint olGetLastProcessedFrameId(struct GlobalSettings *settings,struct OutputLine
         n = -n;
     return n;
 }
-
+ 
 
 jint olGetLastPlayedFrameId(struct GlobalSettings *settings,struct OutputLine *line) {
     return ((jint *)line->outputBuffer)[olHeader(LAST_PLAYED_FRAME)];

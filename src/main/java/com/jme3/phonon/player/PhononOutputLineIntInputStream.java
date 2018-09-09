@@ -4,8 +4,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.jme3.phonon.PhononChannel;
-import com.jme3.phonon.PhononChannel.ChannelStatus;
+import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.PhononOutputLine.ChannelStatus;
 import com.jme3.phonon.format.decoder.AudioDataDecoder;
 import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
 
@@ -13,21 +13,19 @@ import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
  * PhononChanneInputStream
  */
 
-public class PhononChannelIntInputStream extends InputStream {
+public class PhononOutputLineIntInputStream extends InputStream {
     ChannelStatus lastStat;
-    PhononChannel chan;
+    PhononOutputLine line;
     byte floatBuffer[];
     byte tmpBuffer[];
     int tmpBufferI = 0;
-    int sampleSize;
-
+ 
     private AudioDataDecoder decoder;
 
-    public PhononChannelIntInputStream(PhononChannel chan,int sampleSize) {
-        this.chan = chan;
-        this.sampleSize = sampleSize;
-        floatBuffer = new byte[chan.getFrameSize() * 4];
-        tmpBuffer = new byte[chan.getFrameSize() * (sampleSize/8)];
+    public PhononOutputLineIntInputStream(PhononOutputLine line,int sampleSize) {
+        this.line = line;
+        floatBuffer = new byte[line.getFrameSize() *line.getChannels()* 4];
+        tmpBuffer = new byte[line.getFrameSize() *line.getChannels()* (sampleSize/8)];
 
         decoder = AudioDataDecoderFactory.getAudioDataDecoder(sampleSize);
     }
@@ -37,7 +35,7 @@ public class PhononChannelIntInputStream extends InputStream {
         if (tmpBufferI == tmpBuffer.length) {
             if (lastStat == ChannelStatus.OVER)
                 throw new EOFException(lastStat.toString());
-            lastStat = chan.readNextFrameForPlayer(floatBuffer);
+            lastStat = line.readNextFrameForPlayer(floatBuffer);
             if (lastStat == ChannelStatus.NODATA) {
                 return -1;
             }

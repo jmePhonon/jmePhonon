@@ -1,11 +1,13 @@
 #/bin/sh
-echo "Premake $PWD"
 mkdir -p tmp/tools
 mkdir -p tmp/cache
 mkdir -p build/natives
 
 source build.dep/safeRm.sh
 source build.dep/findJava.sh
+source build.dep/findOs.sh
+
+
 
 # Get steam audio
 if [ "$STEAM_AUDIO_URL" = "" ];
@@ -14,11 +16,13 @@ then
     export STEAM_AUDIO_HASH="5b888a84c6bbe79560346338a3a708787645cc8324091b865187d4138df85b43"
 fi
 
+
 export STEAM_AUDIO_URL_HASH="`echo "$STEAM_AUDIO_URL" | sha256sum | cut -d' ' -f1`"
 
 
-function compareSteamAudioHash {
-    if [ "`cat tmp/cache/$STEAM_AUDIO_URL_HASH.zip | sha256sum | cut -d' ' -f1`" != "$STEAM_AUDIO_HASH" ];
+#compareFileHash FILE HASH
+function compareFileHash {
+    if [ "`cat $1 | sha256sum | cut -d' ' -f1`" != "$2" ];
     then
         echo "fail"
     else
@@ -26,65 +30,96 @@ function compareSteamAudioHash {
     fi
 }
 
-function getSteamAudio {
-    if [ "$1" != "" ];
+# TODO: Clean this function
+function prepareWorkspace {
+    forceUpdate=$1
+         
+    jni_md_folder="jni_md_Windows"
+    if [ "$OS_WINDOWS" != "" -a ! -f "tmp/$jni_md_folder/jni_md.h"  ];
+    then
+        mkdir -p tmp/$jni_md_folder/
+        wget "http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/fd4e976e01bf/src/windows/javavm/export/jni_md.h" -O tmp/$jni_md_folder/jni_md.h
+    fi
+
+    jni_md_folder="jni_md_OSX"
+    if [ "$OS_OSX" != "" -a ! -f "tmp/$jni_md_folder/jni_md.h"  ];
+    then
+        mkdir -p tmp/$jni_md_folder/
+        wget "http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/fd4e976e01bf/src/macosx/javavm/export/jni_md.h" -O tmp/$jni_md_folder/jni_md.h
+    fi
+
+    jni_md_folder="jni_md_Linux"  
+    if [ "$OS_LINUX" != "" -a ! -f "tmp/$jni_md_folder/jni_md.h" ];
+    then
+            mkdir -p tmp/$jni_md_folder/
+
+         wget "http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/fd4e976e01bf/src/solaris/javavm/export/jni_md.h" -O tmp/$jni_md_folder/jni_md.h
+    fi
+
+
+  
+
+
+
+    #Steam audio
+    if [ "$forceupdate" != "" ];
     then
         export UPDATE_STEAMAUDIO=1
     fi
+
     if [ "$UPDATE_STEAMAUDIO" = "" ];
     then
-        export UPDATE_STEAMAUDIO="`compareSteamAudioHash`"
+        export UPDATE_STEAMAUDIO="`compareFileHash tmp/cache/$STEAM_AUDIO_URL_HASH.zip $STEAM_AUDIO_HASH`"
     fi
-
-if [  ! -f src/steamaudio/include/phonon.h -o  "$UPDATE_STEAMAUDIO" != "" ];
-then
-    safeRm tmp/ext_sta
-    mkdir -p tmp/ext_sta
-    if [ ! -f tmp/cache/$STEAM_AUDIO_URL_HASH.zip -o "$UPDATE_STEAMAUDIO" != "" ];
+    if [  ! -f src/steamaudio/include/phonon.h -o  "$UPDATE_STEAMAUDIO" != "" ];
     then
-        echo "Download steam audio"
-        wget "$STEAM_AUDIO_URL" -O tmp/cache/$STEAM_AUDIO_URL_HASH.zip
-        
-        if [ "`compareSteamAudioHash`" != "" ];
+        safeRm tmp/ext_sta
+        mkdir -p tmp/ext_sta
+        if [ ! -f tmp/cache/$STEAM_AUDIO_URL_HASH.zip -o "$UPDATE_STEAMAUDIO" != "" ];
         then
-            echo "Error. Steamaudio hash is wrong or the download is corrupted"
-            safeRm  tmp/cache/$STEAM_AUDIO_URL_HASH.zip
-            exit 1
-        fi
-       cp tmp/cache/$STEAM_AUDIO_URL_HASH.zip tmp/ext_sta/steamaudio.zip
-    else
-        echo "Use steam audio from cache tmp/cache/$STEAM_AUDIO_URL_HASH.zip"
+            echo "Download steam audio"
+            wget "$STEAM_AUDIO_URL" -O tmp/cache/$STEAM_AUDIO_URL_HASH.zip
+            
+            if [ "`compareSteamAudioHash`" != "" ];
+            then
+                echo "Error. Steamaudio hash is wrong or the download is corrupted"
+                safeRm  tmp/cache/$STEAM_AUDIO_URL_HASH.zip
+                exit 1
+            fi
         cp tmp/cache/$STEAM_AUDIO_URL_HASH.zip tmp/ext_sta/steamaudio.zip
+        else
+            echo "Use steam audio from cache tmp/cache/$STEAM_AUDIO_URL_HASH.zip"
+            cp tmp/cache/$STEAM_AUDIO_URL_HASH.zip tmp/ext_sta/steamaudio.zip
+        fi
+        cd tmp/ext_sta
+        unzip steamaudio.zip
+        safeRm steamaudio.zip
+        
+        safeRm ../../src/steamaudio
+        mkdir -p ../../src/steamaudio
+        cp -Rf steamaudio_api/* ../../src/steamaudio/
+        
+        cd ..
+        safeRm ext_sta
+
+        cd ../src/steamaudio/
+
+        cp -Rf bin/* lib/
+        safeRm bin
+
+        cd doc
+        git clone https://github.com/ValveSoftware/steam-audio.git
+        cd steam-audio 
+        git branch gh-pages
+        git reset --hard ec6acfd41f18664fe9726e090d05217f6e2bfaf2
+        cp -Rf doc/capi ../steamaudio_api_html
+        cd .. 
+        safeRm steam-audio
+
+        cd ../../
+
+
     fi
-    cd tmp/ext_sta
-    unzip steamaudio.zip
-    safeRm steamaudio.zip
-    
-    safeRm ../../src/steamaudio
-    mkdir -p ../../src/steamaudio
-    cp -Rf steamaudio_api/* ../../src/steamaudio/
-    
-    cd ..
-    safeRm ext_sta
-
-    cd ../src/steamaudio/
-
-    cp -Rf bin/* lib/
-    safeRm bin
-
-    cd doc
-    git clone https://github.com/ValveSoftware/steam-audio.git
-    cd steam-audio 
-    git branch gh-pages
-    git reset --hard ec6acfd41f18664fe9726e090d05217f6e2bfaf2
-    cp -Rf doc/capi ../steamaudio_api_html
-    cd .. 
-    safeRm steam-audio
-
-    cd ../../
-
-
-fi
 ################
 
 }
@@ -106,14 +141,7 @@ function downloadResources {
     unzip tmp/res.zip -d src/test/resources/
 }
 
-#####
-# build 
-#    compiler  [ gcc,g++,clang... ]
-#    platform [ Windows,Linux,OSX,Android ]
-#    arch [ x86,x64 ]
-#    args [ custom args ]
-#    liboutfolder [ where to copy phonon lib ]
-#    file [ optional ]
+
 function build {
     compiler="$1"
     platform="$2"
@@ -150,8 +178,9 @@ function build {
         platform_libsuffix=".dylib"
     fi
 
+    echo "" > tmp/ext_cpplist.txt
+      find src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
 
-  
 
     build_script="
     $compiler -mtune=generic  
@@ -162,11 +191,15 @@ function build {
     -Wall 
     -Lsrc/steamaudio/lib/$platform/$arch
     -Isrc/steamaudio/include
+    -Isrc/ext
+    -Itmp/jni_md_$platform
+    -I$JDK_ROOT/include
     $arch_flag   
     $(cat  tmp/build_IIlist.txt)
     $args 
     $(cat  tmp/build_cpplist.txt) 
-    $args2  -Wl,-Bdynamic -lphonon $libs"
+    $(cat  tmp/ext_cpplist.txt) 
+    $args2  -Wl,-Bdynamic -lphonon $libs $BUILD_ARGS"
     cp "src/steamaudio/lib/$platform/$arch/${platform_libprefix}phonon${platform_libsuffix}" "$liboutfolder/"
     echo "Run $build_script"
 
@@ -190,6 +223,7 @@ function buildNativeTests {
     ffmpeg -i 399354__romariogrande__eastandw_mono.ogg -f f32be -acodec pcm_f32le inputaudio.raw
     cd ../../..
     
+
     build "g++"  \
     "Linux" "x64" \
     "build/test/" \
@@ -258,34 +292,64 @@ function buildNatives {
     
     find src/main/natives -type f -name '*.c' >> tmp/build_cpplist.txt
     
-    #Linux 64
-    dest="build/natives/linux-x86-64"
-    mkdir -p $dest
-    build "gcc" \
-    "Linux" "x64" \
-    "$dest" \
-    "--std=gnu99 
-    -Isrc/main/natives/include
-    -Isrc/main/natives
-    -I$JDK_ROOT/include
-    -I$JDK_ROOT/include/linux" \
-    "-Wl,-soname,jmephonon.so  -obuild/natives/linux-x86-64/libjmephonon.so" \
-    ""
+    if [ "$OS_LINUX" != "" ];
+    then
+        #Linux 64
+        dest="build/natives/linux-x86-64"
+        mkdir -p $dest
+        build "gcc" \
+        "Linux" "x64" \
+        "$dest" \
+        "--std=gnu99 
+        -Isrc/main/natives/include
+        -Isrc/main/natives"\
+        "-Wl,-soname,jmephonon.so  -obuild/natives/linux-x86-64/libjmephonon.so" \
+        ""
 
-    #Linux 32
-    dest="build/natives/linux-x86"
-    mkdir -p $dest
-    build "gcc" \
-    "Linux" "x86" \
-    "$dest" \
-    "--std=gnu99
-    -Wint-to-pointer-cast
-    -Isrc/main/natives/include
-    -Isrc/main/natives
-    -I$JDK_ROOT/include
-    -I$JDK_ROOT/include/linux" \
-    "-Wl,-soname,jmephonon.so  -obuild/natives/linux-x86/libjmephonon.so" \
-    ""
+        #Linux 32
+        dest="build/natives/linux-x86"
+        mkdir -p $dest
+        build "gcc" \
+        "Linux" "x86" \
+        "$dest" \
+        "--std=gnu99
+        -Wint-to-pointer-cast
+        -Isrc/main/natives/include
+        -Isrc/main/natives" \
+        "-Wl,-soname,jmephonon.so  -obuild/natives/linux-x86/libjmephonon.so" \
+        ""
+    fi
+
+
+    if [ "$OS_WINDOWS" != "" ];
+    then
+        #Windows 64
+        dest="build/natives/windows-x86-64"
+        mkdir -p $dest
+        build "x86_64-w64-mingw32-gcc" \
+        "Windows" "x64" \
+        "$dest" \
+        "-static --std=gnu99 
+        -Isrc/main/natives/include
+        -Isrc/main/natives" \
+        "-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon.dll
+          -obuild/natives/windows-x86-64/jmephonon.dll" \
+        ""
+
+        #Windows 32
+        dest="build/natives/windows-x86"
+        mkdir -p $dest
+           build "i686-w64-mingw32-gcc" \
+        "Windows" "x86" \
+        "$dest" \
+        "-static  --std=gnu99 
+        -Isrc/main/natives/include
+        -Isrc/main/natives" \
+        "-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon.dll
+          -obuild/natives/windows-x86/jmephonon.dll" \
+        ""
+      
+    fi
 
     #Force update vscode
     if [ -d build/resources ];
@@ -296,6 +360,13 @@ function buildNatives {
     then
         cp -Rf build/natives/* bin/
     fi
+}
+
+
+function deploy {
+    safeRm "deploy"
+    mkdir -p deploy
+    cp build/libs/*.jar deploy/
 }
 
 $@
