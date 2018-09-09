@@ -26,36 +26,59 @@ public class PhononListener {
 
     boolean LIVE_ON_THE_EDGE = false,UPDATE_EVERYTHING=true;
     public PhononListener() {
-        MEMORY=BufferUtils.createByteBuffer(LISTENER_size);
+        MEMORY = BufferUtils.createByteBuffer(LISTENER_size);
+        memorySetPos(0,0,0);
+        memorySetDirUp(0,0,0,0,0,0);
+        memorySetVel(0, 0, 0);
+        memorySetVolume(1);
     }
+
+    private void memorySetPos(float x, float y, float z) {
+        MEMORY.putFloat(POSX, x);
+        MEMORY.putFloat(POSY, y);
+        MEMORY.putFloat(POSZ, z);
+    }
+    
+    private void memorySetDirUp(float dx, float dy, float dz, float upx, float upy, float upz) {
+        MEMORY.putFloat(DIRX, dx);
+        MEMORY.putFloat(DIRY, dy);
+        MEMORY.putFloat(DIRZ, dz);
+        MEMORY.putFloat(UPX, upx);
+        MEMORY.putFloat(UPY, upy);
+        MEMORY.putFloat(UPZ, upz);
+    }
+    
+    private void memorySetVel(float velx, float vely, float velz) {
+        MEMORY.putFloat(VELX, velx);
+        MEMORY.putFloat(VELY, vely);
+        MEMORY.putFloat(VELZ, velz);
+    }
+    
+    private void memorySetVolume(float v) {
+        MEMORY.putFloat(VOLUME, v);
+
+    }
+    
+    
 
     public void updateNative() {
         if (LIVE_ON_THE_EDGE||needNativeUpdate) {
             // System.out.println("JListener position "+posX+" "+posY+" "+posZ);
             if (UPDATE_EVERYTHING||posUpdate) {
-                MEMORY.putFloat(POSX, posX);
-                MEMORY.putFloat(POSY, posY);
-                MEMORY.putFloat(POSZ, posZ);
+                memorySetPos(posX, posY, posZ);
                 posUpdate = false;
             }
             if (UPDATE_EVERYTHING||rotUpdate) {
-                MEMORY.putFloat(DIRX, dirX);
-                MEMORY.putFloat(DIRY, dirY);
-                MEMORY.putFloat(DIRZ, dirZ);
-                MEMORY.putFloat(UPX, upX);
-                MEMORY.putFloat(UPY, upY);
-                MEMORY.putFloat(UPZ, upZ);
+                memorySetDirUp(dirX, dirY, dirZ, upX, upY, upZ);
                 rotUpdate = false;
             }
             if (UPDATE_EVERYTHING||velUpdate) {
-                MEMORY.putFloat(VELX, velX);
-                MEMORY.putFloat(VELY, velY);
-                MEMORY.putFloat(VELZ, velZ);
+                memorySetVel(velX,  velY, velZ);
                 velUpdate = false;
             }
 
-            if (UPDATE_EVERYTHING||volumeUpdate) {
-                MEMORY.putFloat(VOLUME, volume);
+            if (UPDATE_EVERYTHING || volumeUpdate) {
+                memorySetVolume(volume);
                 volumeUpdate = false;
             }
             needNativeUpdate = false;
