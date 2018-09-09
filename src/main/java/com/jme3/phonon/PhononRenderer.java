@@ -311,9 +311,16 @@ public class PhononRenderer implements AudioRenderer {
 				if(src.isDirectional()) {
 					PHONON_AUDIOSOURCES_DATA.updateSourceDirection(src);
 				}
+				break;
 			case Volume:
 				PHONON_AUDIOSOURCES_DATA.updateSourceVolume(src);
-			
+				break;
+			case IsDirectional:
+				PHONON_AUDIOSOURCES_DATA.updateSourceDirectionality(src);
+				break;
+			case InnerAngle:
+				PHONON_AUDIOSOURCES_DATA.updateSourceInnerAngle(src);
+				break;
 			default:
 				System.err.println("Unrecognized param while updating audio source.");
 				return;	

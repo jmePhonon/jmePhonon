@@ -1,21 +1,5 @@
 package com.jme3.phonon;
 
-
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADY;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADZ;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSY;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSZ;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTY;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTZ;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.SIZE;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPY;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPZ;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.VOLUME;
-
 import java.nio.ByteBuffer;
 
 import com.jme3.audio.AudioNode;
@@ -23,6 +7,8 @@ import com.jme3.audio.AudioSource;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
+
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.*;
 
 public class PhononAudioSourcesData {
     private final ByteBuffer[] MEMORIES;
@@ -69,6 +55,20 @@ public class PhononAudioSourcesData {
         setMemoryVolume(MEMORIES[index], volume);
     }
 
+    public void updateSourceDirectionality(AudioSource src) {
+        int index = src.getChannel();
+        boolean isDirectional = src.isDirectional();
+
+        setMemoryDipoleWeight(MEMORIES[index], isDirectional ? 1.0f : 0.0f);
+    }
+    
+    public void updateSourceInnerAngle(AudioSource src) {
+        int index = src.getChannel();
+        float dipolePower = src.getInnerAngle();
+
+        setMemoryDipolePower(MEMORIES[index], dipolePower);
+    }
+
     public void updateNodeUp(AudioNode node) {
         int index = node.getChannel();
         Vector3f up = node.getWorldRotation().getRotationColumn(1);
@@ -107,6 +107,14 @@ public class PhononAudioSourcesData {
     
     private void setMemoryVolume(ByteBuffer memory, float volume) {
         memory.putFloat(VOLUME, volume);
+    }
+
+    private void setMemoryDipoleWeight(ByteBuffer memory, float dipoleWeight) {
+        memory.putFloat(DIPOLEWEIGHT, dipoleWeight);
+    }
+    
+    private void setMemoryDipolePower(ByteBuffer memory, float dipolePower) {
+        memory.putFloat(DIPOLEPOWER, dipolePower);
     }
 
     public long[] memoryAddresses() {
