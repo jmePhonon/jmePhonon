@@ -17,6 +17,7 @@ import com.jme3.audio.ListenerParam;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
+import com.jme3.phonon.utils.JmeEnvToSndEnv;
 import com.jme3.renderer.RenderManager;
 import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.phonon.format.F32leAudioData;
@@ -152,6 +153,8 @@ public class PhononRenderer implements AudioRenderer {
 		destroyNative();
 	}
 
+	native void setEnvironmentNative(float[] envdata);
+
 	/**
 	 * Connect a source to an outputline
 	 * 
@@ -269,7 +272,11 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void setEnvironment(Environment env) {
+		setEnvironmentNative(JmeEnvToSndEnv.convert(env));
+	}
 
+	public void setEnvironment(float[] env) {
+		setEnvironmentNative(env);
 	}
 
 	@Override

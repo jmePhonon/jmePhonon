@@ -214,7 +214,7 @@ void phInitializeSource(struct GlobalSettings *settings,struct AudioSource *audi
 
     // TODO make this configurable
     context->directSoundEffectOptions.applyDistanceAttenuation = true;
-    context->directSoundEffectOptions.applyAirAbsorption = false;
+    context->directSoundEffectOptions.applyAirAbsorption = true;
     context->directSoundEffectOptions.applyDirectivity = false;
     context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_NONE;
 
@@ -320,6 +320,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,
       sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC 
       IPL_DIRECTOCCLUSION_NONE , 
      IPL_DIRECTOCCLUSION_RAYCAST );
+
+    //  path.distanceAttenuation *= 1.9;
 
      iplApplyDirectSoundEffect(ctx->directSoundEffect,
                              PhSharedContext.monoBuffer1,

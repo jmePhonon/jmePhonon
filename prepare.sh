@@ -16,11 +16,13 @@ then
     export STEAM_AUDIO_HASH="5b888a84c6bbe79560346338a3a708787645cc8324091b865187d4138df85b43"
 fi
 
+
 export STEAM_AUDIO_URL_HASH="`echo "$STEAM_AUDIO_URL" | sha256sum | cut -d' ' -f1`"
 
 
-function compareSteamAudioHash {
-    if [ "`cat tmp/cache/$STEAM_AUDIO_URL_HASH.zip | sha256sum | cut -d' ' -f1`" != "$STEAM_AUDIO_HASH" ];
+#compareFileHash FILE HASH
+function compareFileHash {
+    if [ "`cat $1 | sha256sum | cut -d' ' -f1`" != "$2" ];
     then
         echo "fail"
     else
@@ -55,6 +57,11 @@ function prepareWorkspace {
     fi
 
 
+  
+
+
+
+    #Steam audio
     if [ "$forceupdate" != "" ];
     then
         export UPDATE_STEAMAUDIO=1
@@ -62,10 +69,8 @@ function prepareWorkspace {
 
     if [ "$UPDATE_STEAMAUDIO" = "" ];
     then
-        export UPDATE_STEAMAUDIO="`compareSteamAudioHash`"
+        export UPDATE_STEAMAUDIO="`compareFileHash tmp/cache/$STEAM_AUDIO_URL_HASH.zip $STEAM_AUDIO_HASH`"
     fi
-
-    #Steam audio
     if [  ! -f src/steamaudio/include/phonon.h -o  "$UPDATE_STEAMAUDIO" != "" ];
     then
         safeRm tmp/ext_sta
@@ -173,8 +178,9 @@ function build {
         platform_libsuffix=".dylib"
     fi
 
+    echo "" > tmp/ext_cpplist.txt
+      find src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
 
-  
 
     build_script="
     $compiler -mtune=generic  
@@ -185,13 +191,15 @@ function build {
     -Wall 
     -Lsrc/steamaudio/lib/$platform/$arch
     -Isrc/steamaudio/include
+    -Isrc/ext
     -Itmp/jni_md_$platform
     -I$JDK_ROOT/include
     $arch_flag   
     $(cat  tmp/build_IIlist.txt)
     $args 
     $(cat  tmp/build_cpplist.txt) 
-    $args2  -Wl,-Bdynamic -lphonon $libs"
+    $(cat  tmp/ext_cpplist.txt) 
+    $args2  -Wl,-Bdynamic -lphonon $libs $BUILD_ARGS"
     cp "src/steamaudio/lib/$platform/$arch/${platform_libprefix}phonon${platform_libsuffix}" "$liboutfolder/"
     echo "Run $build_script"
 

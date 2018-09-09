@@ -24,7 +24,7 @@ public class PhononListener {
     public volatile boolean volumeUpdate = false;
     public volatile float volume=0;
 
-    boolean LIVE_ON_THE_EDGE = false;
+    boolean LIVE_ON_THE_EDGE = false,UPDATE_EVERYTHING=true;
     public PhononListener() {
         MEMORY=BufferUtils.createByteBuffer(LISTENER_size);
     }
@@ -32,46 +32,46 @@ public class PhononListener {
     public void updateNative() {
         if (LIVE_ON_THE_EDGE||needNativeUpdate) {
             // System.out.println("JListener position "+posX+" "+posY+" "+posZ);
-            // if (posUpdate) {
+            if (UPDATE_EVERYTHING||posUpdate) {
                 MEMORY.putFloat(POSX, posX);
                 MEMORY.putFloat(POSY, posY);
                 MEMORY.putFloat(POSZ, posZ);
                 posUpdate = false;
-            // }
-            // if (rotUpdate) {
+            }
+            if (UPDATE_EVERYTHING||rotUpdate) {
                 MEMORY.putFloat(DIRX, dirX);
                 MEMORY.putFloat(DIRY, dirY);
                 MEMORY.putFloat(DIRZ, dirZ);
                 MEMORY.putFloat(UPX, upX);
                 MEMORY.putFloat(UPY, upY);
                 MEMORY.putFloat(UPZ, upZ);
-                // rotUpdate = false;
-            // }
-            // if (velUpdate) {
+                rotUpdate = false;
+            }
+            if (UPDATE_EVERYTHING||velUpdate) {
                 MEMORY.putFloat(VELX, velX);
                 MEMORY.putFloat(VELY, velY);
                 MEMORY.putFloat(VELZ, velZ);
-            //     velUpdate = false;
-            // }
+                velUpdate = false;
+            }
 
-            // if (volumeUpdate) {
+            if (UPDATE_EVERYTHING||volumeUpdate) {
                 MEMORY.putFloat(VOLUME, volume);
-            //     volumeUpdate = false;
-            // }
+                volumeUpdate = false;
+            }
             needNativeUpdate = false;
         }
     }
 
     public void update(Listener listener) {
         if (LIVE_ON_THE_EDGE || !needNativeUpdate) {
-            // if (posUpdate) {
+            if (UPDATE_EVERYTHING||posUpdate) {
             Vector3f pos = listener.getLocation();
             posX = pos.x;
             posY = pos.y;
             posZ = pos.z;
-            // }
+            }
 
-            // if (rotUpdate) {
+            if (UPDATE_EVERYTHING||rotUpdate) {
             Vector3f dir = listener.getDirection();
             dirX = dir.x;
             dirY = dir.y;
@@ -82,19 +82,19 @@ public class PhononListener {
             upY = up.y;
             upZ = up.z;
 
-            // }
+            }
 
-            // if (velUpdate) {
+            if (UPDATE_EVERYTHING||velUpdate) {
             Vector3f vel = listener.getVelocity();
             velX = vel.x;
             velY = vel.y;
             velZ = vel.z;
-            // }
+            }
 
-            // if (volumeUpdate) {
+            if (UPDATE_EVERYTHING||volumeUpdate) {
             volume = listener.getVolume();
-            // }
-            needNativeUpdate = true;
+            }
+            needNativeUpdate = UPDATE_EVERYTHING||volumeUpdate||velUpdate||rotUpdate||posUpdate;
         }
     }
 

@@ -4,7 +4,11 @@ import java.io.EOFException;
 import java.io.InputStream;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.BooleanControl;
+import javax.sound.sampled.Control;
+import javax.sound.sampled.EnumControl;
 import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.ReverbType;
 import javax.sound.sampled.SourceDataLine;
 import com.jme3.phonon.PhononOutputLine;
 import com.jme3.phonon.PhononOutputLine.ChannelStatus;
@@ -32,14 +36,9 @@ public class PhononPlayer {
         preloadBytes = maxPreBufferingSamples * bytesPerSample;
 
         audioFormat = new AudioFormat(sampleRate, outputSampleSize, outputChannels, true, false);
-        output = AudioSystem.getSourceDataLine(audioFormat);
-        output.open(audioFormat,preloadBytes);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
-
-   
-       
-        // System.out.println("Preloading " + preloadBytes + " bytes");
-    //    if (output.getBufferSize() < preloadBytes)
-    //         preloadBytes = output.getBufferSize();           
+        output = AudioSystem.getSourceDataLine(audioFormat);  
+        output.open(audioFormat, preloadBytes);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
+     
 
         tmp= new byte[preloadBytes];
     }

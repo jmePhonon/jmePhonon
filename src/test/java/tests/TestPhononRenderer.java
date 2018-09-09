@@ -9,6 +9,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioNode;
+import com.jme3.audio.Environment;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
 import com.jme3.audio.AudioData.DataType;
@@ -29,7 +30,7 @@ import com.jme3.util.BufferUtils;
 
 public class TestPhononRenderer extends SimpleApplication {
 
-    static  int outputLines = 16;
+    static  int outputLines = 1;
     static int frameSize = 1024;// samples
     static int frameBuffer = 3;
     static int maxPreBuffering = 1024*2*4; //2 frame preload
@@ -42,7 +43,7 @@ public class TestPhononRenderer extends SimpleApplication {
         if (dialogResult == JOptionPane.YES_OPTION) {
             settings.setAudioRenderer(null);
         }
-        settings.setFrameRate(60);
+        settings.setFrameRate(200);
         TestPhononRenderer app = new TestPhononRenderer();
         app.setSettings(settings);
 
@@ -64,7 +65,7 @@ public class TestPhononRenderer extends SimpleApplication {
 
     @Override
     public void simpleUpdate(float tpf) {
-      
+  
     
     }
 
@@ -77,6 +78,7 @@ public class TestPhononRenderer extends SimpleApplication {
             double latency = ((double) 1000 / 44100) * frameSize * frameBuffer + maxPreBuffering;
             System.out.println("Expected Latency " + latency);
             PhononSettings effects = new PhononSettings();
+            effects.passThrough = false;
             try {
                 audioRenderer = new PhononRenderer(44100, outputLines, 16, channels, frameSize,
                         frameBuffer, 24, maxPreBuffering, ThreadMode.JAVA, effects);
@@ -93,6 +95,8 @@ public class TestPhononRenderer extends SimpleApplication {
             audioRenderer.setListener(listener);
         }
 
+        // Generic env
+
         Geometry audioSourceGeom = new Geometry("AudioSource", new Box(2, 2, 2));
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         audioSourceGeom.setMaterial(audioSourceGeomMat);
@@ -102,6 +106,10 @@ public class TestPhononRenderer extends SimpleApplication {
 
         AudioNode an = new AudioNode(assetManager, "mono/399354__romariogrande__eastandw.ogg",DataType.Buffer);
         rootNode.attachChild(an);
+        an.setPositional(true);
+        an.setRefDistance(1);
+        an.setReverbEnabled(true);
+
         an.play();
 
 
