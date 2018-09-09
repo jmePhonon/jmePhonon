@@ -42,6 +42,8 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
         if(olIsInitialized(settings,&lines[i])&&lines[i].numConnectedSources<bestLine->numConnectedSources){
             bestLine = &lines[i];
             sourceIndex = i;
+            if(bestLine->numConnectedSources == 0)
+                break;
         }
     }
 
