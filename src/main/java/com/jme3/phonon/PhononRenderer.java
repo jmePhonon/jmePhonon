@@ -300,7 +300,7 @@ public class PhononRenderer implements AudioRenderer {
 		if(src.getChannel() < 0) {
 			return;
 		}
-		
+
 		switch(param) {
 			case Position:
 				if(src.isPositional()) {
@@ -311,7 +311,9 @@ public class PhononRenderer implements AudioRenderer {
 				if(src.isDirectional()) {
 					PHONON_AUDIOSOURCES_DATA.updateSourceDirection(src);
 				}
-
+			case Volume:
+				PHONON_AUDIOSOURCES_DATA.updateSourceVolume(src);
+			
 			default:
 				System.err.println("Unrecognized param while updating audio source.");
 				return;	

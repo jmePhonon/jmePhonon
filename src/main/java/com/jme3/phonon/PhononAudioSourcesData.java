@@ -14,6 +14,7 @@ import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.SIZE;
 import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPX;
 import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPY;
 import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPZ;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.VOLUME;
 
 import java.nio.ByteBuffer;
 
@@ -56,18 +57,25 @@ public class PhononAudioSourcesData {
         setMemoryAhead(MEMORIES[index], ahead);
 
         if(src instanceof AudioNode) {
-            updateSourceUp((AudioNode) src);
-            updateSourceRight((AudioNode) src);
+            updateNodeUp((AudioNode) src);
+            updateNodeRight((AudioNode) src);
         }
     }
 
-    public void updateSourceUp(AudioNode node) {
+    public void updateSourceVolume(AudioSource src) {
+        int index = src.getChannel();
+        float volume = src.getVolume();
+
+        setMemoryVolume(MEMORIES[index], volume);
+    }
+
+    public void updateNodeUp(AudioNode node) {
         int index = node.getChannel();
         Vector3f up = node.getWorldRotation().getRotationColumn(1);
         setMemoryUp(MEMORIES[index], up);        
     }
 
-    public void updateSourceRight(AudioNode node) {
+    public void updateNodeRight(AudioNode node) {
         int index = node.getChannel();
         Vector3f right = node.getWorldRotation().getRotationColumn(0).negate();
         setMemoryRight(MEMORIES[index], right);
@@ -95,6 +103,10 @@ public class PhononAudioSourcesData {
         memory.putFloat(RIGHTX, right.x);
         memory.putFloat(RIGHTY, right.y);
         memory.putFloat(RIGHTZ, right.z);
+    }
+    
+    private void setMemoryVolume(ByteBuffer memory, float volume) {
+        memory.putFloat(VOLUME, volume);
     }
 
     public long[] memoryAddresses() {
