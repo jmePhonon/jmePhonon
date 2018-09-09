@@ -57,14 +57,16 @@ void  passThroughMixer(jfloat** inputs,jint nInputs,jfloat *output){
 
 
 
-JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj,jint size,jlong sourceAddr){
-    struct AudioSource* source= olConnectSourceToBestLine(&SETTINGS,OUTPUT_LINES,SETTINGS.nOutputLines,
-      (jfloat *)(intptr_t)sourceAddr,size);
-    phFlushSource(&SETTINGS,source);
+JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj,jint size,jlong sourceAddr){
+    struct AudioSource* source = olConnectSourceToBestLine(&SETTINGS, OUTPUT_LINES, SETTINGS.nOutputLines,
+      (jfloat *)(intptr_t)sourceAddr, size);
+
+    phFlushSource(&SETTINGS, source);
+
     if (source == NULL)
         return -1;
     else
-        return (intptr_t)source;
+        return source->sourceIndex;
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative(JNIEnv *env, jobject obj, jlong addr) {
@@ -149,26 +151,29 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 }
             #endif
 
-            olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);
-            olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+
+        olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels);
+        olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
     }
 }
 
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env, 
-jobject obj, 
-jint sampleRate,
-jint nOutputLines,
-jint nSourcesPerLine,
-jint nOutputChannels,
-jint frameSize,
-jint bufferSize,
- jboolean nativeThread,
- jboolean decoupledNativeThread,
+    jobject obj, 
+    jint sampleRate,
+    jint nOutputLines,
+    jint nSourcesPerLine,
+    jint nOutputChannels,
+    jint frameSize,
+    jint bufferSize,
+    jboolean nativeThread,
+    jboolean decoupledNativeThread,
 
- jlong listenerDataPointer,
-// effects
-jboolean isPassthrough
+    jlong listenerDataPointer,
+    jlongArray audioSourcesSceneDataArrayPointer,
+
+    // effects
+    jboolean isPassthrough
 ) {
 
     SETTINGS.nOutputLines = nOutputLines;
@@ -194,10 +199,14 @@ jboolean isPassthrough
 
     float *listenerData = (float*)(intptr_t)listenerDataPointer;
 
-    phInit(&SETTINGS,nSourcesPerLine,listenerData);
+    jlong* audioSourcesSceneDataArray = (*env)->GetLongArrayElements(env, audioSourcesSceneDataArrayPointer, 0);
+
+    phInit(&SETTINGS,nSourcesPerLine, listenerData);
+
     for(jint i=0;i<SETTINGS.nOutputLines;i++){
         for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
-            phInitializeSource(&SETTINGS,&OUTPUT_LINES[i].sourcesSlots[j]);
+            float* audioSourceSceneData = (float*)(intptr_t) audioSourcesSceneDataArray[i * nSourcesPerLine + j];
+            phInitializeSource(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j], audioSourceSceneData);
         }
     }
     #ifdef INCLUDE_SIMPLE_REVERB

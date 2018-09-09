@@ -18,9 +18,9 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setEnvironmentNative
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    connectSourceNative
- * Signature: (IJ)J
+ * Signature: (IJ)I
  */
-JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
+JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
   (JNIEnv *, jobject, jint, jlong);
 
 /*
@@ -50,10 +50,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    initNative
- * Signature: (IIIIIIZZJZ)V
+ * Signature: (IIIIIIZZJ[JZ)V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jboolean, jboolean, jlong, jboolean);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jboolean, jboolean, jlong, jlongArray, jboolean);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer

@@ -1,32 +1,28 @@
 package tests;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.LineUnavailableException;
+
 import javax.swing.JOptionPane;
+
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioContext;
-import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioData.DataType;
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.Environment;
 import com.jme3.audio.Listener;
-import com.jme3.audio.ListenerParam;
-import com.jme3.audio.AudioData.DataType;
 import com.jme3.material.Material;
-import com.jme3.material.MaterialList;
 import com.jme3.math.ColorRGBA;
-import com.jme3.phonon.format.F32leAudioData;
-import com.jme3.phonon.PhononSettings;
-import com.jme3.phonon.PhononOutputLine;
+import com.jme3.math.Quaternion;
+import com.jme3.math.Vector3f;
 import com.jme3.phonon.PhononRenderer;
+import com.jme3.phonon.PhononSettings;
 import com.jme3.phonon.ThreadMode;
-import com.jme3.phonon.player.PhononPlayer;
+import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import com.jme3.system.AppSettings;
-import com.jme3.util.BufferUtils;
 
 public class TestPhononRenderer extends SimpleApplication {
 
@@ -35,6 +31,7 @@ public class TestPhononRenderer extends SimpleApplication {
     static int frameBuffer = 3;
     static int maxPreBuffering = 1024*2*4; //2 frame preload
     static int channels = 2;
+
     public static void main(String[] args) {
         AppSettings settings = new AppSettings(true);
         
@@ -53,23 +50,13 @@ public class TestPhononRenderer extends SimpleApplication {
     
     public TestPhononRenderer() {
   
-       
     }
 
-    @Override
-    public void simpleRender(RenderManager rm) {
-        super.simpleRender(rm);
-        listener.setLocation(cam.getLocation());
-        listener.setRotation(cam.getRotation());
-    }
 
-    @Override
-    public void simpleUpdate(float tpf) {
-  
-    
-    }
 
+    Node audioSourceNode;
     ArrayList<F32leAudioData> loadedSound = new ArrayList<F32leAudioData>();
+
     @Override
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
@@ -86,7 +73,6 @@ public class TestPhononRenderer extends SimpleApplication {
                 e1.printStackTrace();
             }
 
-
             audioRenderer.initialize();
 
             AudioContext.setAudioRenderer(audioRenderer);
@@ -97,29 +83,45 @@ public class TestPhononRenderer extends SimpleApplication {
 
         // Generic env
         audioRenderer.setEnvironment(Environment.Cavern);
-        Geometry audioSourceGeom = new Geometry("AudioSource", new Box(2, 2, 2));
+
+        audioSourceNode = new Node();
+
+        Geometry audioSourceGeom = new Geometry("AudioSource", new Box(.5f, .5f, .5f));
         Material audioSourceGeomMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
         audioSourceGeom.setMaterial(audioSourceGeomMat);
         audioSourceGeomMat.setColor("Color",ColorRGBA.Red);
-        rootNode.attachChild(audioSourceGeom);
+        audioSourceNode.attachChild(audioSourceGeom);
         flyCam.setMoveSpeed(10f);
 
-        AudioNode an = new AudioNode(assetManager, "mono/399354__romariogrande__eastandw.ogg",DataType.Buffer);
-        rootNode.attachChild(an);
+        AudioNode an = new AudioNode(assetManager, "mono/399354__romariogrande__eastandw.ogg", DataType.Buffer);
+        audioSourceNode.attachChild(an);
+        an.setName("Audio Node");
+        an.setPositional(true);
+        an.setDirectional(true);
         an.setPositional(true);
         an.setRefDistance(1);
         an.setReverbEnabled(true);
-
+        an.setInnerAngle(360f);
         an.play();
 
-
-        
-
-        
-        
-
-
-
-
+        rootNode.attachChild(audioSourceNode);
     }
+
+    private float currentAngle = 0f;
+
+    @Override
+    public void simpleRender(RenderManager rm) {
+        super.simpleRender(rm);
+        listener.setLocation(cam.getLocation());
+        listener.setRotation(cam.getRotation());
+        
+        // audioSourceNode.setLocalTranslation(audioSourceNode.getLocalTranslation().add(0f, .025f, 0f));
+        Vector3f angles = new Vector3f(currentAngle, 0f, 0f);
+        // audioSourceNode.setLocalRotation(new Quaternion().fromAxes(angles.add(1f, 0f, 0f), angles.add(0f, 1f, 0f), angles));
+        ((AudioNode) audioSourceNode.getChild("Audio Node")).setDirection(angles);
+        currentAngle = (currentAngle + .1f);
+    }
+
+    @Override
+    public void simpleUpdate(float tpf) { }
 }

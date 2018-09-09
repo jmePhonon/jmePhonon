@@ -7,6 +7,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.sound.sampled.LineUnavailableException;
 import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioParam;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
@@ -14,6 +15,7 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
+import com.jme3.audio.openal.ALAudioRenderer;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
@@ -75,13 +77,13 @@ public class PhononRenderer implements AudioRenderer {
 	private final int MAX_PLAYER_PREBUFFERING;
 
 	private final PhononListener PHONON_LISTENER;
+	private final PhononAudioSourcesData PHONON_AUDIOSOURCES_DATA;
 
 	private Listener jmeListener;
 
 	final ThreadMode THREAD_MODE;
 
 	boolean SIMULATE_LOAD = false;
-
 
 	public PhononRenderer(int sampleRate, int nOutputLines, int nSourcesPerLine,
 			int nOutputChannels, int frameSize, int bufferSize, int outputSampleSize,
@@ -97,18 +99,18 @@ public class PhononRenderer implements AudioRenderer {
 		THREAD_MODE = threadMode;
 
 		PHONON_LISTENER = new PhononListener();
+		PHONON_AUDIOSOURCES_DATA = new PhononAudioSourcesData(nOutputLines, nSourcesPerLine);
 		PLAYERS = new PhononPlayer[nOutputLines];
 		OUTPUT_SAMPLE_SIZE = outputSampleSize;
 
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
-
-
-
 		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
 				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
-				PHONON_LISTENER.getAddress(), // Effects
+				PHONON_LISTENER.getAddress(),
+				PHONON_AUDIOSOURCES_DATA.memoryAddresses(),
+				// Effects
 				settings.passThrough);
 
 		for (int i = 0; i < OUTPUT_LINES.length; i++) {
@@ -121,16 +123,12 @@ public class PhononRenderer implements AudioRenderer {
 		}
 	}
 
-
 	public PhononOutputLine getLine(int i) {
 		return OUTPUT_LINES[i];
 	}
 
-
 	@Override
 	public void initialize() {
-
-
 		if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
 			Thread decoderThread = new Thread(() -> runDecoder());
 			decoderThread.setName("Phonon Java Thread");
@@ -138,6 +136,7 @@ public class PhononRenderer implements AudioRenderer {
 			decoderThread.setDaemon(true);
 			decoderThread.start();
 		}
+
 		// playeThread = new Thread(() -> runPlayer());
 
 		// playeThread.setDaemon(true);
@@ -160,9 +159,9 @@ public class PhononRenderer implements AudioRenderer {
 	 * 
 	 * @param length     Lenght of the source measured in samples
 	 * @param sourceAddr Address of the source
-	 * @return 64 bit memory address of the source
+	 * @return Source data buffer index 
 	 */
-	native long connectSourceNative(int length, long sourceAddr);
+	native int connectSourceNative(int length, long sourceAddr);
 
 	/**
 	 * Disconnect source from an output line
@@ -182,11 +181,9 @@ public class PhononRenderer implements AudioRenderer {
 
 	native void updateNative();
 
-
-
 	native void initNative(int sampleRate, int nOutputLines, int nSourcesPerLine,
 			int nOutputChannels, int frameSize, int bufferSize, boolean nativeThread,
-			boolean decoupledNativeThread, long listenerDataPointer,
+			boolean decoupledNativeThread, long listenerDataPointer, long[] audioSourcesSceneDataArrayPointer,
 			// effects
 			boolean isPassThrough);
 
@@ -194,13 +191,12 @@ public class PhononRenderer implements AudioRenderer {
 
 
 
-	public long connectSource(F32leAudioData audioData) {
+	public int connectSource(F32leAudioData audioData) {
 		System.out.println("Connect source [" + audioData.getAddress() + "] of size "
 				+ audioData.getSizeInSamples());
 		int length = audioData.getSizeInSamples();
 		long addr = audioData.getAddress();
 
-		// OUTPUT_LINES[lineID].reset();
 		return connectSourceNative(length, addr);
 	}
 
@@ -217,7 +213,6 @@ public class PhononRenderer implements AudioRenderer {
 
 	// long UPDATE_RATE = 50* 1000000l;
 	public void runDecoder() {
-
 		do {
 			if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
 				try {
@@ -226,7 +221,6 @@ public class PhononRenderer implements AudioRenderer {
 
 				}
 			}
-
 
 			PHONON_LISTENER.updateNative();
 			if (SIMULATE_LOAD) {
@@ -251,6 +245,7 @@ public class PhononRenderer implements AudioRenderer {
 
 
 		} while (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled);
+
 
 	}
 
@@ -282,31 +277,65 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void playSourceInstance(AudioSource src) {
-		F32leAudioData data = toF32leData(src.getAudioData());
+		/*if(!PHONON_AUDIOSOURCES_DATA.hasSourceData(src)) {
+			F32leAudioData data = toF32leData(src.getAudioData());
 
-
+			long slotAddress = this.connectSource(data);
+			src.setChannel(1);
+		}*/
 	}
 
 	@Override
 	public void playSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
-		this.connectSource(data);
-
+		src.setChannel(connectSource(data));
+		src.setStatus(AudioSource.Status.Playing);
+		System.out.println("Channel: " + src.getChannel());
 	}
 
 	@Override
 	public void pauseSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
-
+		src.setStatus(AudioSource.Status.Paused);
 	}
 
 	@Override
 	public void stopSource(AudioSource src) {
-
+		src.setStatus(AudioSource.Status.Stopped);
+		src.setChannel(0);
 	}
 
 	@Override
-	public void updateSourceParam(AudioSource src, AudioParam param) {}
+	public void updateSourceParam(AudioSource src, AudioParam param) {
+		if(src.getChannel() < 0) {
+			return;
+		}
+
+		switch(param) {
+			case Position:
+				if(src.isPositional()) {
+					PHONON_AUDIOSOURCES_DATA.updateSourcePosition(src);
+				}
+				break;
+			case Direction:
+				if(src.isDirectional()) {
+					PHONON_AUDIOSOURCES_DATA.updateSourceDirection(src);
+				}
+				break;
+			case Volume:
+				PHONON_AUDIOSOURCES_DATA.updateSourceVolume(src);
+				break;
+			case IsDirectional:
+				PHONON_AUDIOSOURCES_DATA.updateSourceDirectionality(src);
+				break;
+			case InnerAngle:
+				PHONON_AUDIOSOURCES_DATA.updateSourceInnerAngle(src);
+				break;
+			default:
+				System.err.println("Unrecognized param while updating audio source.");
+				return;	
+		}
+	}
 
 
 	@Override

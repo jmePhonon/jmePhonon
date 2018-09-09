@@ -3,71 +3,71 @@
 
 #include "types.h"
 
-  struct {
-        IPLhandle context;
-        IPLRenderingSettings settings;
-        IPLSimulationSettings simulationSettings;
+struct {
+    IPLhandle context;
+    IPLRenderingSettings settings;
+    IPLSimulationSettings simulationSettings;
 
-        IPLAudioFormat monoFormat;
-        IPLAudioBuffer monoBuffer1;
-        IPLAudioBuffer monoBuffer2;
-        jfloat *auxMonoFrame;
+    IPLAudioFormat monoFormat;
+    IPLAudioBuffer monoBuffer1;
+    IPLAudioBuffer monoBuffer2;
+    jfloat *auxMonoFrame;
 
 
-        IPLAudioFormat outputFormat;
-        IPLAudioBuffer outputBuffer;
+    IPLAudioFormat outputFormat;
+    IPLAudioBuffer outputBuffer;
 
-        IPLVector3 listenerPosition;
-        IPLVector3 listenerDirection;
-        IPLVector3 listenerUp;
+    IPLVector3 listenerPosition;
+    IPLVector3 listenerDirection;
+    IPLVector3 listenerUp;
 
-        IPLhandle scene;
-        IPLMaterial *materials;
+    IPLhandle scene;
+    IPLMaterial *materials;
 
-        IPLhandle environment;
-        IPLhandle environmentalRenderer;
+    IPLhandle environment;
+    IPLhandle environmentalRenderer;
 
-        IPLHrtfParams defaultHrtfParams;
-        IPLhandle binauralRenderer;
+    IPLHrtfParams defaultHrtfParams;
+    IPLhandle binauralRenderer;
 
-        IPLAudioBuffer *mixerQueue;
+    IPLAudioBuffer *mixerQueue;
 
-        jfloat *listenerData;
+    jfloat *listenerData;
+} PhSharedContext; // This context is shared between every source
 
-    } PhSharedContext; // This context is shared between every source
+struct PhContext { //nb for each source we need to create a new PhContext    
+    IPLhandle binauralEffect;
+    IPLhandle directSoundEffect;
+    IPLDirectSoundEffectOptions directSoundEffectOptions;
+};
 
-    struct PhContext { //nb for each source we need to create a new PhContext    
-        IPLhandle binauralEffect;
-        IPLhandle directSoundEffect;
-        IPLDirectSoundEffectOptions directSoundEffectOptions;
-    };
+/** Adapted from jmonkeyengine's Quaternion.java */
+void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
+    jfloat vx = v->x, vy = v->y, vz = v->z;
+    if (vx == 0.f && vy == 0.f && vz == 0.f) {
+        store->x = 0;
+        store->y = 0;
+        store->z = 0;
+    } else {
+        jfloat x = qtr->x;
+        jfloat y = qtr->y;
+        jfloat z = qtr->z;
+        jfloat w = qtr->w;
 
-    /** Adapted from jmonkeyengine's Quaternion.java */
-    void phMultQtrVec(IPLQuaternion *qtr, IPLVector3 *v, IPLVector3 *store) {
-        jfloat vx = v->x, vy = v->y, vz = v->z;
-        if (vx == 0.f && vy == 0.f && vz == 0.f) {
-            store->x = 0;
-            store->y = 0;
-            store->z = 0;
-        } else {
-            jfloat x = qtr->x;
-            jfloat y = qtr->y;
-            jfloat z = qtr->z;
-            jfloat w = qtr->w;
-
-            store->x = w * w * vx + 2 * y * w * vz - 2 * z * w * vy + x * x * vx + 2 * y * x * vy + 2 * z * x * vz - z * z * vx - y * y * vx;
-            store->y = 2 * x * y * vx + y * y * vy + 2 * z * y * vz + 2 * w * z * vx - z * z * vy + w * w * vy - 2 * x * w * vz - x * x * vy;
-            store->z = 2 * x * z * vx + 2 * y * z * vy + z * z * vz - 2 * w * y * vx - y * y * vz + 2 * w * x * vy - x * x * vz + w * w * vz;
-        }
-}
-  jfloat phQtrNorm(IPLQuaternion *qtr) {
-      jfloat x = qtr->x;
-      jfloat y = qtr->y;
-      jfloat z = qtr->z;
-      jfloat w = qtr->w;
-      
-      return w * w + x * x + y * y + z * z;
+        store->x = w * w * vx + 2 * y * w * vz - 2 * z * w * vy + x * x * vx + 2 * y * x * vy + 2 * z * x * vz - z * z * vx - y * y * vx;
+        store->y = 2 * x * y * vx + y * y * vy + 2 * z * y * vz + 2 * w * z * vx - z * z * vy + w * w * vy - 2 * x * w * vz - x * x * vy;
+        store->z = 2 * x * z * vx + 2 * y * z * vy + z * z * vz - 2 * w * y * vx - y * y * vz + 2 * w * x * vy - x * x * vz + w * w * vz;
     }
+}
+
+jfloat phQtrNorm(IPLQuaternion *qtr) {
+    jfloat x = qtr->x;
+    jfloat y = qtr->y;
+    jfloat z = qtr->z;
+    jfloat w = qtr->w;
+    
+    return w * w + x * x + y * y + z * z;
+}
 
 void phQtrInverse(IPLQuaternion *qtr,IPLQuaternion *out){
     jfloat x = qtr->x;
@@ -209,7 +209,7 @@ void phDestroy(struct GlobalSettings *settings){
 /**
  * Allocates one PhContext for the audioSource
  */
-void phInitializeSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceSceneData){
     struct PhContext *context = malloc(sizeof(struct PhContext));
 
     // TODO make this configurable
@@ -222,11 +222,9 @@ void phInitializeSource(struct GlobalSettings *settings,struct AudioSource *audi
     iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer, 
     PhSharedContext.monoFormat,PhSharedContext.monoFormat, &context->directSoundEffect);
 
-
     iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, PhSharedContext.outputFormat, &context->binauralEffect);
     audioSource->phononContext = context;
-
-
+    audioSource->sceneData = audioSourceSceneData;
 }
 
 /**
@@ -262,6 +260,51 @@ IPLVector3 *phGetListenerUp(){
     return &PhSharedContext.listenerUp;
 }
 
+IPLVector3* phGetSourcePosition(IPLVector3* position, float *sourceData) {
+    position->x = sourceData[phSourceField(POSX)];
+    position->y = sourceData[phSourceField(POSY)];
+    position->z = sourceData[phSourceField(POSZ)];
+
+    return position;
+}
+
+IPLVector3* phGetSourceAhead(IPLVector3* ahead, float *sourceData) {
+    ahead->x = sourceData[phSourceField(AHEADX)];
+    ahead->y = sourceData[phSourceField(AHEADY)];
+    ahead->z = sourceData[phSourceField(AHEADZ)];
+
+    printf("new source ahead: %f %f %f\n", ahead->x, ahead->y, ahead->z);
+
+    return ahead;
+}
+
+IPLVector3* phGetSourceUp(IPLVector3* up, float *sourceData) {
+    up->x = sourceData[phSourceField(UPX)];
+    up->y = sourceData[phSourceField(UPY)];
+    up->z = sourceData[phSourceField(UPZ)];
+
+    return up;
+}
+
+IPLVector3* phGetSourceRight(IPLVector3* right, float *sourceData) {
+    right->x = sourceData[phSourceField(RIGHTX)];
+    right->y = sourceData[phSourceField(RIGHTY)];
+    right->z = sourceData[phSourceField(RIGHTZ)];
+
+    return right;
+}
+
+IPLDirectivity* phGetSourceDirectivity(IPLDirectivity* directivity, float* sourceData) {
+    directivity->dipoleWeight = sourceData[phSourceField(DIPOLEWEIGHT)];
+    directivity->dipolePower = sourceData[phSourceField(DIPOLEPOWER)];
+
+    // TODO: retrieve those directivity fields
+    directivity->callback = NULL;
+    directivity->userData = NULL;
+
+    return directivity;
+}
+
 void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame){
     // for(jint i=0;i<PhSharedContext.settings.frameSize;i++){
     //     outframe[i] = inframe[i];
@@ -271,28 +314,13 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,
         printf("FIXME: PhContext is null for this source?\n");
         return;
     }
-   IPLVector3 sourcePosition;
-    sourcePosition.x = 0;
-    sourcePosition.y = 0;
-    sourcePosition.z = 0;
-
-// get this data from sourcedata
-    IPLSource source;
-    source.position = sourcePosition;
-    source.ahead.x = 0;
-    source.ahead.y = 0;
-    source.ahead.z = 1;
-    source.up.x = 0;
-    source.up.y = 1;
-    source.up.z = 0;
-    source.right.x = 1;
-    source.right.y = 0;
-    source.right.z = 0;
-    source.directivity.dipoleWeight = 0.0;
-    source.directivity.dipolePower = 1.0;
-    source.directivity.callback = NULL;
-    source.directivity.userData = NULL;
     
+    IPLSource source;
+    phGetSourcePosition(&source.position, asource->sceneData);
+    phGetSourceAhead(&source.ahead, asource->sceneData);
+    phGetSourceUp(&source.up, asource->sceneData);
+    phGetSourceRight(&source.right, asource->sceneData);
+    phGetSourceDirectivity(&source.directivity, asource->sceneData);    
 
     ///>>??????
     ///
@@ -303,7 +331,7 @@ void phProcessFrame(struct GlobalSettings *settings,struct AudioSource *asource,
     IPLVector3 *listenerUp = phGetListenerUp();
     IPLVector3 *listenerDirection = phGetListenerDirection();
 
-    IPLVector3 direction= iplCalculateRelativeDirection(sourcePosition, (*listenerPos),
+    IPLVector3 direction= iplCalculateRelativeDirection(source.position, (*listenerPos),
         (*listenerDirection), (*listenerUp));
 
     

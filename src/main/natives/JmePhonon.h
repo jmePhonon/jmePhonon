@@ -10,6 +10,7 @@
 #include <math.h>
 #include "AudioSource.h"
 #include "memory_layout/LISTENER_LAYOUT.h" 
+#include "memory_layout/AUDIOSOURCE_LAYOUT.h" 
 
 void phInit(struct GlobalSettings *settings,jint mixQueueMaxSize,float *listenerData);
 void phProcessFrame(struct GlobalSettings *settings, struct AudioSource *source,jfloat *inFrame, jfloat *outFrame);
@@ -19,7 +20,7 @@ void phDestroy(struct GlobalSettings *settings);
 /**
  * Allocates one PhContext for the audioSource
  */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceSceneData);
 
 
 /**
