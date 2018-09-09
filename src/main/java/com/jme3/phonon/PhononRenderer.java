@@ -104,19 +104,11 @@ public class PhononRenderer implements AudioRenderer {
 
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
-
-		ByteBuffer[] audioSourceDataMemories = PHONON_AUDIOSOURCES_DATA.getMemoryBuffers();
-		long audioSourceDataAddresses[] = new long[audioSourceDataMemories.length];
-
-		for(int i = 0; i < audioSourceDataAddresses.length; i++) {
-			audioSourceDataAddresses[i] = DirectBufferUtils.getAddr(audioSourceDataMemories[i]);
-		}
-
 		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
 		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
 				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
 				PHONON_LISTENER.getAddress(),
-				audioSourceDataAddresses,
+				PHONON_AUDIOSOURCES_DATA.memoryAddresses(),
 				// Effects
 				settings.passThrough);
 

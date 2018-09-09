@@ -1,14 +1,27 @@
 package com.jme3.phonon;
 
 
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADY;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADZ;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSY;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSZ;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTY;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTZ;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.SIZE;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPY;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPZ;
+
 import java.nio.ByteBuffer;
 
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.math.Vector3f;
+import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
-
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.*;
 
 public class PhononAudioSourcesData {
     private final ByteBuffer[] MEMORIES;
@@ -84,7 +97,13 @@ public class PhononAudioSourcesData {
         memory.putFloat(RIGHTZ, right.z);
     }
 
-    public ByteBuffer[] getMemoryBuffers() {
-        return MEMORIES;
+    public long[] memoryAddresses() {
+        long audioSourceDataAddresses[] = new long[MEMORIES.length];
+
+		for(int i = 0; i < audioSourceDataAddresses.length; i++) {
+			audioSourceDataAddresses[i] = DirectBufferUtils.getAddr(MEMORIES[i]);
+		}
+
+        return audioSourceDataAddresses;
     }
 }
