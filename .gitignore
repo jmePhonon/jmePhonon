@@ -13,6 +13,5 @@ src/test/resources/inputaudio.raw
 *.ddl
 .Trash/
 *.log
-src/test/resources
 deploy/
 src/ext/
