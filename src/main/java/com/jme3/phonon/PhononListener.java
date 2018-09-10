@@ -29,11 +29,13 @@ public class PhononListener {
     public PhononListener() {
         MEMORY = BufferUtils.createByteBuffer(LISTENER_size);
         // initialization
-        POS.updateFrom(new Vector3f());
-        DIR.updateFrom(new Vector3f(0,0,1));
-        UP.updateFrom(new Vector3f(0,1,0));
-        VEL.updateFrom(new Vector3f(0,0,0));
-        VOL.updateFrom(0f);
+        
+        POS.updateFrom(Vector3f.ZERO);
+        DIR.updateFrom(Vector3f.UNIT_Z);
+        UP.updateFrom(Vector3f.UNIT_Y);
+        VEL.updateFrom(Vector3f.ZERO);
+        VOL.updateFrom(1f);
+        finalizeUpdate();
     }
 
     

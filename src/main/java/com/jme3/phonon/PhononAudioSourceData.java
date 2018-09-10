@@ -36,6 +36,7 @@ public class PhononAudioSourceData {
         DWEIGHT.updateFrom(0f);
         DPOWER.updateFrom(0f);
         VOL.updateFrom(1f);
+        finalizeUpdate();
     }
 
     public void finalizeUpdate() {
