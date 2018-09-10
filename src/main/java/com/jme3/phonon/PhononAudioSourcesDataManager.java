@@ -1,12 +1,6 @@
 package com.jme3.phonon;
 
-import java.nio.ByteBuffer;
-
-import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
-import com.jme3.math.Vector3f;
-import com.jme3.phonon.utils.DirectBufferUtils;
-import com.jme3.util.BufferUtils;
 
 public class PhononAudioSourcesDataManager {
     private final PhononAudioSourceData[] DATA;
@@ -21,21 +15,37 @@ public class PhononAudioSourcesDataManager {
         }
     }
 
-    public void updateSourcePosition(AudioSource src) {
-        DATA[src.getChannel()].positionUpdate(src);
-    }
-    
-    public void updateSourceDirection(AudioSource src) {
-        DATA[src.getChannel()].directionUpdate(src);
+    public void pairSourceAndData(AudioSource src, int dataIndex) {
+        src.setChannel(dataIndex);
+        DATA[dataIndex].setSource(src);
     }
 
-    public void updateSourceVolume(AudioSource src) {
-        DATA[src.getChannel()].volumeUpdate(src);
+    public void unpairSourceAndData(AudioSource src) {
+        DATA[src.getChannel()].setSource(null);
+        src.setChannel(-1);
+    }
+
+    public void setSrcPosUpdateNeeded(AudioSource src) {
+        DATA[src.getChannel()].setPosUpdateNeeded();
     }
     
-    public void finalizeUpdates() {
+    public void setSrcDirUpdateNeeded(AudioSource src) {
+        DATA[src.getChannel()].setDirUpdateNeeded();
+    }
+
+    public void setSrcVolUpdateNeeded(AudioSource src) {
+        DATA[src.getChannel()].setVolUpdateNeeded();
+    }
+    
+    public void finalizeDataUpdates() {
         for(PhononAudioSourceData sourceData : DATA) {
             sourceData.finalizeUpdate();
+        }
+    }
+
+    public void updateData() {
+        for(PhononAudioSourceData sourceData : DATA) {
+            sourceData.update();
         }
     }
 
