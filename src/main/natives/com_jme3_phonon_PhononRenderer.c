@@ -1,6 +1,11 @@
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     #error This implementation runs only on little endian machines
 #endif
+
+#if defined(__linux__)
+    #include "platform/linux/NativeUpdate.h"
+#endif
+
 #include "Common.h" 
 
 
@@ -29,9 +34,6 @@ struct {
     jfloat **mixerQueue;
 } Temp;
 
-#if defined(__linux__)
-    #include "platform/linux/NativeUpdate.h"
-#endif
 
 
 
@@ -164,7 +166,13 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     SETTINGS.isPassthrough = isPassthrough;
 
     GLOBAL_LISTENER = lsNew(&SETTINGS, (jfloat*)(intptr_t)listenerDataPointer);
+
+
+
+
     OUTPUT_LINES = olNew(&SETTINGS, nOutputLines);
+
+   
 
     Temp.outputFrame1= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
         Temp.outputFrame2= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
@@ -175,18 +183,19 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
         Temp.mixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
     }
 
-
-
-    jlong* audioSourcesSceneDataArray = (*env)->GetLongArrayElements(env, audioSourcesSceneDataArrayPointer, 0);
-
- 
     phInit(&SETTINGS,nSourcesPerLine); 
+
+    jlong* audioSourcesSceneDataArray = (*env)->GetLongArrayElements(env, audioSourcesSceneDataArrayPointer, 0); 
     for(jint i=0;i<SETTINGS.nOutputLines;i++){
         for(jint j=0;j<SETTINGS.nSourcesPerLine;j++){
-            float* audioSourceSceneData = (float*)(intptr_t) audioSourcesSceneDataArray[i * nSourcesPerLine + j];
-            phInitializeSource(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j], audioSourceSceneData);
+            jfloat* audioSourceSceneData = (jfloat*)(intptr_t) audioSourcesSceneDataArray[i * nSourcesPerLine + j];
+            asSetSceneData(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j], audioSourceSceneData);
+            phInitializeSource(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j]);
         }
     }
+
+
+    
     #ifdef INCLUDE_SIMPLE_REVERB
         srInit(&SETTINGS);
     #endif

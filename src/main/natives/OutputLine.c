@@ -3,7 +3,7 @@
 
 struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
     struct OutputLine *lines= malloc(sizeof(struct OutputLine) * nOutputLines);
-    for(int i=0;i<nOutputLines;i++){
+    for(jint i=0;i<nOutputLines;i++){
         // printf("Phonon: Initialize line id %d\n", i);
         lines[i].uList = (struct UList*) malloc(sizeof(struct UList));
         ulistInit(lines[i].uList);
@@ -20,7 +20,7 @@ struct OutputLine *olNew(struct GlobalSettings *settings,jint nOutputLines){
 
 
 void olDestroy(struct GlobalSettings *settings,struct OutputLine *lines,jint nOutputLines){
-    for(int i=0;i<nOutputLines;i++){
+    for(jint i=0;i<nOutputLines;i++){
         asDestroy(settings, lines[i].sourcesSlots,settings->nSourcesPerLine);
         ulistDestroy(lines[i].uList);
     }

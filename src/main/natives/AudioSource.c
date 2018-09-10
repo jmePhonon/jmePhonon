@@ -1,25 +1,19 @@
 #include "AudioSource.h"
+#include "memory_layout/AUDIOSOURCE_LAYOUT.h"
 
 void asInit(struct GlobalSettings *settings, struct AudioSource *source){
     source->data = NULL;
     source->lastReadFrameIndex = 0;
-    source->position[0] = 0;
-    source->position[1] = 0;
-    source->position[2] = 0;
+    
 
-    source->rotation[0] = 0;
-    source->rotation[1] = 0;
-    source->rotation[2] = 0;
-    source->rotation[3] = 0;
-
-    source->velocity = 0;
-    source->volume = 1;
     source->pitch = 1;
 
     source->connectedLine = NULL;
     source->phononContext = NULL;
 
     source->uNode = (struct UListNode*) malloc(sizeof(struct UListNode));
+
+
     ulistInitNode(source->uNode, source); 
 }
 
@@ -35,6 +29,10 @@ struct AudioSource* asNew(struct GlobalSettings *settings, jint n){
 void asDestroy(struct GlobalSettings *settings,struct AudioSource *source,jint n){
     ulistDestroyNode(source->uNode);
     free(source);
+}
+
+void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source, jfloat *data){
+    source->sceneData = data;
 }
 
 jboolean asIsConnected(struct AudioSource *source){
@@ -61,7 +59,7 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
         } else {
             v = data[sampleIndex];
         }
-        store[i] = v*source->volume;
+        store[i] = v*asGetVolume(settings,source);
     }
     source->lastReadFrameIndex++;
 
@@ -71,4 +69,45 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
     }
 
     return hasReachedEnd;
+}
+
+
+jfloat asGetVolume(struct GlobalSettings *settings,struct AudioSource *source){
+    return source->sceneData[asSourceField(VOLUME)];
+}
+
+vec3* asGetSourcePosition(struct GlobalSettings *settings,struct AudioSource *source) {
+    source->_position.x =  source->sceneData[asSourceField(POSX)];
+    source->_position.y= source->sceneData[asSourceField(POSY)];
+    source->_position.z = source->sceneData[asSourceField(POSZ)];
+    return &source->_position;
+}
+
+vec3* asGetSourceDirection(struct GlobalSettings *settings,struct AudioSource *source) {
+    source->_direction.x = source->sceneData[asSourceField(AHEADX)];
+    source->_direction.y= source->sceneData[asSourceField(AHEADY)];
+    source->_direction.z = source->sceneData[asSourceField(AHEADZ)];
+    return &source->_direction;
+}
+
+vec3* asGetSourceUp(struct GlobalSettings *settings,struct AudioSource *source) {
+    source->_up.x = source->sceneData[asSourceField(UPX)];
+    source->_up.y = source->sceneData[asSourceField(UPY)];
+    source->_up.z = source->sceneData[asSourceField(UPZ)];
+    return &source->_up;
+}
+
+vec3* asGetSourceRight(struct GlobalSettings *settings,struct AudioSource *source) {
+    source->_right.x = source->sceneData[asSourceField(RIGHTX)];
+    source->_right.y = source->sceneData[asSourceField(RIGHTY)];
+    source->_right.z = source->sceneData[asSourceField(RIGHTZ)];
+    return &source->_right;
+}
+
+drt* asGetSourceDirectivity(struct GlobalSettings *settings,struct AudioSource *source) {
+    source->_directivity.dipoleWeight = source->sceneData[asSourceField(DIPOLEWEIGHT)];
+    source->_directivity.dipolePower = source->sceneData[asSourceField(DIPOLEPOWER)];
+    source->_directivity.callback = NULL;
+    source->_directivity.userData = NULL;
+    return &source->_directivity;
 }

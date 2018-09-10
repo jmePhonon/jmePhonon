@@ -14,6 +14,9 @@
 
 #define HAS_NATIVE_THREAD_SUPPORT 1
 
+#define true 1
+#define false 0
+
 struct {
     JavaVM *vm;
     JNIEnv *env;

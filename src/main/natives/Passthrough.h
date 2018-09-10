@@ -3,10 +3,10 @@
 #include "Common.h" 
 
 static inline void passThrough(struct GlobalSettings *settings,jfloat *input, jfloat *output) {
-    int inputIndex = 0;
-    int outputIndex = 0;
+    jint inputIndex = 0;
+    jint outputIndex = 0;
     while(inputIndex<settings->inputFrameSize){
-        for(int j=0;j<settings->nOutputChannels;j++){
+        for(jint j=0;j<settings->nOutputChannels;j++){
             output[outputIndex++] = input[inputIndex];
         }
         inputIndex++;

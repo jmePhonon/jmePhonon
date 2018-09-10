@@ -28,21 +28,14 @@ public class PhononAudioSourceData {
     public PhononAudioSourceData() {
         MEMORY = BufferUtils.createByteBuffer(SIZE);
 
-        POS.setUpdateNeeded();
-        AHEAD.setUpdateNeeded();
-        UP.setUpdateNeeded();
-        RIGHT.setUpdateNeeded();
-        DWEIGHT.setUpdateNeeded();
-        DPOWER.setUpdateNeeded();
-        VOL.setUpdateNeeded();
-
+  
         POS.updateFrom(Vector3f.ZERO);
-        AHEAD.updateFrom(Vector3f.ZERO);
+        AHEAD.updateFrom(Vector3f.UNIT_Z);
         UP.updateFrom(Vector3f.UNIT_Y);
         RIGHT.updateFrom(Vector3f.UNIT_X);
         DWEIGHT.updateFrom(0f);
         DPOWER.updateFrom(0f);
-        VOL.updateFrom(0f);
+        VOL.updateFrom(1f);
     }
 
     public void finalizeUpdate() {

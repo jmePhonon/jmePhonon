@@ -9,10 +9,15 @@ struct AudioSource {
     jint numSamples;// length of audio data in samples
     jint numFrames; // How many frame in this source
     jint lastReadFrameIndex; // Position where we were the last time we read the source
-    jfloat position[3];   // source position (vector)
-    jfloat rotation[4];   // source rotation (quaternion)
-    jfloat velocity;     // source velocity
-    jfloat volume;    //source volume (0 to 1)
+    
+
+
+    vec3 _position; 
+    vec3 _direction;   
+    vec3 _up;         
+    vec3 _right;    
+    drt _directivity;
+
     jfloat pitch; //source pitch
 
     jboolean loop;
@@ -22,7 +27,7 @@ struct AudioSource {
     struct UListNode* uNode; // U-List node
 
 
-    float* sceneData; // Physical data, passed by Java thread
+    jfloat* sceneData; // Physical data, passed by Java thread
     jint sourceIndex; // Audio source index
 };
 
@@ -45,4 +50,15 @@ jboolean asIsConnected(struct AudioSource *source);
  * @return true if the end of the source has been reached
  */
 jboolean asReadNextFrame(struct GlobalSettings *settings, struct AudioSource *source, jfloat *store);
+
+jfloat asGetVolume(struct GlobalSettings *settings, struct AudioSource *source);
+vec3 *asGetSourcePosition(struct GlobalSettings *settings, struct AudioSource *source);
+vec3 *asGetSourceDirection(struct GlobalSettings *settings, struct AudioSource *source);
+
+vec3 *asGetSourceUp(struct GlobalSettings *settings, struct AudioSource *source);
+vec3 *asGetSourceRight(struct GlobalSettings *settings, struct AudioSource *source);
+
+drt *asGetSourceDirectivity(struct GlobalSettings *settings, struct AudioSource *source);
+
+void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source, jfloat *data);
 #endif

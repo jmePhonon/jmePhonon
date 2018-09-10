@@ -12,6 +12,7 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Listener;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.PhononRenderer;
@@ -111,19 +112,25 @@ public class TestPhononRenderer extends SimpleApplication {
 
     private float currentAngle = 0f;
 
+    float time = 0;
     @Override
     public void simpleRender(RenderManager rm) {
         super.simpleRender(rm);
         listener.setLocation(cam.getLocation());
         listener.setRotation(cam.getRotation());
         
-        audioSourceNode.setLocalTranslation(audioSourceNode.getLocalTranslation().add(0f, .025f, 0f));
         Vector3f angles = new Vector3f(currentAngle, 0f, 0f);
-        // audioSourceNode.setLocalRotation(new Quaternion().fromAxes(angles.add(1f, 0f, 0f), angles.add(0f, 1f, 0f), angles));
+        audioSourceNode.setLocalRotation(new Quaternion().fromAxes(angles.add(1f, 0f, 0f), angles.add(0f, 1f, 0f), angles));
         ((AudioNode) audioSourceNode.getChild("Audio Node")).setDirection(angles);
         currentAngle = (currentAngle + .1f);
     }
 
     @Override
-    public void simpleUpdate(float tpf) { }
+    public void simpleUpdate(float tpf) {
+        time += tpf;
+        float speed=3;
+        float radius = 10;
+        // audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
+     
+    }
 }

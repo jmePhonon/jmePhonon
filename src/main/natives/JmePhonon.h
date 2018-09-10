@@ -19,7 +19,7 @@ void phDestroy(struct GlobalSettings *settings);
 /** 
  * Allocates one PhContext for the audioSour ce
  */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource, float* audioSourceSceneData);
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
 
 
 /**
