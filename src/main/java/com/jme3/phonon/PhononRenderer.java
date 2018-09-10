@@ -223,7 +223,7 @@ public class PhononRenderer implements AudioRenderer {
 			}
 
 			PHONON_LISTENER.finalizeUpdate();
-			PHONON_ASDATA_MANAGER.finalizeUpdates();
+			PHONON_ASDATA_MANAGER.finalizeDataUpdates();
 
 			if (SIMULATE_LOAD) {
 				try {
@@ -290,9 +290,9 @@ public class PhononRenderer implements AudioRenderer {
 	@Override
 	public void playSource(AudioSource src) {
 		F32leAudioData data = toF32leData(src.getAudioData());
-		src.setChannel(connectSource(data));
+		int dataIndex = connectSource(data);
+		PHONON_ASDATA_MANAGER.pairSourceAndData(src, dataIndex);
 		src.setStatus(AudioSource.Status.Playing);
-		System.out.println("Channel: " + src.getChannel());
 	}
 
 	@Override
@@ -304,7 +304,7 @@ public class PhononRenderer implements AudioRenderer {
 	@Override
 	public void stopSource(AudioSource src) {
 		src.setStatus(AudioSource.Status.Stopped);
-		src.setChannel(0);
+		PHONON_ASDATA_MANAGER.unpairSourceAndData(src);
 	}
 
 	@Override
@@ -316,16 +316,16 @@ public class PhononRenderer implements AudioRenderer {
 		switch(param) {
 			case Position:
 				if(src.isPositional()) {
-					PHONON_ASDATA_MANAGER.updateSourcePosition(src);
+					PHONON_ASDATA_MANAGER.setSrcPosUpdateNeeded(src);
 				}
 				break;
 			case Direction:
 				if(src.isDirectional()) {
-					PHONON_ASDATA_MANAGER.updateSourceDirection(src);
+					PHONON_ASDATA_MANAGER.setSrcDirUpdateNeeded(src);
 				}
 				break;
 			case Volume:
-				PHONON_ASDATA_MANAGER.updateSourceVolume(src);
+				PHONON_ASDATA_MANAGER.setSrcVolUpdateNeeded(src);
 				break;
 			default:
 				System.err.println("Unrecognized param while updating audio source.");
@@ -337,7 +337,7 @@ public class PhononRenderer implements AudioRenderer {
 	@Override
 	public void update(float tpf) {
 		PHONON_LISTENER.update(jmeListener);
-
+		PHONON_ASDATA_MANAGER.updateData();
 	}
 
 

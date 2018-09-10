@@ -14,6 +14,7 @@ import com.jme3.util.BufferUtils;
 public class PhononAudioSourceData {
     public volatile boolean needNativeUpdate = false;
     private final ByteBuffer MEMORY;
+    private AudioSource source;
     
     private final VVector3f POS = new VVector3f();
     private final VVector3f AHEAD = new VVector3f();
@@ -36,42 +37,60 @@ public class PhononAudioSourceData {
         DWEIGHT.updateFrom(0f);
         DPOWER.updateFrom(0f);
         VOL.updateFrom(1f);
+
+        source = null;
+
         finalizeUpdate();
+    }
+
+    public void setSource(AudioSource src) {
+        source = src;
+    }
+
+    public void update() {
+        if(source != null) {
+            POS.updateFrom(source.getPosition());
+            AHEAD.updateFrom(source.getDirection());
+
+            if(source instanceof AudioNode) {
+                UP.updateFrom(((AudioNode) source).getWorldRotation().getRotationColumn(1));
+                RIGHT.updateFrom(((AudioNode) source).getWorldRotation().getRotationColumn(0).negate());
+            }
+
+            // DWEIGHT and DPOWER update?
+            VOL.updateFrom(source.getVolume());
+        }
     }
 
     public void finalizeUpdate() {
         POS.finalizeUpdate(MEMORY, POSX);
         AHEAD.finalizeUpdate(MEMORY, AHEADX);
-        UP.finalizeUpdate(MEMORY, UPX);
-        RIGHT.finalizeUpdate(MEMORY, RIGHTX);
+
+        if(source instanceof AudioNode) {
+            UP.finalizeUpdate(MEMORY, UPX);
+            RIGHT.finalizeUpdate(MEMORY, RIGHTX);
+        }
+
         DWEIGHT.finalizeUpdate(MEMORY, DIPOLEWEIGHT);
         DPOWER.finalizeUpdate(MEMORY, DIPOLEPOWER);
         VOL.finalizeUpdate(MEMORY, VOLUME);
     }
 
-    public void positionUpdate(AudioSource src) {
+    public void setPosUpdateNeeded() {
         POS.setUpdateNeeded();
-        POS.updateFrom(src.getPosition());
     }
 
-    public void directionUpdate(AudioSource src) {
+    public void setDirUpdateNeeded() {
         AHEAD.setUpdateNeeded();
-        AHEAD.updateFrom(src.getDirection());
         
-        if(src instanceof AudioNode) {
-            AudioNode node = (AudioNode) src;
-            UP.updateFrom(node.getWorldRotation().getRotationColumn(1));
+        if(source instanceof AudioNode) {
             UP.setUpdateNeeded();
-            RIGHT.updateFrom(node.getWorldRotation().getRotationColumn(0).negate());
             RIGHT.setUpdateNeeded();
         }
-        
-        // DWEIGHT and DPOWER update?
     }
         
-    public void volumeUpdate(AudioSource src) {
+    public void setVolUpdateNeeded() {
         VOL.setUpdateNeeded();
-        VOL.updateFrom(src.getVolume());
     }
 
     public long getAddress() {

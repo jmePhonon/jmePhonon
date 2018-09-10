@@ -130,7 +130,7 @@ public class TestPhononRenderer extends SimpleApplication {
         time += tpf;
         float speed=3;
         float radius = 10;
-        // audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
+        audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
      
     }
 }
