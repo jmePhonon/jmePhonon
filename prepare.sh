@@ -392,7 +392,7 @@ function deploy {
         then
             echo "Deploy $filename ( $f ) to bintray"
             curl -X PUT  -T $f -u$BINTRAY_USER:$BINTRAY_API_KEY\
-            "htps://api.bintray.com/content/riccardo/jmePhonon/jmePhonon/$VERSION/com/jme3/phonon/$VERSION/$filename-$VERSION.jar?publish=1&override=1"
+            "htps://api.bintray.com/content/jmephonon/jmePhonon/jmePhonon/$VERSION/com/jme3/phonon/$VERSION/$filename-$VERSION.jar?publish=1&override=1"
         fi
 
     done
