@@ -4,7 +4,7 @@ services:
 git:
   lfs_skip_smudge: true
 script:
-  - ./make.sh OS_LINUX=1,OS_WINDOWS=1,NO_CACHE=1 clean downloadResources updateJNIHeaders build buildStandaloneTests deploy
+  - ./make.sh OS_LINUX=1,OS_WINDOWS=1,NO_CACHE=1 clean downloadResources updateJNIHeaders packageSource build buildStandaloneTests deploy -Pin_version=""
 deploy:
   provider: releases
   skip_cleanup: true

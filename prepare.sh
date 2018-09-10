@@ -284,8 +284,8 @@ function updateJNIHeaders {
 
 
 function buildNatives {
-    safeRm build/natives
-    mkdir -p build/natives
+    safeRm tmp/natives
+    mkdir -p tmp/natives
 
     echo '' > tmp/build_cpplist.txt
     echo '' > tmp/build_IIlist.txt
@@ -295,7 +295,7 @@ function buildNatives {
     if [ "$OS_LINUX" != "" ];
     then
         #Linux 64
-        dest="build/natives/linux-x86-64"
+        dest="tmp/natives/linux-x86-64"
         mkdir -p $dest
         build "gcc" \
         "Linux" "x64" \
@@ -303,11 +303,11 @@ function buildNatives {
         "--std=gnu99 
         -Isrc/main/natives/include
         -Isrc/main/natives"\
-        "-Wl,-soname,jmephonon.so  -obuild/natives/linux-x86-64/libjmephonon.so" \
+        "-Wl,-soname,jmephonon.so  -otmp/natives/linux-x86-64/libjmephonon.so" \
         ""
 
         #Linux 32
-        dest="build/natives/linux-x86"
+        dest="tmp/natives/linux-x86"
         mkdir -p $dest
         build "gcc" \
         "Linux" "x86" \
@@ -316,7 +316,7 @@ function buildNatives {
         -Wint-to-pointer-cast
         -Isrc/main/natives/include
         -Isrc/main/natives" \
-        "-Wl,-soname,jmephonon.so  -obuild/natives/linux-x86/libjmephonon.so" \
+        "-Wl,-soname,jmephonon.so  -otmp/natives/linux-x86/libjmephonon.so" \
         ""
     fi
 
@@ -324,7 +324,7 @@ function buildNatives {
     if [ "$OS_WINDOWS" != "" ];
     then
         #Windows 64
-        dest="build/natives/windows-x86-64"
+        dest="tmp/natives/windows-x86-64"
         mkdir -p $dest
         build "x86_64-w64-mingw32-gcc" \
         "Windows" "x64" \
@@ -333,11 +333,11 @@ function buildNatives {
         -Isrc/main/natives/include
         -Isrc/main/natives" \
         "-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon.dll
-          -obuild/natives/windows-x86-64/jmephonon.dll" \
+          -otmp/natives/windows-x86-64/jmephonon.dll" \
         ""
 
         #Windows 32
-        dest="build/natives/windows-x86"
+        dest="tmp/natives/windows-x86"
         mkdir -p $dest
            build "i686-w64-mingw32-gcc" \
         "Windows" "x86" \
@@ -346,7 +346,7 @@ function buildNatives {
         -Isrc/main/natives/include
         -Isrc/main/natives" \
         "-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon.dll
-          -obuild/natives/windows-x86/jmephonon.dll" \
+          -otmp/natives/windows-x86/jmephonon.dll" \
         ""
       
     fi
@@ -354,19 +354,49 @@ function buildNatives {
     #Force update vscode
     if [ -d build/resources ];
     then
-        cp -Rf build/natives/* build/resources/
+        cp -Rf tmp/natives/* build/resources/
     fi
     if [ -d bin ];
     then
-        cp -Rf build/natives/* bin/
+        cp -Rf tmp/natives/* bin/
     fi
 }
 
 
 function deploy {
+    DEPLOY=""
+    VERSION=$TRAVIS_COMMIT
+    if [ "$TRAVIS_PULL_REQUEST" == "false" -a "$TRAVIS_TAG" != "" ];
+    then
+        echo "Deploy for $TRAVIS_TAG."
+        VERSION=$TRAVIS_TAG
+        DEPLOY="1"        
+    fi
+
+    if [ "$DEPLOY" = "" -a "$TRAVIS_PULL_REQUEST" == "false" -a  "$TRAVIS_BRANCH" == "master" ];
+    then
+        VERSION="-SNAPSHOT"
+        DEPLOY="1"        
+    fi
+
     safeRm "deploy"
     mkdir -p deploy
     cp build/libs/*.jar deploy/
+    for f in deploy/*.jar;
+    do
+        filename="`basename $f`"
+        filename="${filename%.*}"
+        echo "$filename ( $f ) read for deploy"
+
+        if [ "$DEPLOY" == "1" -a "$BINTRAY_USER" != "" -a "$BINTRAY_API_KEY" != "" ];
+        then
+            echo "Deploy $filename ( $f ) to bintray"
+            curl -X PUT  -T $f -u$BINTRAY_USER:$BINTRAY_API_KEY\
+            "htps://api.bintray.com/content/riccardo/jmePhonon/jmePhonon/$VERSION/com/jme3/phonon/$VERSION/$filename-$VERSION.jar?publish=1&override=1"
+        fi
+
+    done
+
 }
 
 $@
