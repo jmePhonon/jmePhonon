@@ -16,4 +16,5 @@ RUN if [ "`sha256sum /tmp/gradle.zip | cut -d' ' -f1`" != "248cfd92104ce12c5431d
     rm -Rf /tmp/gradle && rm -f /tmp/gradle.zip && \
     echo "Installed gradle `gradle -v`"
 RUN apt-get install -y gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 
+RUN apt-get install -y curl
 ENTRYPOINT ["bash","/entrypoint.sh"]

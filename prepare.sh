@@ -375,6 +375,7 @@ function deploy {
 
     if [ "$DEPLOY" = "" -a "$TRAVIS_PULL_REQUEST" == "false" -a  "$TRAVIS_BRANCH" == "master" ];
     then
+        echo "Deploy for $TRAVIS_BRANCH."
         VERSION="-SNAPSHOT"
         DEPLOY="1"        
     fi
@@ -387,12 +388,13 @@ function deploy {
         filename="`basename $f`"
         filename="${filename%.*}"
         echo "$filename ( $f ) read for deploy"
-
-        if [ "$DEPLOY" == "1" -a "$BINTRAY_USER" != "" -a "$BINTRAY_API_KEY" != "" ];
+        
+        echo "Deploy on $BINTRAY_USER."
+        if [ "$DEPLOY" == "1" -a "$BINTRAY_USER" != "" -a "$BINTRAY_KEY" != "" ];
         then
             echo "Deploy $filename ( $f ) to bintray"
-            curl -X PUT  -T $f -u$BINTRAY_USER:$BINTRAY_API_KEY\
-            "htps://api.bintray.com/content/jmephonon/jmePhonon/jmePhonon/$VERSION/com/jme3/phonon/$VERSION/$filename-$VERSION.jar?publish=1&override=1"
+            curl -X PUT  -T $f -u$BINTRAY_USER:$BINTRAY_KEY\
+            "https://api.bintray.com/content/jmephonon/jmePhonon/jmePhonon/$VERSION/com/jme3/phonon/$VERSION/$filename-$VERSION.jar?publish=1&override=1"
         fi
 
     done
