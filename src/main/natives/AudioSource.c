@@ -109,8 +109,8 @@ vec3* asGetSourceRight(struct GlobalSettings *settings,struct AudioSource *sourc
 
 
 jboolean _asHasFlag(struct GlobalSettings *settings,struct AudioSource *source,jint flag){
-    jint *dataInt=(jint*)source->sceneData;
-    jint flags = dataInt[asSourceField(FLAGS)]; 
+    jbyte *dataByte=(jbyte*)source->sceneData;
+    jbyte flags = dataByte[asSourceFieldB(FLAGS)]; 
     return (flags & flag) == flag;
 }
  
@@ -123,6 +123,7 @@ drt* asGetSourceDirectivity(struct GlobalSettings *settings,struct AudioSource *
 }
 
 jint asGetNumChannels(struct GlobalSettings *settings,struct AudioSource *source){
-    jint *dateByte=(jint*)source->sceneData;
-    return dateByte[asSourceField(NUM_CHANNELS)]; 
+    jbyte *dataByte=(jbyte*)source->sceneData;
+    jbyte numChannels = dataByte[asSourceFieldB(NUM_CHANNELS)];
+    return (jint) numChannels; 
 } 
