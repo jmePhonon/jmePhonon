@@ -19,7 +19,7 @@ public class PhononAudioSourceData {
     private AudioSource source;
     
     private final VVector3f POS = new VVector3f();
-    private final VByte CHANNELS = new VByte();
+    private final VInteger CHANNELS = new VInteger();
     private final VVector3f AHEAD = new VVector3f();
     private final VVector3f UP = new VVector3f();
     private final VVector3f RIGHT = new VVector3f();
@@ -38,7 +38,7 @@ public class PhononAudioSourceData {
         MEMORY = BufferUtils.createByteBuffer(SIZE);
 
         FLS.updateFrom(0);
-        CHANNELS.updateFrom((byte)1);
+        CHANNELS.updateFrom(1);
         POS.updateFrom(Vector3f.ZERO);
         AHEAD.updateFrom(Vector3f.UNIT_Z);
         UP.updateFrom(Vector3f.UNIT_Y);
@@ -55,7 +55,7 @@ public class PhononAudioSourceData {
     public void setSource(AudioSource src) {
         source = src;
         CHANNELS.setUpdateNeeded();
-        CHANNELS.updateFrom((byte)src.getAudioData().getChannels());
+        CHANNELS.updateFrom(src.getAudioData().getChannels());
         FLS.setUpdateNeeded();
         POS.setUpdateNeeded();
         AHEAD.setUpdateNeeded();
@@ -74,7 +74,7 @@ public class PhononAudioSourceData {
                 int f = 0;
                 if (source.isPositional())
                     f |= FLAG_POSITIONAL;
-                    if (source.isDirectional())
+                if (source.isDirectional())
                     f |= FLAG_DIRECTIONAL;
                 if (source.getStatus()==Status.Paused)
                     f |= FLAG_PAUSED;

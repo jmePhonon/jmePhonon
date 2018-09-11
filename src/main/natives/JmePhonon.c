@@ -59,7 +59,7 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
 
     iplCreateContext(NULL, NULL, NULL, &PhSharedContext.context);
     PhSharedContext.settings.samplingRate = settings->sampleRate;
-    PhSharedContext.settings.frameSize =settings->inputFrameSize;
+    PhSharedContext.settings.frameSize =settings->frameSize;
     PhSharedContext.settings.convolutionType =IPL_CONVOLUTIONTYPE_PHONON ;
     
     PhSharedContext.monoFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;

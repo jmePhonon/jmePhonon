@@ -10,7 +10,7 @@ public class AUDIOSOURCE_LAYOUT {
 
     public static final byte FLAGS_fieldsize = 4;
 
-    public static final byte NUM_CHANNELS_fieldsize = 1;
+    public static final byte NUM_CHANNELS_fieldsize = 4;
 
     public static final byte POSX_fieldsize = 4;
     public static final byte POSY_fieldsize = 4;

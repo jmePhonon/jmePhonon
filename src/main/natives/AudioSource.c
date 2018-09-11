@@ -45,7 +45,7 @@ jboolean asIsConnected(struct AudioSource *source){
  * @return true if the end of the source has been reached
  */
 jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *source,  jfloat *store) {
-    jint frameSize = settings->inputFrameSize;
+    jint frameSize = settings->frameSize*asGetNumChannels(settings, source);
     jint sourceSamples = source->numSamples;
     jfloat *data = source->data;
     jboolean hasReachedEnd = false;
@@ -60,7 +60,9 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
         } else {
             v = data[sampleIndex];
         }
-        store[i] = v*asGetVolume(settings,source);
+        v *=asGetVolume(settings, source);
+
+        store[i] = v ;
     }
     source->lastReadFrameIndex++;
 
@@ -121,7 +123,6 @@ drt* asGetSourceDirectivity(struct GlobalSettings *settings,struct AudioSource *
 }
 
 jint asGetNumChannels(struct GlobalSettings *settings,struct AudioSource *source){
-    jbyte *dateByte=(jbyte*)source->sceneData;
-    jbyte n=dateByte[asSourceFieldB(NUM_CHANNELS)]; 
-    return(jint) n;
-}
+    jint *dateByte=(jint*)source->sceneData;
+    return dateByte[asSourceField(NUM_CHANNELS)]; 
+} 

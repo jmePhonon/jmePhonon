@@ -79,7 +79,7 @@ public class TestPhononRenderer extends SimpleApplication {
             AudioContext.setAudioRenderer(audioRenderer);
             listener = new Listener();
             listener.setRenderer(audioRenderer);
-            listener.setVolume(2);
+            listener.setVolume(1);
             audioRenderer.setListener(listener);
         }
 
@@ -96,16 +96,26 @@ public class TestPhononRenderer extends SimpleApplication {
         audioSourceNode.attachChild(audioSourceGeom);
         flyCam.setMoveSpeed(10f);
 
-        AudioNode an = new AudioNode(assetManager, "mono/399354__romariogrande__eastandw.ogg", DataType.Buffer);
+        AudioNode an = new AudioNode(assetManager, "mono/264864__augustsandberg__marine-diesel-engine.wav", DataType.Buffer);
         audioSourceNode.attachChild(an);
         an.setName("Audio Node");
-        an.setPositional(true);
         an.setDirectional(true);
         an.setPositional(true);
         an.setRefDistance(1);
+        an.setVolume(1f);
+        an.setLooping(true);
         an.setReverbEnabled(true);
         an.setInnerAngle(360f);
-        an.play();
+        an.play(); 
+ 
+
+        AudioNode bg = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
+        audioSourceNode.attachChild(bg);
+        bg.setName("Audio Node");
+        bg.setPositional(false);
+        bg.setVolume(.1f);
+        bg.setLooping(true);
+        bg.play();
 
         rootNode.attachChild(audioSourceNode);
     }

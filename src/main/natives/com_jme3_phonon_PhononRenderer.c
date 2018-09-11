@@ -28,9 +28,9 @@ struct OutputLine *OUTPUT_LINES;
 struct Listener *GLOBAL_LISTENER;
 
 struct {
-    jfloat *outputFrame1;
-    jfloat *outputFrame2;
-    jfloat *inputFrame;
+    jfloat *frame1;
+    jfloat *frame2;
+    jfloat *monoFrame1;
     jfloat **mixerQueue;
 } Temp;
 
@@ -83,57 +83,66 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
             continue;
         }
 
-        jboolean loop = false;
 
         jint mixerQueueSize = 0;
-
+ 
         struct UList* uList = line->uList;
         struct UListNode* uNode = uList->head->next;
 
         while(!ulistIsTail(uList, uNode)) {
             struct AudioSource *audioSource = uNode->audioSource;
-                if(asReadNextFrame(&SETTINGS, audioSource, Temp.inputFrame)) {
-                    // Reached end
-                    if(loop){
+            jboolean loop = asHasFlag(&SETTINGS,audioSource,LOOP);
+            jint nchannels = asGetNumChannels(&SETTINGS,audioSource);
 
-                    } else {
-                        ulistRemove(uNode);
-                    }
-                }
+            jfloat *inFrame = nchannels==1?Temp.monoFrame1:Temp.frame1;
 
-                if(SETTINGS.isPassthrough) {
-                    passThrough(&SETTINGS,Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+
+            if (asReadNextFrame(&SETTINGS, audioSource,inFrame)) {
+                // Reached end
+                if (loop) {
+                    printf("Looping \n");
+
                 } else {
-                    phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, Temp.inputFrame, Temp.mixerQueue[mixerQueueSize++]);
+                    ulistRemove(uNode);
                 }
+            }                
+            jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
 
-                uNode = uNode->next;
-        }
-
-
-            jfloat *output = Temp.outputFrame1;
-            if(mixerQueueSize==1){
-                output = Temp.mixerQueue[0];
+            if (SETTINGS.isPassthrough || !isPositional) {
+                passThrough(&SETTINGS, inFrame, Temp.mixerQueue[mixerQueueSize++],nchannels);
             } else {
-                if(SETTINGS.isPassthrough){
-                    passThroughMixer(&SETTINGS,Temp.mixerQueue,mixerQueueSize, output);
-                }else{
-                    phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
-                }
+                //Positional source is always mono
+                phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, inFrame, Temp.mixerQueue[mixerQueueSize++]);
             }
+
+            uNode = uNode->next;
+        }  
         
 
 
-            #ifdef INCLUDE_SIMPLE_REVERB 
-                if(srHasValidEnvironment(&SETTINGS)){
-                    srApplyReverb(&SETTINGS,output, Temp.outputFrame2);
-                    output = Temp.outputFrame2;
-                }
-            #endif
-                jfloat *masterVolume = lsGetVolume(&SETTINGS,GLOBAL_LISTENER);
+        jfloat *output = Temp.frame1;
+        if(mixerQueueSize==1){
+            output = Temp.mixerQueue[0];
+        } else {
+            if(SETTINGS.isPassthrough){
+                passThroughMixer(&SETTINGS,Temp.mixerQueue,mixerQueueSize, output);
+            }else{
+                phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
+            }
+        }
+        
 
-                olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.inputFrameSize * SETTINGS.nOutputChannels, (*masterVolume));
-                olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+
+        #ifdef INCLUDE_SIMPLE_REVERB 
+            if(srHasValidEnvironment(&SETTINGS)){
+                srApplyReverb(&SETTINGS,output, Temp.frame2);
+                output = Temp.frame2;
+            }
+        #endif
+        jfloat *masterVolume = lsGetVolume(&SETTINGS,GLOBAL_LISTENER);
+
+        olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
+        olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
     }
 }
 
@@ -159,8 +168,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     SETTINGS.nOutputLines = nOutputLines;
     SETTINGS.nSourcesPerLine = nSourcesPerLine;
     SETTINGS.nOutputChannels = nOutputChannels;
-    SETTINGS.inputFrameSize = frameSize;
-    // SETTINGS.outputFrameSize = frameSize * nOutputChannels;
+    SETTINGS.frameSize = frameSize;
+    // SETTINGS.frameSize = frameSize * nOutputChannels;
     SETTINGS.sampleRate = sampleRate;
     SETTINGS.bufferSize = bufferSize;
     SETTINGS.isPassthrough = isPassthrough;
@@ -174,13 +183,13 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
 
    
 
-    Temp.outputFrame1= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
-        Temp.outputFrame2= (jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
+    Temp.frame1= (jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
+        Temp.frame2= (jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
 
-    Temp.inputFrame= (jfloat*)malloc(4 * SETTINGS.inputFrameSize);
+    Temp.monoFrame1= (jfloat*)malloc(4 * SETTINGS.frameSize);
     Temp.mixerQueue=(jfloat**)malloc(sizeof(jfloat*) * nSourcesPerLine );
     for(jint i=0;i<SETTINGS.nSourcesPerLine;i++){
-        Temp.mixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.inputFrameSize*nOutputChannels);
+        Temp.mixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
     }
 
     phInit(&SETTINGS,nSourcesPerLine); 
@@ -219,10 +228,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv 
     #ifdef INCLUDE_SIMPLE_REVERB
         srDestroy(&SETTINGS);
     #endif
-    free(Temp.outputFrame1);
-    free(Temp.outputFrame2);
+    free(Temp.frame1);
+    free(Temp.frame2);
 
-    free(Temp.inputFrame);
+    free(Temp.monoFrame1);
     for(jint i=0;i<SETTINGS.nSourcesPerLine;i++){
         free(Temp.mixerQueue[i]);
     }
