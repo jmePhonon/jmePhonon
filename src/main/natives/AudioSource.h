@@ -8,7 +8,6 @@
 struct AudioSource {
     jfloat *data; // float 32 little endian, multiple sources can share the same audio data
     jint numSamples;// length of audio data in samples
-    jint numFrames; // How many frame in this source
     jint lastReadFrameIndex; // Position where we were the last time we read the source
     
 

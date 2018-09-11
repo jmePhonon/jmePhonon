@@ -111,10 +111,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
             if (asReadNextFrame(&SETTINGS, audioSource,inFrame)) {
                 // Reached end
-                if (loop) {
-                    printf("Looping \n");
-
-                } else {
+                if (!loop) {                   
                     ulistRemove(uNode);
                 }
             }                

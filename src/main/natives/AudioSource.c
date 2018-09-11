@@ -67,7 +67,7 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
     source->lastReadFrameIndex++;
 
     // Reset the frame index when the end is reached, useful if we intend to loop the sound
-    if(source->lastReadFrameIndex>=source->numFrames){
+    if(hasReachedEnd){
         source->lastReadFrameIndex = 0;
     }
 
