@@ -15,6 +15,7 @@ import com.jme3.util.BufferUtils;
 
 public class PhononAudioSourceData {
     private final ByteBuffer MEMORY;
+    private  PhononOutputLine connectedLine;
     private AudioSource source;
     
     private final VVector3f POS = new VVector3f();
@@ -29,13 +30,12 @@ public class PhononAudioSourceData {
     private final VByte FLS = new VByte();
 
 
-    
+    private volatile int stopAt;
     
     // private final boolean UPDATE_EVERYTHING = true;
 
     public PhononAudioSourceData() {
         MEMORY = BufferUtils.createByteBuffer(SIZE);
-
         FLS.updateFrom((byte) 0);
         CHANNELS.updateFrom((byte) 1);
         POS.updateFrom(Vector3f.ZERO);
@@ -46,13 +46,29 @@ public class PhononAudioSourceData {
         DPOWER.updateFrom(0f);
         VOL.updateFrom(1f);
 
+        MEMORY.putInt(STOPAT, -1);
+
         source = null;
 
         finalizeUpdate();
     }
 
+    public void setLine(PhononOutputLine line) {
+        connectedLine = line;
+    }
+
+    public AudioSource getSource() {
+        return source;
+    }
+
+    private boolean isOver() {
+        return stopAt!=-1&&connectedLine.getLastPlayedFrameId() >= stopAt;
+    }
+
     public void setSource(AudioSource src) {
         source = src;
+        if (src == null)
+            return;
         CHANNELS.setUpdateNeeded();
         CHANNELS.updateFrom((byte) src.getAudioData().getChannels());
         FLS.setUpdateNeeded();
@@ -67,7 +83,11 @@ public class PhononAudioSourceData {
     }
 
     public void update() {
-        if(source != null) {
+        if (source != null) {
+            if (isOver()) {
+              source.setStatus(Status.Stopped);
+            }
+
             POS.updateFrom(source.getPosition());
             if (FLS.needUpdate) {
                 int f = 0;
@@ -111,6 +131,8 @@ public class PhononAudioSourceData {
         VOL.finalizeUpdate(MEMORY, VOLUME);
 
         FLS.finalizeUpdate(MEMORY, FLAGS);
+
+        stopAt = MEMORY.getInt(STOPAT);
     }
 
     public void setPosUpdateNeeded() {

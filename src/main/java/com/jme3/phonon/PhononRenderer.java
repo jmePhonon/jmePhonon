@@ -100,7 +100,10 @@ public class PhononRenderer implements AudioRenderer {
 		THREAD_MODE = threadMode;
 
 		PHONON_LISTENER = new PhononListener();
-		PHONON_ASDATA_MANAGER = new PhononAudioSourcesDataManager(nOutputLines, nSourcesPerLine);
+		PHONON_ASDATA_MANAGER =
+				new PhononAudioSourcesDataManager(this, nOutputLines, nSourcesPerLine);
+		
+	
 		PLAYERS = new PhononPlayer[nOutputLines];
 		OUTPUT_SAMPLE_SIZE = outputSampleSize;
 
@@ -297,7 +300,7 @@ public class PhononRenderer implements AudioRenderer {
 		}
 		F32leAudioData data = toF32leData(src.getAudioData());
 		int dataIndex = connectSource(data);
-		PHONON_ASDATA_MANAGER.pairSourceAndData(src, dataIndex);
+		PHONON_ASDATA_MANAGER.pairSourceAndData(OUTPUT_LINES[dataIndex/SOURCES_PER_OUTPUT_LINE],src, dataIndex);
 		src.setStatus(AudioSource.Status.Playing);
 	}
 

@@ -114,14 +114,15 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
                 if (asReadNextFrame(&SETTINGS, audioSource,inFrame)) {
                     // Reached end
-                    if (!loop) {                   
+                    if (!loop) {
+                        asSetStopAt(&SETTINGS, audioSource,frameIndex);
                         ulistRemove(uNode);
                     }
                 }                
                 jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
                 jboolean hasReverb = asHasFlag(&SETTINGS,audioSource,REVERB);
         
-
+ 
                 if (SETTINGS.isPassthrough || !isPositional) {
                     passThrough(&SETTINGS, inFrame, 
                     #ifdef INCLUDE_SIMPLE_REVERB

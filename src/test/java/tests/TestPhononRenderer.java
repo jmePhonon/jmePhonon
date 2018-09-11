@@ -110,7 +110,7 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         engine.setPositional(true);
         engine.setRefDistance(1);
         engine.setVolume(1f);
-        engine.setLooping(true);
+        engine.setLooping(false);
         engine.setReverbEnabled(true);
         engine.setInnerAngle(360f);
         engine.play(); 
@@ -148,7 +148,7 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         float speed=3;
         float radius = 10;
         audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
-     
+        System.out.println("Sound status: "+engine.getStatus());
     }
 
     @Override

@@ -126,4 +126,9 @@ jint asGetNumChannels(struct GlobalSettings *settings,struct AudioSource *source
     jbyte *dataByte=(jbyte*)source->sceneData;
     jbyte numChannels = dataByte[asSourceFieldB(NUM_CHANNELS)];
     return (jint) numChannels; 
-} 
+}
+
+void asSetStopAt(struct GlobalSettings *settings, struct AudioSource *source, jint index){
+    jint *data=(jint*)source->sceneData;
+    data[asSourceField(STOPAT)] = index;
+}

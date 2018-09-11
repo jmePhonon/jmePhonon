@@ -65,5 +65,5 @@ void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source,
 jint asGetNumChannels(struct GlobalSettings *settings, struct AudioSource *source);
 #define asHasFlag(settings, source, flag) (_asHasFlag(settings, source, asFlag(flag)))
 jboolean _asHasFlag(struct GlobalSettings *settings, struct AudioSource *source, jint flag);
-
+void asSetStopAt(struct GlobalSettings *settings, struct AudioSource *source, jint index);
 #endif

@@ -4,19 +4,24 @@ import com.jme3.audio.AudioSource;
 
 public class PhononAudioSourcesDataManager {
     private final PhononAudioSourceData[] DATA;
-
-    public PhononAudioSourcesDataManager(int nOutputLines, int nSourcesPerLine) {
+    private final PhononRenderer RENDERER;
+    public PhononAudioSourcesDataManager(PhononRenderer renderer,int nOutputLines, int nSourcesPerLine) {
         int nTotalSource = nOutputLines * nSourcesPerLine;
 
+        RENDERER = renderer;
         DATA = new PhononAudioSourceData[nTotalSource];
-
         for(int i = 0; i < nTotalSource; ++i) {
             DATA[i] = new PhononAudioSourceData(); 
         }
     }
 
-    public void pairSourceAndData(AudioSource src, int dataIndex) {
+    public PhononAudioSourceData[] getSourceDatas() {
+        return DATA;
+    }
+
+    public void pairSourceAndData(PhononOutputLine line,AudioSource src, int dataIndex) {
         src.setChannel(dataIndex);
+        DATA[dataIndex].setLine(line);
         DATA[dataIndex].setSource(src);
     }
 
@@ -49,8 +54,11 @@ public class PhononAudioSourcesDataManager {
     }
 
     public void updateData() {
-        for(PhononAudioSourceData sourceData : DATA) {
+        for (PhononAudioSourceData sourceData : DATA) {
             sourceData.update();
+            if (sourceData.getSource()!=null&&sourceData.getSource().getStatus() == AudioSource.Status.Stopped) {
+                RENDERER.stopSource(sourceData.getSource());
+            }            
         }
     }
 
