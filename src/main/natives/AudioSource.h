@@ -3,6 +3,7 @@
 
 #include "Common.h"
 #include "UList.h"
+#include "memory_layout/AUDIOSOURCE_LAYOUT.h"
 
 struct AudioSource {
     jfloat *data; // float 32 little endian, multiple sources can share the same audio data
@@ -61,4 +62,9 @@ vec3 *asGetSourceRight(struct GlobalSettings *settings, struct AudioSource *sour
 drt *asGetSourceDirectivity(struct GlobalSettings *settings, struct AudioSource *source);
 
 void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source, jfloat *data);
+
+jint asGetNumChannels(struct GlobalSettings *settings, struct AudioSource *source);
+#define asHasFlag(settings, source, flag) (_asHasFlag(settings, source, asFlag(flag)))
+jboolean _asHasFlag(struct GlobalSettings *settings, struct AudioSource *source, jint flag);
+
 #endif

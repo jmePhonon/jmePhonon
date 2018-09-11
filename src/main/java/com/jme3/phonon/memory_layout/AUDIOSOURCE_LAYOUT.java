@@ -3,6 +3,15 @@ package com.jme3.phonon.memory_layout;
 public class AUDIOSOURCE_LAYOUT {
     public static final boolean JNIEXPORT = true;
 
+    public final static int FLAG_POSITIONAL=(1<<0);
+    public final static int FLAG_DIRECTIONAL=(1<<1);
+    public final static int FLAG_PAUSED=(1<<2);
+    public final static int FLAG_LOOP=(1<<3);
+
+    public static final byte FLAGS_fieldsize = 4;
+
+    public static final byte NUM_CHANNELS_fieldsize = 1;
+
     public static final byte POSX_fieldsize = 4;
     public static final byte POSY_fieldsize = 4;
     public static final byte POSZ_fieldsize = 4;
@@ -24,7 +33,10 @@ public class AUDIOSOURCE_LAYOUT {
     
     public static final byte VOLUME_fieldsize = 4;
 
-    public static final byte POSX = 0; 
+    public static final byte FLAGS = 0;
+    public static final byte NUM_CHANNELS = FLAGS+FLAGS_fieldsize;
+
+    public static final byte POSX = NUM_CHANNELS+NUM_CHANNELS_fieldsize; 
     public static final byte POSY = POSX+POSX_fieldsize;
     public static final byte POSZ = POSY+POSY_fieldsize;
     

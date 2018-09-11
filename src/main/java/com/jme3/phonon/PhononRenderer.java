@@ -15,6 +15,7 @@ import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
+import com.jme3.audio.AudioSource.Status;
 import com.jme3.audio.openal.ALAudioRenderer;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
@@ -297,8 +298,8 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void pauseSource(AudioSource src) {
-		F32leAudioData data = toF32leData(src.getAudioData());
-		src.setStatus(AudioSource.Status.Paused);
+		src.setStatus(Status.Paused);
+		PHONON_ASDATA_MANAGER.setSrcFlagsUpdateNeeded(src);
 	}
 
 	@Override
@@ -313,7 +314,12 @@ public class PhononRenderer implements AudioRenderer {
 			return;
 		}
 
-		switch(param) {
+		switch (param) {
+			case IsPositional :
+			case IsDirectional:
+			case Looping:
+				PHONON_ASDATA_MANAGER.setSrcFlagsUpdateNeeded(src);
+				break;
 			case Position:
 				if(src.isPositional()) {
 					PHONON_ASDATA_MANAGER.setSrcPosUpdateNeeded(src);

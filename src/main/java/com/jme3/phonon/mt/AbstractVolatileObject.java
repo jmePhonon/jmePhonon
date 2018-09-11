@@ -7,8 +7,8 @@ import com.sun.corba.se.impl.ior.ByteBuffer;
  */
 public abstract class AbstractVolatileObject<A,B> implements VolatileObject<A,B>{
 
-    private volatile boolean needUpdate=true;
-    private volatile boolean needUpdateFinalization;
+    public volatile boolean needUpdate=true;
+    public volatile boolean needUpdateFinalization;
 
     @Override
     public void setUpdateNeeded() {

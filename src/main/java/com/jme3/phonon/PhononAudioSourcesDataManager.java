@@ -25,6 +25,11 @@ public class PhononAudioSourcesDataManager {
         src.setChannel(-1);
     }
 
+    public void setSrcFlagsUpdateNeeded(AudioSource src) {
+        DATA[src.getChannel()].setFlagsUpdateNeeded();
+
+    }
+
     public void setSrcPosUpdateNeeded(AudioSource src) {
         DATA[src.getChannel()].setPosUpdateNeeded();
     }

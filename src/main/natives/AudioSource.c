@@ -39,6 +39,7 @@ jboolean asIsConnected(struct AudioSource *source){
     // return source->connectedLine != NULL && source->data != NULL;
     return source->uNode->connected;
 }
+
 /**
  * Read the next frame from the audio source, restart from the beginning when the end is reached
  * @return true if the end of the source has been reached
@@ -104,10 +105,23 @@ vec3* asGetSourceRight(struct GlobalSettings *settings,struct AudioSource *sourc
     return &source->_right;
 }
 
+
+jboolean _asHasFlag(struct GlobalSettings *settings,struct AudioSource *source,jint flag){
+    jint *dataInt=(jint*)source->sceneData;
+    jint flags = dataInt[asSourceField(FLAGS)]; 
+    return (flags & flag) == flag;
+}
+ 
 drt* asGetSourceDirectivity(struct GlobalSettings *settings,struct AudioSource *source) {
     source->_directivity.dipoleWeight = source->sceneData[asSourceField(DIPOLEWEIGHT)];
     source->_directivity.dipolePower = source->sceneData[asSourceField(DIPOLEPOWER)];
     source->_directivity.callback = NULL;
     source->_directivity.userData = NULL;
     return &source->_directivity;
+}
+
+jint asGetNumChannels(struct GlobalSettings *settings,struct AudioSource *source){
+    jbyte *dateByte=(jbyte*)source->sceneData;
+    jbyte n=dateByte[asSourceFieldB(NUM_CHANNELS)]; 
+    return(jint) n;
 }
