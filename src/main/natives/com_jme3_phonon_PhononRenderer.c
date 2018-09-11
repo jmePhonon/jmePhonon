@@ -103,42 +103,44 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
         while (!ulistIsTail(uList, uNode)) {
             struct AudioSource *audioSource = uNode->audioSource;
-            jboolean loop = asHasFlag(&SETTINGS,audioSource,LOOP);
-            jint nchannels = asGetNumChannels(&SETTINGS,audioSource);
+            jboolean isPaused=asHasFlag(&SETTINGS,audioSource,PAUSED);
+            if(!isPaused){
 
-            inFrame = nchannels==1?Temp.monoFrame1:Temp.frame1;
+                jboolean loop = asHasFlag(&SETTINGS,audioSource,LOOP);
+                jint nchannels = asGetNumChannels(&SETTINGS,audioSource);
+
+                inFrame = nchannels==1?Temp.monoFrame1:Temp.frame1;
 
 
-            if (asReadNextFrame(&SETTINGS, audioSource,inFrame)) {
-                // Reached end
-                if (!loop) {                   
-                    ulistRemove(uNode);
+                if (asReadNextFrame(&SETTINGS, audioSource,inFrame)) {
+                    // Reached end
+                    if (!loop) {                   
+                        ulistRemove(uNode);
+                    }
+                }                
+                jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
+                jboolean hasReverb = asHasFlag(&SETTINGS,audioSource,REVERB);
+        
+
+                if (SETTINGS.isPassthrough || !isPositional) {
+                    passThrough(&SETTINGS, inFrame, 
+                    #ifdef INCLUDE_SIMPLE_REVERB
+                        ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
+                    #else
+                        Temp.mixerQueue[mixerQueueSize++]
+                    #endif
+                    , nchannels);
+                } else {
+                    //Positional source is always mono
+                    phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, inFrame,
+                    #ifdef INCLUDE_SIMPLE_REVERB
+                        ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
+                    #else
+                        Temp.mixerQueue[mixerQueueSize++]
+                    #endif                
+                    );
                 }
-            }                
-            jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
-            jboolean hasReverb = asHasFlag(&SETTINGS,audioSource,REVERB);
-
-       
-
-            if (SETTINGS.isPassthrough || !isPositional) {
-                passThrough(&SETTINGS, inFrame, 
-                #ifdef INCLUDE_SIMPLE_REVERB
-                    ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
-                #else
-                    Temp.mixerQueue[mixerQueueSize++]
-                #endif
-                , nchannels);
-            } else {
-                //Positional source is always mono
-                phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, inFrame,
-                #ifdef INCLUDE_SIMPLE_REVERB
-                    ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
-                #else
-                    Temp.mixerQueue[mixerQueueSize++]
-                #endif                
-                );
             }
-
            
 
             uNode = uNode->next;

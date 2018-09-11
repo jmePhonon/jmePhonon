@@ -290,6 +290,11 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void playSource(AudioSource src) {
+		if ( src.getStatus() == AudioSource.Status.Paused) {
+			src.setStatus(Status.Playing);
+			PHONON_ASDATA_MANAGER.setSrcFlagsUpdateNeeded(src);
+			return;
+		}
 		F32leAudioData data = toF32leData(src.getAudioData());
 		int dataIndex = connectSource(data);
 		PHONON_ASDATA_MANAGER.pairSourceAndData(src, dataIndex);

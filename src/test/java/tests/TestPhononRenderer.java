@@ -7,7 +7,12 @@ import javax.swing.JOptionPane;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioData.DataType;
+import com.jme3.audio.AudioNode.Status;
+import com.jme3.input.KeyInput;
+import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.KeyTrigger;
 import com.jme3.audio.AudioNode;
+import com.jme3.audio.AudioSource;
 import com.jme3.audio.Environment;
 import com.jme3.audio.Listener;
 import com.jme3.material.Material;
@@ -25,7 +30,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
 import com.jme3.system.AppSettings;
 
-public class TestPhononRenderer extends SimpleApplication {
+public class TestPhononRenderer extends SimpleApplication implements ActionListener{
 
     static  int outputLines = 1;
     static int frameSize = 1024;// samples
@@ -57,10 +62,12 @@ public class TestPhononRenderer extends SimpleApplication {
 
     Node audioSourceNode;
     ArrayList<F32leAudioData> loadedSound = new ArrayList<F32leAudioData>();
-
+    AudioNode engine;
     @Override
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
+        this.inputManager.addMapping("PAUSE", new KeyTrigger(KeyInput.KEY_P));
+        this.inputManager.addListener(this,"PAUSE");
       
         if (audioRenderer == null) {
             double latency = ((double) 1000 / 44100) * frameSize * frameBuffer + maxPreBuffering;
@@ -96,17 +103,17 @@ public class TestPhononRenderer extends SimpleApplication {
         audioSourceNode.attachChild(audioSourceGeom);
         flyCam.setMoveSpeed(10f);
 
-        AudioNode an = new AudioNode(assetManager, "mono/264864__augustsandberg__marine-diesel-engine.wav", DataType.Buffer);
-        audioSourceNode.attachChild(an);
-        an.setName("Audio Node");
-        an.setDirectional(true);
-        an.setPositional(true);
-        an.setRefDistance(1);
-        an.setVolume(1f);
-        an.setLooping(true);
-        an.setReverbEnabled(true);
-        an.setInnerAngle(360f);
-        an.play(); 
+        engine = new AudioNode(assetManager, "mono/264864__augustsandberg__marine-diesel-engine.wav", DataType.Buffer);
+        audioSourceNode.attachChild(engine);
+        engine.setName("Audio Node");
+        engine.setDirectional(true);
+        engine.setPositional(true);
+        engine.setRefDistance(1);
+        engine.setVolume(1f);
+        engine.setLooping(true);
+        engine.setReverbEnabled(true);
+        engine.setInnerAngle(360f);
+        engine.play(); 
  
 
         AudioNode bg = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
@@ -142,5 +149,15 @@ public class TestPhononRenderer extends SimpleApplication {
         float radius = 10;
         audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
      
+    }
+
+    @Override
+    public void onAction(String name, boolean isPressed, float tpf) {
+        if (name.equals("PAUSE")&&isPressed) {
+            if (engine.getStatus() != AudioSource.Status.Paused)
+                engine.pause();
+            else engine.play();
+            System.out.println("Pause");
+        }
     }
 }
