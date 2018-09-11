@@ -101,7 +101,7 @@ public class PhononRenderer implements AudioRenderer {
 
 		PHONON_LISTENER = new PhononListener();
 		PHONON_ASDATA_MANAGER =
-				new PhononAudioSourcesDataManager(this, nOutputLines, nSourcesPerLine);
+				new PhononAudioSourcesDataManager(nOutputLines, nSourcesPerLine);
 		
 	
 		PLAYERS = new PhononPlayer[nOutputLines];
@@ -313,7 +313,6 @@ public class PhononRenderer implements AudioRenderer {
 	@Override
 	public void stopSource(AudioSource src) {
 		src.setStatus(AudioSource.Status.Stopped);
-		PHONON_ASDATA_MANAGER.unpairSourceAndData(src);
 	}
 
 	@Override
