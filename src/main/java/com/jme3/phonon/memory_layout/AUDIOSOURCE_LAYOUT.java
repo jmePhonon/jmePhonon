@@ -7,6 +7,7 @@ public class AUDIOSOURCE_LAYOUT {
     public final static int FLAG_DIRECTIONAL=(1<<1);
     public final static int FLAG_PAUSED=(1<<2);
     public final static int FLAG_LOOP=(1<<3);
+    public final static int FLAG_REVERB=(1<<4);
 
     public static final byte FLAGS_fieldsize = 1;
     public static final byte NUM_CHANNELS_fieldsize = 1;

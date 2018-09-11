@@ -113,7 +113,7 @@ public class TestPhononRenderer extends SimpleApplication {
         audioSourceNode.attachChild(bg);
         bg.setName("Audio Node");
         bg.setPositional(false);
-        bg.setVolume(.2f);
+        bg.setVolume(.1f);
         bg.setLooping(true);
         bg.play();
 

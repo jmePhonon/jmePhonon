@@ -316,7 +316,9 @@ public class PhononRenderer implements AudioRenderer {
 
 		switch (param) {
 			case IsPositional :
-			case IsDirectional:
+			case IsDirectional :
+			case ReverbEnabled :
+			case ReverbFilter:
 			case Looping:
 				PHONON_ASDATA_MANAGER.setSrcFlagsUpdateNeeded(src);
 				break;

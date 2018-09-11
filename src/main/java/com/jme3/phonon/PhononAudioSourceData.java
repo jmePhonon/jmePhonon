@@ -79,6 +79,9 @@ public class PhononAudioSourceData {
                     f |= FLAG_PAUSED;
                 if (source.isLooping())
                     f |= FLAG_LOOP;
+                if (source.isReverbEnabled()) 
+                    f|=FLAG_REVERB;
+                
                 FLS.updateFrom((byte) f);
             }
 

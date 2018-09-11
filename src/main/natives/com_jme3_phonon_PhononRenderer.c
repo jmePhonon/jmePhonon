@@ -119,7 +119,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 }
             }                
             jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
-            jboolean hasReverb = true;
+            jboolean hasReverb = asHasFlag(&SETTINGS,audioSource,REVERB);
 
        
 
