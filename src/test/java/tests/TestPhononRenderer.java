@@ -84,7 +84,7 @@ public class TestPhononRenderer extends SimpleApplication {
         }
 
         // Generic env
-        audioRenderer.setEnvironment(Environment.Cavern);
+        audioRenderer.setEnvironment(Environment.Dungeon);
 
         audioSourceNode = new Node();
 
@@ -113,7 +113,7 @@ public class TestPhononRenderer extends SimpleApplication {
         audioSourceNode.attachChild(bg);
         bg.setName("Audio Node");
         bg.setPositional(false);
-        bg.setVolume(.1f);
+        bg.setVolume(.2f);
         bg.setLooping(true);
         bg.play();
 

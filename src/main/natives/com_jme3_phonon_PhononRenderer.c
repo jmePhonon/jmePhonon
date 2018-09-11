@@ -172,9 +172,9 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
                 // Now Temp.frame2 contains the mixed reverb queue.
 
-                // For the next step we'll need to reuse the first two slots of the reverMixerQueue
+                // For the next step we'll need to reuse the first three slots of the reverMixerQueue
                 // The first two slots may be changed to point somewhere else, so we store here their actual addresses
-                // to rever them back later
+                // to revert them back later
                 jfloat *mixerQueue0 = Temp.reverbMixerQueue[0];
                 jfloat *mixerQueue1 = Temp.reverbMixerQueue[1];
                    
@@ -199,7 +199,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 // The final outFrame is Temp.reverbMixerQueue[2]
                 outFrame = Temp.reverbMixerQueue[2];
 
-                // we also need to rever reverbMixerQueue [0] and [1]  to their original addresses
+                // we also need to revert reverbMixerQueue [0] and [1]  to their original addresses
                 Temp.reverbMixerQueue[0] = mixerQueue0;
                 Temp.reverbMixerQueue[1] = mixerQueue1;
                 
