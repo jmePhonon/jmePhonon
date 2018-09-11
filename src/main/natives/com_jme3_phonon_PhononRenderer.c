@@ -29,9 +29,14 @@ struct Listener *GLOBAL_LISTENER;
 
 struct {
     jfloat *frame1;
-    jfloat *frame2;
     jfloat *monoFrame1;
     jfloat **mixerQueue;
+    #ifdef INCLUDE_SIMPLE_REVERB 
+        jfloat *frame2;
+        // Since we apply simple reverb after the final mixing we need two queues to slit sounds with and without reverb
+        // we will apply reverb only to the first queue, and then we will mix the two queues together.
+        jfloat **reverbMixerQueue;
+    #endif
 } Temp;
 
 
@@ -84,17 +89,24 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         }
 
 
-        jint mixerQueueSize = 0;
  
         struct UList* uList = line->uList;
         struct UListNode* uNode = uList->head->next;
+        jfloat *inFrame;
+        jfloat *outFrame;
+        
 
-        while(!ulistIsTail(uList, uNode)) {
+        jint mixerQueueSize = 0;
+        #ifdef INCLUDE_SIMPLE_REVERB
+            jint reverbMixerQueueSize = 0;
+        #endif
+
+        while (!ulistIsTail(uList, uNode)) {
             struct AudioSource *audioSource = uNode->audioSource;
             jboolean loop = asHasFlag(&SETTINGS,audioSource,LOOP);
             jint nchannels = asGetNumChannels(&SETTINGS,audioSource);
 
-            jfloat *inFrame = nchannels==1?Temp.monoFrame1:Temp.frame1;
+            inFrame = nchannels==1?Temp.monoFrame1:Temp.frame1;
 
 
             if (asReadNextFrame(&SETTINGS, audioSource,inFrame)) {
@@ -107,41 +119,99 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                 }
             }                
             jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
+            jboolean hasReverb = true;
+
+       
 
             if (SETTINGS.isPassthrough || !isPositional) {
-                passThrough(&SETTINGS, inFrame, Temp.mixerQueue[mixerQueueSize++],nchannels);
+                passThrough(&SETTINGS, inFrame, 
+                #ifdef INCLUDE_SIMPLE_REVERB
+                    ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
+                #else
+                    Temp.mixerQueue[mixerQueueSize++]
+                #endif
+                , nchannels);
             } else {
                 //Positional source is always mono
-                phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, inFrame, Temp.mixerQueue[mixerQueueSize++]);
+                phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, inFrame,
+                #ifdef INCLUDE_SIMPLE_REVERB
+                    ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
+                #else
+                    Temp.mixerQueue[mixerQueueSize++]
+                #endif                
+                );
             }
+
+           
 
             uNode = uNode->next;
         }  
         
-
-
-        jfloat *output = Temp.frame1;
         if(mixerQueueSize==1){
-            output = Temp.mixerQueue[0];
+            outFrame = Temp.mixerQueue[0];
         } else {
+            outFrame = Temp.frame1;
             if(SETTINGS.isPassthrough){
-                passThroughMixer(&SETTINGS,Temp.mixerQueue,mixerQueueSize, output);
+                passThroughMixer(&SETTINGS,Temp.mixerQueue,mixerQueueSize, outFrame);
             }else{
-                phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , output);
+                phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , outFrame);
             }
-        }
-        
-
-
+        }          
+           
+        // At this point outFrame points to the mixed output (that can be stored either in Temp.frame1 or Temp.mixerQueue[0])
         #ifdef INCLUDE_SIMPLE_REVERB 
-            if(srHasValidEnvironment(&SETTINGS)){
-                srApplyReverb(&SETTINGS,output, Temp.frame2);
-                output = Temp.frame2;
+            // We need to mix the simple reverb queue to the outFrame
+
+            if (reverbMixerQueueSize >= 0){ // only if there is something to mix...               
+                // We will store the mixed result of reverbMixerQueue in Temp.frame2.
+                if (SETTINGS.isPassthrough) {
+                    passThroughMixer(&SETTINGS, Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.frame2);
+                }else{
+                    phMixOutputBuffers(Temp.reverbMixerQueue, reverbMixerQueueSize , Temp.frame2);
+                }
+
+                // Now Temp.frame2 contains the mixed reverb queue.
+
+                // For the next step we'll need to reuse the first two slots of the reverMixerQueue
+                // The first two slots may be changed to point somewhere else, so we store here their actual addresses
+                // to rever them back later
+                jfloat *mixerQueue0 = Temp.reverbMixerQueue[0];
+                jfloat *mixerQueue1 = Temp.reverbMixerQueue[1];
+                   
+                if(srHasValidEnvironment(&SETTINGS)){ // if reverb is enabled
+                    srApplyReverb(&SETTINGS,Temp.frame2, Temp.reverbMixerQueue[0]);//we apply the reverb on the mixed result ( Temp.frame2) and we store the result on Temp.reverbMixerQueue[0]
+                }else{ // if reverb is disabled,we will just make the first slot of the reverbMixerQueue point to Temp.frame2
+                    Temp.reverbMixerQueue[0] = Temp.frame2; // thats why we saved the addr before.
+                }
+                Temp.reverbMixerQueue[1] = outFrame; // We make the second slot of reverbMixerQueue point to
+                                                     // outFrame (that can be either a pointer to Temp.frame1 or a pointer to Temp.mixerQueue[0])
+                                                    // thats why we saved the addr before...
+
+                // Now we'll mix the first two slots of the reverbMixerQueue and we'll save the result on the third slot of reverbMixerQueue 
+                reverbMixerQueueSize = 2; // we need to mix only the first 2 slots
+
+                if (SETTINGS.isPassthrough) {
+                    passThroughMixer(&SETTINGS, Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.reverbMixerQueue[2]);
+                }else{
+                    phMixOutputBuffers(Temp.reverbMixerQueue, reverbMixerQueueSize , Temp.reverbMixerQueue[2]);
+                }
+
+                // The final outFrame is Temp.reverbMixerQueue[2]
+                outFrame = Temp.reverbMixerQueue[2];
+
+                // we also need to rever reverbMixerQueue [0] and [1]  to their original addresses
+                Temp.reverbMixerQueue[0] = mixerQueue0;
+                Temp.reverbMixerQueue[1] = mixerQueue1;
+                
             }
         #endif
+ 
+
+
+       
         jfloat *masterVolume = lsGetVolume(&SETTINGS,GLOBAL_LISTENER);
 
-        olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, output, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
+        olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
         olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
     }
 }
@@ -184,13 +254,21 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
    
 
     Temp.frame1= (jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
-        Temp.frame2= (jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
 
     Temp.monoFrame1= (jfloat*)malloc(4 * SETTINGS.frameSize);
     Temp.mixerQueue=(jfloat**)malloc(sizeof(jfloat*) * nSourcesPerLine );
     for(jint i=0;i<SETTINGS.nSourcesPerLine;i++){
         Temp.mixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
     }
+
+    #ifdef INCLUDE_SIMPLE_REVERB
+        Temp.frame2= (jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
+
+        Temp.reverbMixerQueue=(jfloat**)malloc(sizeof(jfloat*) * nSourcesPerLine );
+        for(jint i=0;i<SETTINGS.nSourcesPerLine + 1 ;i++){
+            Temp.reverbMixerQueue[i]=(jfloat*)malloc(4 * SETTINGS.frameSize*nOutputChannels);
+        }
+    #endif
 
     phInit(&SETTINGS,nSourcesPerLine); 
 
@@ -209,7 +287,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
         srInit(&SETTINGS);
     #endif
 
-#ifdef HAS_NATIVE_THREAD_SUPPORT    
+    #ifdef HAS_NATIVE_THREAD_SUPPORT    
         if(nativeThread){
             nuInit(env, &obj, decoupledNativeThread, Java_com_jme3_phonon_PhononRenderer_updateNative);
         }
@@ -229,10 +307,17 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv 
         srDestroy(&SETTINGS);
     #endif
     free(Temp.frame1);
-    free(Temp.frame2);
+
+    #ifdef INCLUDE_SIMPLE_REVERB
+        free(Temp.frame2);
+        for(jint i=0;i<SETTINGS.nSourcesPerLine;i++){
+            free(Temp.reverbMixerQueue[i]);
+        }
+        free(Temp.reverbMixerQueue);
+    #endif
 
     free(Temp.monoFrame1);
-    for(jint i=0;i<SETTINGS.nSourcesPerLine;i++){
+    for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
         free(Temp.mixerQueue[i]);
     }
     free(Temp.mixerQueue);
