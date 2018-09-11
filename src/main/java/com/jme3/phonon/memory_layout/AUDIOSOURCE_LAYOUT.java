@@ -8,9 +8,10 @@ public class AUDIOSOURCE_LAYOUT {
     public final static int FLAG_PAUSED=(1<<2);
     public final static int FLAG_LOOP=(1<<3);
 
-    public static final byte FLAGS_fieldsize = 4;
-
-    public static final byte NUM_CHANNELS_fieldsize = 4;
+    public static final byte FLAGS_fieldsize = 1;
+    public static final byte NUM_CHANNELS_fieldsize = 1;
+    public static final byte UNUSED0_fieldsize = 1;
+    public static final byte UNUSED1_fieldsize = 1;
 
     public static final byte POSX_fieldsize = 4;
     public static final byte POSY_fieldsize = 4;
@@ -34,9 +35,11 @@ public class AUDIOSOURCE_LAYOUT {
     public static final byte VOLUME_fieldsize = 4;
 
     public static final byte FLAGS = 0;
-    public static final byte NUM_CHANNELS = FLAGS+FLAGS_fieldsize;
+    public static final byte NUM_CHANNELS = FLAGS + FLAGS_fieldsize;
+    public static final byte UNUSED0 = NUM_CHANNELS + NUM_CHANNELS_fieldsize;
+    public static final byte UNUSED1 = UNUSED0 + UNUSED0_fieldsize;
 
-    public static final byte POSX = NUM_CHANNELS+NUM_CHANNELS_fieldsize; 
+    public static final byte POSX = UNUSED1 + UNUSED1_fieldsize; 
     public static final byte POSY = POSX+POSX_fieldsize;
     public static final byte POSZ = POSY+POSY_fieldsize;
     

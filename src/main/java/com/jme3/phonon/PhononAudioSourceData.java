@@ -9,7 +9,6 @@ import com.jme3.audio.AudioSource.Status;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.mt.VByte;
 import com.jme3.phonon.mt.VFloat;
-import com.jme3.phonon.mt.VInteger;
 import com.jme3.phonon.mt.VVector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
@@ -19,7 +18,7 @@ public class PhononAudioSourceData {
     private AudioSource source;
     
     private final VVector3f POS = new VVector3f();
-    private final VInteger CHANNELS = new VInteger();
+    private final VByte CHANNELS = new VByte();
     private final VVector3f AHEAD = new VVector3f();
     private final VVector3f UP = new VVector3f();
     private final VVector3f RIGHT = new VVector3f();
@@ -27,7 +26,7 @@ public class PhononAudioSourceData {
     private final VFloat DPOWER = new VFloat();
     private final VFloat VOL = new VFloat();
 
-    private final VInteger FLS = new VInteger();
+    private final VByte FLS = new VByte();
 
 
     
@@ -37,8 +36,8 @@ public class PhononAudioSourceData {
     public PhononAudioSourceData() {
         MEMORY = BufferUtils.createByteBuffer(SIZE);
 
-        FLS.updateFrom(0);
-        CHANNELS.updateFrom(1);
+        FLS.updateFrom((byte) 0);
+        CHANNELS.updateFrom((byte) 1);
         POS.updateFrom(Vector3f.ZERO);
         AHEAD.updateFrom(Vector3f.UNIT_Z);
         UP.updateFrom(Vector3f.UNIT_Y);
@@ -55,7 +54,7 @@ public class PhononAudioSourceData {
     public void setSource(AudioSource src) {
         source = src;
         CHANNELS.setUpdateNeeded();
-        CHANNELS.updateFrom(src.getAudioData().getChannels());
+        CHANNELS.updateFrom((byte) src.getAudioData().getChannels());
         FLS.setUpdateNeeded();
         POS.setUpdateNeeded();
         AHEAD.setUpdateNeeded();
@@ -80,7 +79,7 @@ public class PhononAudioSourceData {
                     f |= FLAG_PAUSED;
                 if (source.isLooping())
                     f |= FLAG_LOOP;
-                FLS.updateFrom(f);
+                FLS.updateFrom((byte) f);
             }
 
             AHEAD.updateFrom(source.getDirection());
