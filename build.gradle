@@ -11,8 +11,8 @@ version= project.hasProperty('in_version') ? project.getProperty('in_version') :
 targetCompatibility = '1.8'
 sourceCompatibility = '1.8'
 
-def jmerepo='com.github.jmonkeyengine.jMonkeyEngine'
-def jmeversion='v3.2.0-stable'
+def jmerepo='com.github.jMonkeyEngine.jmonkeyengine'
+def jmeversion='025b27c96d295e02c1471580980c7f4429be44b5'
 
 
 
@@ -35,23 +35,11 @@ task packageJavadoc(type: Jar) {
 
 
 
-eclipse {
-    classpath {
-        file {
-            whenMerged {
-                def jre = entries.find { it.path.contains 'org.eclipse.jdt.launching.JRE_CONTAINER' }
-                jre.accessRules.add(new AccessRule('accessible', 'com/**'))
-                jre.accessRules.add(new AccessRule('accessible', '**'))
-                jre.accessRules.add(new AccessRule('accessible', 'sun/**'))           
-             }
-        }
-    }
-}
+
 
 repositories {
     mavenCentral()
-    maven { url 'https://jitpack.io' }
-    
+    maven { url 'https://jitpack.io' }    
 }
 
 dependencies {
@@ -64,21 +52,19 @@ dependencies {
 }
 
 sourceSets{
-main {   
-    resources {
-        srcDir 'tmp/natives/'
+    main {   
+        resources {
+            srcDir 'tmp/natives/'
+        }
     }
-}
 
 
-test {   
-    java{
-        srcDir "src/test/unit"
+    test {   
+        java{
+            srcDir "src/test/unit"
+        }
+
     }
-    resources {
-        srcDir 'tmp/natives/'
-    }
-}
 
 }
 
@@ -110,7 +96,7 @@ task buildNatives(type :Exec){
     commandLine 'bash','prepare.sh',"buildNatives"
 }
 buildNatives.dependsOn(prepareWorkspace)
-assemble.dependsOn(buildNatives)
+processResources.dependsOn(buildNatives)
 
 task buildStandaloneTests(type: Jar) {
 
