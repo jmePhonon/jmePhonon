@@ -45,6 +45,10 @@ public class PhononAudioSourcesDataManager {
     public void setSrcVolUpdateNeeded(AudioSource src) {
         DATA[src.getChannel()].setVolUpdateNeeded();
     }
+
+    public void setSrcDipPowerUpdateNeeded(AudioSource src) {
+        DATA[src.getChannel()].setDipolePowerUpdateNeeded();
+    }
     
     public void finalizeDataUpdates() {
         for(PhononAudioSourceData sourceData : DATA) {

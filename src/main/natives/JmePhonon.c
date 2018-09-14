@@ -143,7 +143,7 @@ void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *aud
     // TODO make this configurable
     context->directSoundEffectOptions.applyDistanceAttenuation = true;
     context->directSoundEffectOptions.applyAirAbsorption = true;
-    context->directSoundEffectOptions.applyDirectivity = false;
+    context->directSoundEffectOptions.applyDirectivity = true;
     context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_NONE;
 
     // Direct sound
@@ -178,6 +178,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
         return;
     }
     
+    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.applyDirectivity = asHasFlag(settings, asource, DIRECTIONAL);
+
     IPLSource source;
     source.position = (*asGetSourcePosition(settings, asource));
     source.ahead = (*asGetSourceDirection(settings, asource));
@@ -185,43 +187,41 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
     source.right = (*asGetSourceRight(settings, asource));
     source.directivity = (*asGetSourceDirectivity(settings, asource));
 
+    ///>>??????
+    ///
 
+    jfloat sourceRadius = 1;
 
- ///>>??????
- ///
+    IPLVector3 *listenerPos = lsGetPosition(settings, listener);
+    IPLVector3 *listenerUp = lsGetUp(settings, listener);
+    IPLVector3 *listenerDirection = lsGetDirection(settings, listener);
 
- jfloat sourceRadius = 1;
+    IPLVector3 direction = iplCalculateRelativeDirection(source.position, (*listenerPos),
+                                                        (*listenerDirection), (*listenerUp));
 
- IPLVector3 *listenerPos = lsGetPosition(settings, listener);
- IPLVector3 *listenerUp = lsGetUp(settings, listener);
- IPLVector3 *listenerDirection = lsGetDirection(settings, listener);
+    PhSharedContext.monoBuffer1.interleavedBuffer = inFrame;
+    PhSharedContext.monoBuffer2.interleavedBuffer = PhSharedContext.auxMonoFrame;
 
- IPLVector3 direction = iplCalculateRelativeDirection(source.position, (*listenerPos),
-                                                      (*listenerDirection), (*listenerUp));
+    // Find direct path
+    IPLDirectSoundPath path = iplGetDirectSoundPath(PhSharedContext.environment,
+                                                    (*listenerPos),
+                                                    (*listenerDirection),
+                                                    (*listenerUp),
+                                                    source,
+                                                    sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
+                                                    IPL_DIRECTOCCLUSION_NONE,
+                                                    IPL_DIRECTOCCLUSION_RAYCAST);
 
- PhSharedContext.monoBuffer1.interleavedBuffer = inFrame;
- PhSharedContext.monoBuffer2.interleavedBuffer = PhSharedContext.auxMonoFrame;
+    //  path.distanceAttenuation *= 1.9;
 
- // Find direct path
- IPLDirectSoundPath path = iplGetDirectSoundPath(PhSharedContext.environment,
-                                                 (*listenerPos),
-                                                 (*listenerDirection),
-                                                 (*listenerUp),
-                                                 source,
-                                                 sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
-                                                 IPL_DIRECTOCCLUSION_NONE,
-                                                 IPL_DIRECTOCCLUSION_RAYCAST);
+    iplApplyDirectSoundEffect(ctx->directSoundEffect,
+                            PhSharedContext.monoBuffer1,
+                            path,
+                            ctx->directSoundEffectOptions,
+                            PhSharedContext.monoBuffer2);
 
- //  path.distanceAttenuation *= 1.9;
-
- iplApplyDirectSoundEffect(ctx->directSoundEffect,
-                           PhSharedContext.monoBuffer1,
-                           path,
-                           ctx->directSoundEffectOptions,
-                           PhSharedContext.monoBuffer2);
-
- PhSharedContext.outputBuffer.interleavedBuffer = outFrame;
- iplApplyBinauralEffect(ctx->binauralEffect, PhSharedContext.monoBuffer2, direction, IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
+    PhSharedContext.outputBuffer.interleavedBuffer = outFrame;
+    iplApplyBinauralEffect(ctx->binauralEffect, PhSharedContext.monoBuffer2, direction, IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
 
 }
 

@@ -20,8 +20,10 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
+import com.jme3.phonon.PhononAudioSourceData;
 import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.PhononSettings;
+import com.jme3.phonon.Phonon;
 import com.jme3.phonon.ThreadMode;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.renderer.RenderManager;
@@ -67,7 +69,8 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
         this.inputManager.addMapping("PAUSE", new KeyTrigger(KeyInput.KEY_P));
-        this.inputManager.addListener(this,"PAUSE");
+        this.inputManager.addMapping("DIRECTIONAL", new KeyTrigger(KeyInput.KEY_G));
+        this.inputManager.addListener(this, "PAUSE", "DIRECTIONAL");
       
         if (audioRenderer == null) {
             double latency = ((double) 1000 / 44100) * frameSize * frameBuffer + maxPreBuffering;
@@ -105,20 +108,19 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
 
         engine = new AudioNode(assetManager, "mono/264864__augustsandberg__marine-diesel-engine.wav", DataType.Buffer);
         audioSourceNode.attachChild(engine);
-        engine.setName("Audio Node");
+        engine.setName("Engine Audio Node");
         engine.setDirectional(true);
         engine.setPositional(true);
         engine.setRefDistance(1);
         engine.setVolume(1f);
         engine.setLooping(false);
         engine.setReverbEnabled(true);
-        engine.setInnerAngle(360f);
-        engine.play(); 
- 
+        Phonon.setAudioNodeDipoleWeight(engine, 1f);
+        engine.play();       
 
         AudioNode bg = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
         audioSourceNode.attachChild(bg);
-        bg.setName("Audio Node");
+        bg.setName("Background Audio Node");
         bg.setPositional(false);
         bg.setVolume(.1f);
         bg.setLooping(true);
@@ -127,7 +129,7 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         rootNode.attachChild(audioSourceNode);
     }
 
-    private float currentAngle = 0f;
+    private float currentPower = 0f;
 
     float time = 0;
     @Override
@@ -136,10 +138,9 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         listener.setLocation(cam.getLocation());
         listener.setRotation(cam.getRotation());
         
-        Vector3f angles = new Vector3f(currentAngle, 0f, 0f);
-        audioSourceNode.setLocalRotation(new Quaternion().fromAxes(angles.add(1f, 0f, 0f), angles.add(0f, 1f, 0f), angles));
-        ((AudioNode) audioSourceNode.getChild("Audio Node")).setDirection(angles);
-        currentAngle = (currentAngle + .1f);
+        AudioNode engineAudioNode = ((AudioNode) audioSourceNode.getChild("Engine Audio Node"));
+        currentPower = (currentPower + .1f) % 1f; 
+        Phonon.setAudioNodeDipolePower(engineAudioNode, currentPower);
     }
 
     @Override
@@ -147,8 +148,8 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         time += tpf;
         float speed=3;
         float radius = 10;
-        audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
-        System.out.println("Sound status: "+engine.getStatus());
+        // audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
+        // System.out.println("Sound status: "+engine.getStatus());
     }
 
     @Override
@@ -158,6 +159,9 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
                 engine.pause();
             else engine.play();
             System.out.println("Pause");
+        } else if(name.equals("DIRECTIONAL") && isPressed) {
+            engine.setDirectional(!engine.isDirectional());
+            System.out.println("Engine is directional: " + engine.isDirectional());
         }
     }
 }

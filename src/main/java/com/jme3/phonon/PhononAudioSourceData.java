@@ -1,6 +1,7 @@
 package com.jme3.phonon;
 
 import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.*;
+import static com.jme3.phonon.Phonon.*;
 
 import java.nio.ByteBuffer;
 import com.jme3.audio.AudioNode;
@@ -69,6 +70,11 @@ public class PhononAudioSourceData {
         source = src;
         if (src == null)
             return;
+
+        if(src instanceof AudioNode) {
+            AudioNode node = (AudioNode) src;
+        }
+
         CHANNELS.setUpdateNeeded();
         CHANNELS.updateFrom((byte) src.getAudioData().getChannels());
         FLS.setUpdateNeeded();
@@ -108,11 +114,17 @@ public class PhononAudioSourceData {
             AHEAD.updateFrom(source.getDirection());
 
             if(source instanceof AudioNode) {
-                UP.updateFrom(((AudioNode) source).getWorldRotation().getRotationColumn(1));
-                RIGHT.updateFrom(((AudioNode) source).getWorldRotation().getRotationColumn(0).negate());
+                // FIXME: find a way to communicate updates to user data fields
+                DWEIGHT.setUpdateNeeded();
+                DPOWER.setUpdateNeeded();
+
+                AudioNode node = (AudioNode) source;
+                UP.updateFrom(node.getWorldRotation().getRotationColumn(1));
+                RIGHT.updateFrom(node.getWorldRotation().getRotationColumn(0).negate());
+                DWEIGHT.updateFrom(Phonon.getAudioNodeDipoleWeight(node));
+                DPOWER.updateFrom(Phonon.getAudioNodeDipolePower(node));
             }
 
-            // DWEIGHT and DPOWER update?
             VOL.updateFrom(source.getVolume());
         }
     }
@@ -151,6 +163,10 @@ public class PhononAudioSourceData {
             UP.setUpdateNeeded();
             RIGHT.setUpdateNeeded();
         }
+    }
+
+    public void setDipolePowerUpdateNeeded() {
+        DPOWER.setUpdateNeeded();
     }
         
     public void setVolUpdateNeeded() {

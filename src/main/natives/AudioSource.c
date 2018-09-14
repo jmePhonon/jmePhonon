@@ -117,8 +117,11 @@ jboolean _asHasFlag(struct GlobalSettings *settings,struct AudioSource *source,j
 drt* asGetSourceDirectivity(struct GlobalSettings *settings,struct AudioSource *source) {
     source->_directivity.dipoleWeight = source->sceneData[asSourceField(DIPOLEWEIGHT)];
     source->_directivity.dipolePower = source->sceneData[asSourceField(DIPOLEPOWER)];
+    
     source->_directivity.callback = NULL;
     source->_directivity.userData = NULL;
+
+    // printf("directivity update with values: %f %f\n", source->_directivity.dipoleWeight, source->_directivity.dipolePower);
     return &source->_directivity;
 }
 
