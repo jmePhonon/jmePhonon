@@ -114,10 +114,6 @@ public class PhononAudioSourceData {
             AHEAD.updateFrom(source.getDirection());
 
             if(source instanceof AudioNode) {
-                // FIXME: find a way to communicate updates to user data fields
-                DWEIGHT.setUpdateNeeded();
-                DPOWER.setUpdateNeeded();
-
                 AudioNode node = (AudioNode) source;
                 UP.updateFrom(node.getWorldRotation().getRotationColumn(1));
                 RIGHT.updateFrom(node.getWorldRotation().getRotationColumn(0).negate());
@@ -167,6 +163,10 @@ public class PhononAudioSourceData {
 
     public void setDipolePowerUpdateNeeded() {
         DPOWER.setUpdateNeeded();
+    }
+    
+    public void setDipoleWeightUpdateNeeded() {
+        DWEIGHT.setUpdateNeeded();
     }
         
     public void setVolUpdateNeeded() {

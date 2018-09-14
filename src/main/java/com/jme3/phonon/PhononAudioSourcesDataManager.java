@@ -50,6 +50,10 @@ public class PhononAudioSourcesDataManager {
         DATA[src.getChannel()].setDipolePowerUpdateNeeded();
     }
     
+    public void setSrcDipWeightUpdateNeeded(AudioSource src) {
+        DATA[src.getChannel()].setDipoleWeightUpdateNeeded();
+    }
+    
     public void finalizeDataUpdates() {
         for(PhononAudioSourceData sourceData : DATA) {
             sourceData.finalizeUpdate();

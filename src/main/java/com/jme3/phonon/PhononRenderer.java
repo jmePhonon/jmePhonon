@@ -1,31 +1,25 @@
 package com.jme3.phonon;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+
 import javax.sound.sampled.LineUnavailableException;
+
 import com.jme3.audio.AudioData;
-import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioParam;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
+import com.jme3.audio.AudioSource.Status;
 import com.jme3.audio.Environment;
 import com.jme3.audio.Filter;
 import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
-import com.jme3.audio.AudioSource.Status;
-import com.jme3.audio.openal.ALAudioRenderer;
-import com.jme3.math.Quaternion;
-import com.jme3.math.Vector3f;
-import com.jme3.phonon.utils.DirectBufferUtils;
-import com.jme3.phonon.utils.JmeEnvToSndEnv;
-import com.jme3.renderer.RenderManager;
-import com.jme3.phonon.player.PhononPlayer;
+import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.phonon.player.PhononPlayer;
 import com.jme3.phonon.utils.DirectBufferUtils;
+import com.jme3.phonon.utils.JmeEnvToSndEnv;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
 
@@ -348,6 +342,23 @@ public class PhononRenderer implements AudioRenderer {
 		}
 	}
 
+	public void updateSourcePhononParam(AudioSource src, PhononAudioParam param) {
+		if(src.getChannel() < 0) {
+			return;
+		}
+
+		switch(param) {
+			case DipolePower:
+				PHONON_ASDATA_MANAGER.setSrcDipPowerUpdateNeeded(src);
+				break;
+			case DipoleWeight:
+				PHONON_ASDATA_MANAGER.setSrcDipWeightUpdateNeeded(src);
+				break;
+			default:
+				System.err.println("Unrecognized param while updating audio source.");
+				return;	
+		}
+	}
 
 	@Override
 	public void update(float tpf) {

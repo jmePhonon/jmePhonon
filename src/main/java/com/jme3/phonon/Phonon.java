@@ -1,6 +1,8 @@
 package com.jme3.phonon;
 
+import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioNode;
+import com.jme3.audio.AudioSource;
 
 /**
  * Phonon main class. Contains helpers methods to initialize and edit Phonon's settings.
@@ -9,8 +11,16 @@ import com.jme3.audio.AudioNode;
  */
 
 public class Phonon {
-    private static final String DIPOLE_WEIGHT_UDID = "phonon.dipole_weight";
-    private static final String DIPOLE_POWER_UDID = "phonon.dipole_power";
+    public static enum PhononAudioParam {
+        DipoleWeight("phonon.dipole_weight"),
+        DipolePower("phonon.dipole_power");
+
+        String key;
+
+        PhononAudioParam(String key) {
+            this.key = key;
+        }
+    }
 
     /**
      * Set audio node dipole weight.
@@ -20,8 +30,10 @@ public class Phonon {
      *
      * @author aegroto
      */
+
     public static void setAudioNodeDipoleWeight(AudioNode node, float dipoleWeight) {
-        node.setUserData(DIPOLE_WEIGHT_UDID, dipoleWeight);
+        node.setUserData(PhononAudioParam.DipoleWeight.key, dipoleWeight);
+        communicateUpdateToRenderer(node, PhononAudioParam.DipoleWeight); 
     }
 
     /**
@@ -32,8 +44,10 @@ public class Phonon {
      *
      * @author aegroto
      */
+
     public static void setAudioNodeDipolePower(AudioNode node, float dipolePower) {
-        node.setUserData(DIPOLE_POWER_UDID, dipolePower);
+        node.setUserData(PhononAudioParam.DipolePower.key, dipolePower);
+        communicateUpdateToRenderer(node, PhononAudioParam.DipolePower); 
     }
 
     /**
@@ -44,8 +58,9 @@ public class Phonon {
      *
      * @author aegroto
      */
+
     public static float getAudioNodeDipoleWeight(AudioNode node) {
-        Object data = node.getUserData(DIPOLE_WEIGHT_UDID);
+        Object data = node.getUserData(PhononAudioParam.DipoleWeight.key);
         return data == null ? 0f : (float) data;
     }
     
@@ -57,8 +72,16 @@ public class Phonon {
      *
      * @author aegroto
      */
+
     public static float getAudioNodeDipolePower(AudioNode node) {
-        Object data = node.getUserData(DIPOLE_POWER_UDID);
+        Object data = node.getUserData(PhononAudioParam.DipolePower.key);
         return data == null ? 0f : (float) data;
+    }
+
+    private static void communicateUpdateToRenderer(AudioSource source, PhononAudioParam param) {
+        if(AudioContext.getAudioRenderer() instanceof PhononRenderer) {
+            PhononRenderer renderer = (PhononRenderer) AudioContext.getAudioRenderer();
+            renderer.updateSourcePhononParam(source, param);
+        }
     }
 }
