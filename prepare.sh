@@ -404,6 +404,7 @@ function deploy {
 function licenseGen {
     shopt -s globstar
     for f in src/**/*.{java,c,h};
+    do
         if ! grep -q "Copyright" "$f" ;
         then     
             license="`cat build.dep/HEADER.template`"
