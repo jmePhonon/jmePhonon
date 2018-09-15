@@ -40,21 +40,17 @@ import com.jme3.util.BufferUtils;
 import static com.jme3.phonon.memory_layout.OUTPUT_LINE_LAYOUT.*;
 
 /**
- * PhononFrameBuffer
- * 
- * This class stores processed data
+ * This class is used to store processed data
  */
 public class PhononOutputLine {
-    private static final int _SAMPLE_SIZE = 4;//Always 4 byte (float32) sample
-
-    protected final ByteBuffer buffer;
-    private final int bufferSize;    // Buffersize in frames
-    private final long bufferAddress;
-
+    private static final int SAMPLE_SIZE = 4;//Always 4 byte (float32) sample
+    private final ByteBuffer BUFFER;
+    private final int BUFFER_SIZE;    // Buffersize in frames
+    private final long BUFFER_ADDRESS;
     private final int CHANNELS;
     private final int FRAMESIZE;    // Frame size in samples, total framesize is CHANNELS*FRAMESIZE
 
-    public static enum ChannelStatus {
+    public static enum LineStatus {
         OVER, NODATA, READY
     }
     
@@ -71,28 +67,25 @@ public class PhononOutputLine {
      * flipped to negative.
      * 
      * 
-     * @param bufferedFrames How many frames should this queue contain
-     * @param samplesPerFrame 
+     * @param frameSize Samples per frame
+     * @param channels Output Channels (1=mono, 2=stereo)
+     * @param bufferSize Frames per buffer 
      */
     public PhononOutputLine(int frameSize, int channels,int bufferSize) {
-        this.bufferSize = bufferSize;
+        this.BUFFER_SIZE = bufferSize;
         CHANNELS = channels;
         FRAMESIZE = frameSize;
-        // Allocate direct buffer, the first 8+ 4 + 4 bytes contain the source id and two int indices
         frameSize*=channels;
-        buffer = BufferUtils.createByteBuffer(HEADER_size + frameSize * _SAMPLE_SIZE * bufferSize).order(ByteOrder.LITTLE_ENDIAN);
-        buffer.position(HEADER_size);
-
+        BUFFER = BufferUtils.createByteBuffer(HEADER_size + frameSize * SAMPLE_SIZE * bufferSize).order(ByteOrder.LITTLE_ENDIAN);
+        BUFFER.position(HEADER_size);
         reset();
-
-        bufferAddress = DirectBufferUtils.getAddr(buffer);
+        BUFFER_ADDRESS = DirectBufferUtils.getAddr(BUFFER);
     }
 
 
     public int getChannels() {
         return CHANNELS;
     }
-
    
     /**
      * How many samples per frame
@@ -105,14 +98,14 @@ public class PhononOutputLine {
      * How many frames for this buffer. 
      */
     public int getBufferSize() {
-        return bufferSize;
+        return BUFFER_SIZE;
     }
     
     /**
      * Get native address for this buffer
      */
     public long getAddress() {
-        return bufferAddress;
+        return BUFFER_ADDRESS;
     }
     
 
@@ -126,14 +119,14 @@ public class PhononOutputLine {
 
   
     protected void setLastProcessedFrameId(int v) {
-        buffer.putInt(LAST_PROCESSED_FRAME, v);
+        BUFFER.putInt(LAST_PROCESSED_FRAME, v);
     }
 
     /**
      * Get id of the latest frame processed by phonon
      */
     public int getLastProcessedFrameId() {
-        int n = buffer.getInt(LAST_PROCESSED_FRAME);
+        int n = BUFFER.getInt(LAST_PROCESSED_FRAME);
         if (n < 0)
             n = -n;
         return n;
@@ -143,7 +136,7 @@ public class PhononOutputLine {
      * Returns true if the entire audio has been processed, will always return false for loops.
      */
     public boolean isProcessingCompleted() {
-        return buffer.getInt(LAST_PROCESSED_FRAME) < 0;
+        return BUFFER.getInt(LAST_PROCESSED_FRAME) < 0;
     }
 
 
@@ -151,48 +144,48 @@ public class PhononOutputLine {
      * Set id of last played frame, internal use only
      */
     private void setLastPlayedFrameId(int v) {
-        buffer.putInt(LAST_PLAYED_FRAME, v);
+        BUFFER.putInt(LAST_PLAYED_FRAME, v);
     }
 
     /**
      * Get id of latest played frame
      */
     public int getLastPlayedFrameId() {
-        int n = buffer.getInt(LAST_PLAYED_FRAME);
+        int n = BUFFER.getInt(LAST_PLAYED_FRAME);
         return n;
     }
 
 
-    public ChannelStatus readNextFrameForPlayer(byte le_out[]) {
+    public LineStatus readNextFrameForPlayer(byte le_out[]) {
         int rawIndex = getLastPlayedFrameId();
         int phononIndex = getLastProcessedFrameId();
         if(rawIndex>=phononIndex){
             // System.err.println("Error... no data is ready to be read");
-            return ChannelStatus.NODATA;
+            return LineStatus.NODATA;
         }
               
         // If we reached the end of the buffer, restart from the begin
-        int readindex = rawIndex % bufferSize;  
+        int readindex = rawIndex % BUFFER_SIZE;  
 
         int frameSize = getFrameSize()*getChannels();
 
         // Move buffer cursor to the correct position
-        buffer.position(BODY + readindex * frameSize * _SAMPLE_SIZE);
+        BUFFER.position(BODY + readindex * frameSize * SAMPLE_SIZE);
         // System.out.println("Read from position " + buffer.position()+" buffer length "+buffer.limit()+" frame size "+frameSize);
 
         // Read next frame at once
-        BitUtils.nextF32le(buffer, le_out, frameSize);
+        BitUtils.nextF32le(BUFFER, le_out, frameSize);
 
         // CHeck if buffer is fully readed
         if (rawIndex == phononIndex && isProcessingCompleted()) {
-            return ChannelStatus.OVER;
+            return LineStatus.OVER;
         }
 
         // Jump to next frame
         rawIndex++;
         setLastPlayedFrameId(rawIndex);
 
-        return ChannelStatus.READY;
+        return LineStatus.READY;
 
 
     }

@@ -38,9 +38,8 @@ public class AudioDataEncoderFactory {
      * 
      * @param bitsPerSample Bits per sample
      * @return A proper encoder from the given format to float32
-     * 
-     * @author aegroto
-     */
+     *
+      */
 
     public static AudioDataEncoder getEncoder(int bitsPerSample) {
         switch(bitsPerSample) {

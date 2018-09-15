@@ -45,9 +45,7 @@ class Int16AudioDataEncoder implements AudioDataEncoder {
      * @param input Input audio data.
      * @param output Output buffer;
      * 
-     * @author aegroto, riccardobl
      */
-
     public void encodeData(ByteBuffer input, ByteBuffer output) {
         for (int i = 0; i < input.limit(); i += 2) {
             BitUtils.nextI16le(input, sm_le);

@@ -39,8 +39,6 @@ public interface AudioDataEncoder {
      * 
      * @param input Input audio data
      * @param output Output buffer
-     * 
-     * @author aegroto
      */
     public abstract void encodeData(ByteBuffer input, ByteBuffer output);
 }

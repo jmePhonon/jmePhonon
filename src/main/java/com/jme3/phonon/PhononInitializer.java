@@ -43,7 +43,6 @@ import com.jme3.audio.Listener;
 /**
  * This class is used INTERNALLY to initialize phonon components.
  * 
- * @author aegroto
  * 
  */
 
@@ -59,7 +58,6 @@ class PhononInitializer {
      * 
      * @throws Exception Generic initialization exception, check messages for more informations.
      * 
-     * @author riccardobl, aegroto
      */
 
     public static PhononRenderer initInApplication(PhononSettings settings, Application app) throws Exception {

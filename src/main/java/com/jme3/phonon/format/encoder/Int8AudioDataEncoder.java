@@ -45,7 +45,6 @@ class Int8AudioDataEncoder implements AudioDataEncoder {
      * @param input Input audio data.
      * @param output Output buffer;
      * 
-     * @author aegroto, riccardobl
      */
 
     public void encodeData(ByteBuffer input, ByteBuffer output) {

@@ -38,9 +38,7 @@ public interface AudioDataDecoder {
      * @param inputBuffer  Input buffer
      * @param outputBuffer Output buffer
      * 
-     * @author aegroto
      */
-
     public abstract void decode(byte[] input, byte[] output);
 
 }

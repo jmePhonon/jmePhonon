@@ -46,7 +46,7 @@ import com.jme3.phonon.PhononOutputLine;
 import com.jme3.phonon.PhononSoundDevice;
 import com.jme3.phonon.PhononSoundPlayer;
 import com.jme3.phonon.PhononSoundSystem;
-import com.jme3.phonon.PhononOutputLine.ChannelStatus;
+import com.jme3.phonon.PhononOutputLine.LineStatus;
 import com.jme3.phonon.utils.BitUtils;
 import com.jme3.phonon.utils.PhononOutputLineIntInputStream;
 

@@ -35,9 +35,6 @@ import javax.sound.sampled.Mixer;
 
 import com.jme3.phonon.PhononSoundDevice;
 
-/**
- * JSDevice
- */
 class JavaSoundDevice implements PhononSoundDevice{
     private final Object ID;
     private final String NAME;
