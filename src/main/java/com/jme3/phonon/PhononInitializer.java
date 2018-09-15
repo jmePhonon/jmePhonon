@@ -70,7 +70,7 @@ class PhononInitializer {
             if(app.getAudioRenderer() != null)
                 app.getAudioRenderer().cleanup();
 
-            forceFieldsReplace(app, phononRenderer, listener);          
+            forceFieldsReplace((LegacyApplication)app, phononRenderer, listener);          
         }
 
         phononRenderer.initialize();
@@ -109,8 +109,8 @@ class PhononInitializer {
         return listener;
     }
 
-    private static void forceFieldsReplace(Application app, PhononRenderer phononRenderer, Listener listener) throws Exception {
-        Field fields[] = app.getClass().getDeclaredFields();
+    private static void forceFieldsReplace(LegacyApplication app, PhononRenderer phononRenderer, Listener listener) throws Exception {
+        Field fields[] = LegacyApplication.class.getDeclaredFields();
 
         for(Field f : fields) {
             if(f.getType().isAssignableFrom(AudioRenderer.class)) {
