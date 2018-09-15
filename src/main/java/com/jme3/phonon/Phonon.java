@@ -1,19 +1,5 @@
 package com.jme3.phonon;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
-import javax.sound.sampled.Mixer;
-import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.AudioFormat.Encoding;
-
 import com.jme3.app.Application;
 import com.jme3.app.LegacyApplication;
 import com.jme3.audio.AudioContext;
@@ -21,7 +7,6 @@ import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.Listener;
-
 /**
  * Phonon main class. Contains helpers methods to initialize and edit Phonon's settings.
  * 
@@ -29,66 +14,33 @@ import com.jme3.audio.Listener;
  */
 
 public final class Phonon {
-    static enum PhononAudioParam{
-        DipoleWeight("phonon.dipole_weight"),DipolePower("phonon.dipole_power");
+    static enum PhononAudioParam {
+        DipoleWeight("phonon.dipole_weight"),
+        DipolePower("phonon.dipole_power");
 
         String key;
 
         PhononAudioParam(String key){
-            this.key=key;
+            this.key = key;
         }
-    }
-
-
-     
-    public static PhononRenderer init(PhononSettings settings, Application app
-     ) throws Exception {
- 
-        if(settings.system==null){
-            //exception
-        }
-        if(settings.device==null){
-            settings.device=settings.system.getAudioDevices().get(0);
-        }
-        if(settings.outputSampleSize==-1){
-            List<Integer> formats=settings.system.getOutputFormats(settings.device,settings.nOutputChannels);
-            settings.outputSampleSize=formats.get(0);
-                   
-        }
-
-        PhononRenderer phononRenderer = new PhononRenderer(settings);
-        AudioContext.setAudioRenderer(phononRenderer);
-
-
-        Listener listener = new Listener();
-        listener.setRenderer(phononRenderer);
-        listener.setVolume(1);
-        phononRenderer.setListener(listener);
-
-        if(app!=null&&app instanceof LegacyApplication){
-            System.out.println("Found LegacyApplication, force replace audioRenderer...");
-            if( app.getAudioRenderer()!=null)app.getAudioRenderer().cleanup();
-            Field fs[]=LegacyApplication.class.getDeclaredFields();
-            for(Field f:fs){
-                if(f.getType().isAssignableFrom(AudioRenderer.class)){
-                    System.out.println("Found field "+f.getName()+", replace.");
-                    f.setAccessible(true);
-                    f.set(app,phononRenderer);
-                }else if(f.getType().isAssignableFrom(Listener.class)){
-                    System.out.println("Found field "+f.getName()+", replace.");
-                    f.setAccessible(true);
-                    f.set(app,listener);
-                }
-            }            
-        }
-        phononRenderer.initialize();
-
-        System.out.println("Phonon initialized with settings "+settings);
-        return phononRenderer;
     }
     
-   
+    /**
+     * Initializes phonon context in the given application
+     * 
+     * @param settings Phonon initialization settings
+     * @param app Application in which Phonon must be inizialized
+     * 
+     * @return Initialized PhononRenderer
+     * 
+     * @throws Exception Generic initialization exception, check messages for more informations.
+     * 
+     * @author riccardobl, aegroto
+     */
 
+    public static PhononRenderer init(PhononSettings settings, Application app) throws Exception {
+        return PhononInitializer.initInApplication(settings, app);
+    }
 
     /**
      * Set audio node dipole weight.
@@ -145,6 +97,15 @@ public final class Phonon {
         Object data = node.getUserData(PhononAudioParam.DipolePower.key);
         return data == null ? 0f : (float) data;
     }
+
+    /**
+     * Auxiliary methods used by setters to communicate Phonon parameters updates
+     * 
+     * @param source Source in which the param has been updated
+     * @param param Param that has been updated
+     * 
+     * @author aegroto
+     */
 
     private static void communicateUpdateToRenderer(AudioSource source, PhononAudioParam param) {
         if(AudioContext.getAudioRenderer() instanceof PhononRenderer) {
