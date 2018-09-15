@@ -162,7 +162,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         #ifdef INCLUDE_SIMPLE_REVERB 
             // We need to mix the simple reverb queue to the outFrame
 
-            if (reverbMixerQueueSize >= 0){ // only if there is something to mix...               
+            if (reverbMixerQueueSize > 0){ // only if there is something to mix...               
                 // We will store the mixed result of reverbMixerQueue in Temp.frame2.
                 if (SETTINGS.isPassthrough) {
                     passThroughMixer(&SETTINGS, Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.frame2);

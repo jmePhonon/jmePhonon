@@ -179,7 +179,7 @@ function build {
     fi
 
     echo "" > tmp/ext_cpplist.txt
-      find src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
+      find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
 
 
     build_script="
@@ -352,14 +352,14 @@ function buildNatives {
     fi
 
     #Force update vscode
-    if [ -d build/resources ];
-    then
-        cp -Rf tmp/natives/* build/resources/
-    fi
-    if [ -d bin ];
-    then
-        cp -Rf tmp/natives/* bin/
-    fi
+    # if [ -d build/resources ];
+    # then
+    #     cp -Rf tmp/natives/* build/resources/
+    # fi
+    # if [ -d bin ];
+    # then
+    #     cp -Rf tmp/natives/* bin/
+    # fi
 }
 
 
