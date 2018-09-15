@@ -99,13 +99,18 @@ public class JavaSoundSystem implements PhononSoundSystem {
      @Override
     public List<PhononSoundDevice> getAudioDevices() {
         List<PhononSoundDevice> devices=new ArrayList<PhononSoundDevice>();
-        Mixer.Info mixInfos[]=AudioSystem.getMixerInfo();
 
+        Mixer.Info  defaultMixer=AudioSystem.getMixer(null).getMixerInfo();
+
+        Mixer.Info mixInfos[]=AudioSystem.getMixerInfo();
         for(Mixer.Info mixInfo:mixInfos){
             PhononSoundDevice device=new JavaSoundDevice(mixInfo.getName(),
                     mixInfo.getName()+": "+mixInfo.getDescription()+", "+mixInfo.getVendor()+", "+mixInfo.getVersion(),
-                AudioSystem.getMixer(mixInfo));
-            devices.add(device);
+                    AudioSystem.getMixer(mixInfo));
+            if(mixInfo==defaultMixer){
+                System.out.println("Found default device "+device);
+                devices.add(0,device);
+            }else  devices.add(device);
         }
         return devices;
     }
