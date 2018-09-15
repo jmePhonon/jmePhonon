@@ -136,7 +136,7 @@ function deepClean {
 
 function downloadResources {
     safeRm tmp/res.zip
-    wget "https://ci-deploy.frk.wf/p4jme/res.zip" -O tmp/res.zip
+    wget "https://ci-deploy.frk.wf/jmePhonon/res.zip" -O tmp/res.zip
     safeRm src/test/resources
     unzip tmp/res.zip -d src/test/resources/
 }
