@@ -401,4 +401,19 @@ function deploy {
 
 }
 
+function licenseGen {
+    shopt -s globstar
+    for f in src/**/*.{java,c,h};
+        if ! grep -q "Copyright" "$f" ;
+        then     
+            license="`cat build.dep/HEADER.template`"
+            echo "$license" > /tmp/___licenseGen.tmp
+            cat "$f" >> /tmp/___licenseGen.tmp
+            mv /tmp/___licenseGen.tmp $f        
+        fi
+    done
+}
+
+
+
 $@
