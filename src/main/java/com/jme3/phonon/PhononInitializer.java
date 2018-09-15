@@ -16,7 +16,7 @@ import com.jme3.audio.Listener;
  * 
  */
 
-public class PhononInitializer {
+class PhononInitializer {
 
     /**
      * Auxiliary method for Phonon.init(...)

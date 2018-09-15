@@ -42,7 +42,6 @@ public final class Phonon {
         return PhononInitializer.initInApplication(settings, app);
     }
 
-
     /**
      * Set audio node dipole weight.
      * 
