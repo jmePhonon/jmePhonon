@@ -1,4 +1,4 @@
-package com.jme3.phonon.mt;
+package com.jme3.phonon.types;
 
 import java.nio.ByteBuffer;
 import com.jme3.math.Vector3f;

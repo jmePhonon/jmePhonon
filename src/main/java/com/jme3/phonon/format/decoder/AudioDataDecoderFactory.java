@@ -19,6 +19,8 @@ public class AudioDataDecoderFactory {
             case 24:
                 return Int24AudioDataDecoder.instance();
             default:
+                System.err.println("Unknown sample size: "+sampleSize);
+                // TODO: This should raise an exception
                 return null;
         }
     }

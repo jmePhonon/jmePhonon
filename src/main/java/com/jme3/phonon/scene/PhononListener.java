@@ -1,12 +1,12 @@
-package com.jme3.phonon;
+package com.jme3.phonon.scene;
 
 import java.nio.ByteBuffer;
 import com.jme3.audio.Listener;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
-import com.jme3.phonon.mt.VFloat;
-import com.jme3.phonon.mt.VVector3f;
+import com.jme3.phonon.types.VFloat;
+import com.jme3.phonon.types.VVector3f;
 import com.jme3.util.BufferUtils;
 import static com.jme3.phonon.memory_layout.LISTENER_LAYOUT.*;
 

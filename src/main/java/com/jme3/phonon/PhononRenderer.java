@@ -17,7 +17,8 @@ import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
 import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.format.F32leAudioData;
-import com.jme3.phonon.player.PhononPlayer;
+import com.jme3.phonon.scene.PhononAudioSourcesDataManager;
+import com.jme3.phonon.scene.PhononListener;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.phonon.utils.JmeEnvToSndEnv;
 import com.jme3.system.NativeLibraryLoader;
@@ -57,7 +58,7 @@ public class PhononRenderer implements AudioRenderer {
 
 	// Mixer lines
 	private final PhononOutputLine[] OUTPUT_LINES;
-	private final PhononPlayer[] PLAYERS;
+	private final PhononSoundPlayer[] PLAYERS;
 
 	// Output channels, 1=mono, 2=stereo ..
 	private final int OUTPUT_CHANNELS_NUM;
@@ -80,26 +81,31 @@ public class PhononRenderer implements AudioRenderer {
 
 	boolean SIMULATE_LOAD = false;
 
-	public PhononRenderer(int sampleRate, int nOutputLines, int nSourcesPerLine,
-			int nOutputChannels, int frameSize, int bufferSize, int outputSampleSize,
-			int maxPrebufferingS, ThreadMode threadMode, PhononSettings settings)
-			throws LineUnavailableException {
-		SAMPLE_RATE = sampleRate;
-		OUTPUT_LINES = new PhononOutputLine[nOutputLines];
-		SOURCES_PER_OUTPUT_LINE = nSourcesPerLine;
-		OUTPUT_CHANNELS_NUM = nOutputChannels;
-		FRAME_SIZE = frameSize;
-		BUFFER_SIZE = bufferSize;
-		MAX_PLAYER_PREBUFFERING = maxPrebufferingS;
-		THREAD_MODE = threadMode;
+
+	private final PhononSoundSystem SOUND_SYSTEM;
+	private final PhononSoundDevice SOUND_DEVICE;
+
+	public PhononRenderer( PhononSettings settings)
+			throws Exception{
+		SOUND_SYSTEM=settings.system;
+		SOUND_DEVICE=settings.device;
+		SAMPLE_RATE = settings.sampleRate;
+		OUTPUT_LINES = new PhononOutputLine[settings.nOutputLines];
+		SOURCES_PER_OUTPUT_LINE = settings.nSourcesPerLine;
+		OUTPUT_CHANNELS_NUM = settings.nOutputChannels;
+		FRAME_SIZE = settings.frameSize;
+		BUFFER_SIZE = settings.bufferSize;
+		MAX_PLAYER_PREBUFFERING = settings.maxPreBuffering;
+		THREAD_MODE=settings.threadMode;
+		
+		OUTPUT_SAMPLE_SIZE = settings.outputSampleSize;
 
 		PHONON_LISTENER = new PhononListener();
 		PHONON_ASDATA_MANAGER =
-				new PhononAudioSourcesDataManager(nOutputLines, nSourcesPerLine);
+				new PhononAudioSourcesDataManager(settings.nOutputLines, settings.nSourcesPerLine);
 		
 	
-		PLAYERS = new PhononPlayer[nOutputLines];
-		OUTPUT_SAMPLE_SIZE = outputSampleSize;
+		PLAYERS = new PhononSoundPlayer[settings.nOutputLines];
 
 		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
@@ -115,7 +121,8 @@ public class PhononRenderer implements AudioRenderer {
 			OUTPUT_LINES[i] = new PhononOutputLine(FRAME_SIZE, OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
 			initLineNative(i, OUTPUT_LINES[i].getAddress());
 			if (settings.initPlayers) {
-				PLAYERS[i] = new PhononPlayer(OUTPUT_LINES[i], SAMPLE_RATE, OUTPUT_CHANNELS_NUM,
+				PLAYERS[i]=SOUND_SYSTEM.newPlayer();
+				PLAYERS[i].init(SOUND_SYSTEM,SOUND_DEVICE,OUTPUT_LINES[i], SAMPLE_RATE, OUTPUT_CHANNELS_NUM,
 						OUTPUT_SAMPLE_SIZE, MAX_PLAYER_PREBUFFERING);
 			}
 		}
@@ -144,7 +151,7 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void cleanup() {
-		for (PhononPlayer p : PLAYERS) {
+		for (PhononSoundPlayer p:PLAYERS){
 			p.close();
 		}
 		destroyNative();
@@ -238,8 +245,8 @@ public class PhononRenderer implements AudioRenderer {
 				} catch (Exception e) {
 				}
 			}
-			for (PhononPlayer player : PLAYERS) {
-				byte res = player.playLoop();
+			for (PhononSoundPlayer player:PLAYERS){
+				byte res = player.loop();
 			}
 
 

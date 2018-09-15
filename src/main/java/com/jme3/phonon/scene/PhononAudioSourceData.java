@@ -1,4 +1,4 @@
-package com.jme3.phonon;
+package com.jme3.phonon.scene;
 
 import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.*;
 import static com.jme3.phonon.Phonon.*;
@@ -8,9 +8,11 @@ import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.AudioSource.Status;
 import com.jme3.math.Vector3f;
-import com.jme3.phonon.mt.VByte;
-import com.jme3.phonon.mt.VFloat;
-import com.jme3.phonon.mt.VVector3f;
+import com.jme3.phonon.Phonon;
+import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.types.VByte;
+import com.jme3.phonon.types.VFloat;
+import com.jme3.phonon.types.VVector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 

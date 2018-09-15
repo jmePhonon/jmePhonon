@@ -1,4 +1,4 @@
-package com.jme3.phonon.player;
+package com.jme3.phonon.utils;
 
 import java.io.EOFException;
 import java.io.IOException;

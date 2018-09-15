@@ -3,6 +3,9 @@ package com.jme3.phonon;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import javax.sound.sampled.LineUnavailableException;
+
+import com.jme3.phonon.desktop_javasound.JavaSoundPhononSettings;
+
 import org.junit.Test;
 
 import junit.framework.TestCase;
@@ -12,7 +15,7 @@ public class TestJNI extends TestCase {
 
 
     @Test
-    public void testJNIPassthrough () throws LineUnavailableException {
+    public void testJNIPassthrough () throws Exception {
 
         int bufferSize = 800;
         int frameSize = 1024;
@@ -21,12 +24,17 @@ public class TestJNI extends TestCase {
         for (int i = 0; i < frameSize*bufferSize; i++) {
             bbf.putFloat((float) Math.random());
         }
-        PhononSettings effects = new PhononSettings();
-        effects.passThrough = true;
-        effects.initPlayers = false;
-        PhononRenderer renderer =
-                new PhononRenderer(44100, 
-        1, 1,1, frameSize, bufferSize,16,1,ThreadMode.JAVA,effects);
+        JavaSoundPhononSettings settings = new JavaSoundPhononSettings();
+        settings.passThrough = true;
+        settings.initPlayers=false;
+        settings.outputSampleSize=16;
+        settings.bufferSize=bufferSize;
+        settings.frameSize=frameSize;
+        settings.nOutputLines=1;
+        settings.nSourcesPerLine=1;
+        settings.nOutputChannels=1;
+        
+        PhononRenderer renderer=Phonon.init(settings,null);
    
         
         // renderer.preInit();        

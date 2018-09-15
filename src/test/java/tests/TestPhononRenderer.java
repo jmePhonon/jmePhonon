@@ -20,11 +20,14 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
-import com.jme3.phonon.PhononAudioSourceData;
 import com.jme3.phonon.PhononRenderer;
 import com.jme3.phonon.PhononSettings;
+import com.jme3.phonon.PhononSoundDevice;
+import com.jme3.phonon.PhononSoundSystem;
 import com.jme3.phonon.Phonon;
 import com.jme3.phonon.ThreadMode;
+import com.jme3.phonon.desktop_javasound.JavaSoundPhononSettings;
+import com.jme3.phonon.desktop_javasound.JavaSoundSystem;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Geometry;
@@ -72,25 +75,14 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         this.inputManager.addMapping("DIRECTIONAL", new KeyTrigger(KeyInput.KEY_G));
         this.inputManager.addListener(this, "PAUSE", "DIRECTIONAL");
       
-        if (audioRenderer == null) {
-            double latency = ((double) 1000 / 44100) * frameSize * frameBuffer + maxPreBuffering;
-            System.out.println("Expected Latency " + latency);
-            PhononSettings effects = new PhononSettings();
-            effects.passThrough = false;
-            try {
-                audioRenderer = new PhononRenderer(44100, outputLines, 16, channels, frameSize,
-                        frameBuffer, 24, maxPreBuffering, ThreadMode.JAVA, effects);
-            } catch (Exception e1) {
-                e1.printStackTrace();
-            }
 
-            audioRenderer.initialize();
-
-            AudioContext.setAudioRenderer(audioRenderer);
-            listener = new Listener();
-            listener.setRenderer(audioRenderer);
-            listener.setVolume(1);
-            audioRenderer.setListener(listener);
+        try{
+            JavaSoundPhononSettings settings=new JavaSoundPhononSettings();
+            Phonon.init(settings,this);
+        }catch(Exception e){
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            System.exit(1);
         }
 
         // Generic env

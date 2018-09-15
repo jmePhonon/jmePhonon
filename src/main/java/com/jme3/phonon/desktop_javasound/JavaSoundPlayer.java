@@ -1,4 +1,4 @@
-package com.jme3.phonon.player;
+package com.jme3.phonon.desktop_javasound;
 
 import java.io.EOFException;
 import java.io.InputStream;
@@ -6,15 +6,20 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.BooleanControl;
 import javax.sound.sampled.Control;
+import javax.sound.sampled.DataLine;
 import javax.sound.sampled.EnumControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.ReverbType;
 import javax.sound.sampled.SourceDataLine;
 import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.PhononSoundDevice;
+import com.jme3.phonon.PhononSoundPlayer;
+import com.jme3.phonon.PhononSoundSystem;
 import com.jme3.phonon.PhononOutputLine.ChannelStatus;
 import com.jme3.phonon.utils.BitUtils;
+import com.jme3.phonon.utils.PhononOutputLineIntInputStream;
 
-public class PhononPlayer {
+class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevice>{
 
 
 
@@ -26,8 +31,15 @@ public class PhononPlayer {
 
     boolean isRunning;
     byte tmp[];
-    public PhononPlayer(PhononOutputLine chan, int sampleRate,
-            int outputChannels,int outputSampleSize,int maxPreBufferingSamples) throws LineUnavailableException {
+
+
+    @Override
+    public void init(
+        JavaSoundSystem system,
+        JavaSoundDevice device,
+    
+    PhononOutputLine chan, int sampleRate,
+            int outputChannels,int outputSampleSize,int maxPreBufferingSamples) throws Exception {
         channel = chan;
 
         int bytesPerSample = (outputSampleSize / 8);
@@ -35,8 +47,9 @@ public class PhononPlayer {
         input = new PhononOutputLineIntInputStream(channel, outputSampleSize);
         preloadBytes = maxPreBufferingSamples * bytesPerSample;
 
-        audioFormat = new AudioFormat(sampleRate, outputSampleSize, outputChannels, true, false);
-        output = AudioSystem.getSourceDataLine(audioFormat);  
+        audioFormat=new AudioFormat(sampleRate,outputSampleSize,outputChannels,true,false);
+        DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+        output=(SourceDataLine)device.getMixer().getLine(info);
         output.open(audioFormat, preloadBytes);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
      
 
@@ -48,7 +61,8 @@ public class PhononPlayer {
         output.close();
     }
 
-    public byte playLoop() {
+    @Override
+    public byte loop() {
 
      
        

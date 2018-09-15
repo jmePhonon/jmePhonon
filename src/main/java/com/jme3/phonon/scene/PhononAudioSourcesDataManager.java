@@ -1,6 +1,7 @@
-package com.jme3.phonon;
+package com.jme3.phonon.scene;
 
 import com.jme3.audio.AudioSource;
+import com.jme3.phonon.PhononOutputLine;
 
 public class PhononAudioSourcesDataManager {
     private final PhononAudioSourceData[] DATA;

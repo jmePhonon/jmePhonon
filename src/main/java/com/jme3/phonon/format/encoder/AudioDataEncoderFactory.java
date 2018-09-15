@@ -19,7 +19,9 @@ public class AudioDataEncoderFactory {
                 return new Int16AudioDataEncoder();
             case 24:
                 return new Int24AudioDataEncoder();
+         
             default:
+                System.err.println("Unknown sample size: "+bitsPerSample);
                 return null;
         }
     }
