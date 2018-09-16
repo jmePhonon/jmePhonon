@@ -112,6 +112,7 @@ public class PhononRenderer implements AudioRenderer {
 
 	private Listener jmeListener;
 
+	private volatile boolean UPDATE_FLAG;
 	private Thread decoderThread;
 	final ThreadMode THREAD_MODE;
 
@@ -170,6 +171,7 @@ public class PhononRenderer implements AudioRenderer {
 			decoderThread.setName("Phonon Java Thread");
 			decoderThread.setPriority(Thread.MAX_PRIORITY);
 			decoderThread.setDaemon(true);
+			UPDATE_FLAG = true;
 			decoderThread.start();
 		}
 
@@ -182,7 +184,15 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void cleanup() {
-		decoderThread.stop();
+		UPDATE_FLAG = false;	
+		
+		do {
+			try {
+				Thread.sleep(1);
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		} while(decoderThread.isAlive());
 
 		for(PhononSoundPlayer p:PLAYERS){
 			p.close();
@@ -316,12 +326,7 @@ public class PhononRenderer implements AudioRenderer {
 			for (PhononSoundPlayer player:PLAYERS){
 				byte res = player.loop();
 			}
-
-
-
-		} while (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled);
-
-
+		} while ((!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) && UPDATE_FLAG);
 	}
 
 
