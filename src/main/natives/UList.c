@@ -77,11 +77,14 @@ jboolean ulistIsTail(struct UList* uList, struct UListNode* node) {
 
 void ulistDestroy(struct UList* uList) {
     ulistDestroyNode(uList->head);
-    ulistDestroyNode(uList->tail);
 
     free(uList);
 }
 
 void ulistDestroyNode(struct UListNode* node) {
+    if(node->next != NULL) {
+        ulistDestroyNode(node->next);
+    }
+
     free(node);
 }
