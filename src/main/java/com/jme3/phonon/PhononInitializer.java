@@ -40,6 +40,7 @@ import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.Listener;
 
+
 /**
  * This class is used INTERNALLY to initialize phonon components.
  * 
@@ -61,15 +62,16 @@ class PhononInitializer {
      */
 
     public static PhononRenderer initInApplication(PhononSettings settings, Application app) throws Exception {
+        if(app!=null){
+            if(app.getAudioRenderer()!=null) app.getAudioRenderer().cleanup();
+        }
         initWithBestSettings(settings);
 
         PhononRenderer phononRenderer = createPhononRenderer(settings);
         Listener listener = createListener(phononRenderer);
 
         if(app != null && app instanceof LegacyApplication) {
-            if(app.getAudioRenderer() != null)
-                app.getAudioRenderer().cleanup();
-
+           
             forceFieldsReplace((LegacyApplication)app, phononRenderer, listener);          
         }
 
@@ -83,13 +85,29 @@ class PhononInitializer {
             throw new Exception("No system found in settings");
         }
 
-        if(settings.device == null){
-            settings.device = settings.system.getAudioDevices().get(0);
-        }
+        List<PhononSoundDevice> devices= settings.system.getAudioDevices();
+        int lastTriedDevice=0;
 
-        if(settings.outputSampleSize == -1){
-            List<Integer> formats = settings.system.getOutputFormats(settings.device,settings.nOutputChannels);
-            settings.outputSampleSize = formats.get(0);
+        boolean ready=false;
+        do{
+            PhononSoundDevice device=settings.device;
+            if(device==null){
+                device=devices.get(lastTriedDevice++);
+            }
+            
+            List<Integer> formats = settings.system.getOutputFormats(device,settings.nOutputChannels);
+            if(formats.size()>0){
+                // If format unset or not available, pick the best one available
+                if(settings.outputSampleSize==-1||(!formats.contains(settings.outputSampleSize))){
+                    settings.outputSampleSize=formats.get(0);
+                }
+                settings.device=device;
+                ready=true;
+            }
+       
+        }while((!ready)&&settings.device==null&&lastTriedDevice<devices.size());
+        if(!ready){
+            throw new Exception("Error initializing output device.");
         }
     }
    

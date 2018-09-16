@@ -52,7 +52,12 @@ import com.jme3.phonon.PhononSoundSystem;
 public class JavaSoundSystem implements PhononSoundSystem {
 
     @Override
-    public  List<Integer> getOutputFormats(PhononSoundDevice device,int nchannels) {
+    public List<Integer> getOutputFormats(PhononSoundDevice device, int nchannels) {
+        return getOutputFormats(device,nchannels,false);
+
+    }
+
+    public  List<Integer> getOutputFormats(PhononSoundDevice device,int nchannels,boolean debugPrint) {
         Line.Info lineInfo = new Line.Info(SourceDataLine.class);
          Mixer mixer=null;
          for(Mixer.Info mixInfo:AudioSystem.getMixerInfo()){
@@ -62,30 +67,47 @@ public class JavaSoundSystem implements PhononSoundSystem {
                  break;
              }
          }
-         if(mixer==null){
-             //exception
-         }
+        if(mixer==null){
+            //exception
+        }
          ArrayList<Integer> formats=new ArrayList<Integer>();
  
          try {
              SourceDataLine ln=(SourceDataLine)mixer.getLine(lineInfo);
              SourceDataLine.Info lnf=(SourceDataLine.Info)ln.getLineInfo();
-             for(AudioFormat f:lnf.getFormats()){
-                 if(f.getEncoding()!=Encoding.PCM_SIGNED) continue;
-                 if(f.getChannels()!=nchannels) continue;
-                 if(f.isBigEndian()) continue;
+            for(AudioFormat f:lnf.getFormats()){
+                if(debugPrint) System.out.println(f);
+                if(f.getEncoding()!=Encoding.PCM_SIGNED){
+                    if(debugPrint) System.out.println("Skip, wrong encoding");
+                    continue;
+                }
+                if(f.getChannels()!=nchannels){
+                    if(debugPrint) System.out.println("Skip, wrong channels "+nchannels+" =/= "+f.getChannels());
+                    continue;
+                }
+                if(f.isBigEndian()){
+                    if(debugPrint) System.out.println("Skip, wrong endianess");
+                    continue;
+                }
 
                  int sampleSize=f.getSampleSizeInBits();
-                 if(sampleSize>24) continue;   
+                if(sampleSize>24){
+                    if(debugPrint) System.out.println("Skip, wrong sample size");
+                    continue;
+                }
 
                  // if(f.getSampleSizeInBits()!=sampleSize) continue;
-                 System.out.println("? "+f);
-                 if(f.getFrameSize()!=(sampleSize/8)*nchannels) continue;
+                //  System.out.println("? "+f);
+                if(f.getFrameSize()!=(sampleSize/8)*nchannels){
+                    if(debugPrint) System.out.println("Skip, wrong framesize "+f.getFrameSize()+"=/="+((sampleSize/8)*nchannels));
+
+                    continue;
+                }
                  formats.add(sampleSize);
              }
  
          }catch(Exception e){
- 
+            e.printStackTrace();
          }
  
          if(formats.size()==0){
