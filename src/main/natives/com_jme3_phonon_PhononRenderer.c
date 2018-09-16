@@ -102,149 +102,163 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setEnvironmentNative(
     #endif
 }
 
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
-    for (jint i = 0; i < SETTINGS.nOutputLines; i++) {
-        struct OutputLine *line = &OUTPUT_LINES[i];
-        if (!olIsInitialized(&SETTINGS, line))
-            continue;
 
+JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_createStaticMeshNative
+  (JNIEnv *env, jobject obj, jint nTris, jint nVerts, jlong tris, jlong verts, jlong mat){
+    jint *trisb=(jint *)(intptr_t)tris;
+    jfloat *vertsb=(jfloat *)(intptr_t)verts;
+    jint *matb=(jint *)(intptr_t)mat;
+    
+    return (intptr_t)phCreateStaticMesh(&SETTINGS, nTris, nVerts, trisb, vertsb, matb);
 
-        jint frameIndex = olGetLastProcessedFrameId(&SETTINGS,line);
-        jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS,line);
-        jint lineBufferSize = SETTINGS.bufferSize;
+  }
 
+  JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyStaticMeshNative
+  (JNIEnv *env, jobject obj, jlong mesh){
+      void *meshp=(void*)(intptr_t)mesh;
+phDestroyStaticMesh(&SETTINGS, meshp);
+  }
 
-        // Processing is too fast, skip.
-        if(frameIndex-lastPlayedFrameIndex>SETTINGS.bufferSize-1){
-            continue;
-        }
+  JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_saveSceneAsObjNative
+  (JNIEnv *env, jobject obj, jlong addr, jbyteArray pathArray){
+      jbyte *path=  (*env)->GetByteArrayElements(env, pathArray, 0); 
 
+      void *meshp=(void*)(intptr_t)addr;
+      phSaveStaticMeshAsObj(&SETTINGS,meshp, path);
+  }
 
- 
-        struct UList* uList = line->uList;
-        struct UListNode* uNode = uList->head->next;
-        jfloat *inFrame;
-        jfloat *outFrame;
-        
+  JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
+      for (jint i = 0; i < SETTINGS.nOutputLines; i++) {
+          struct OutputLine *line = &OUTPUT_LINES[i];
+          if (!olIsInitialized(&SETTINGS, line))
+              continue;
 
-        jint mixerQueueSize = 0;
-        #ifdef INCLUDE_SIMPLE_REVERB
-            jint reverbMixerQueueSize = 0;
-        #endif
+          jint frameIndex = olGetLastProcessedFrameId(&SETTINGS, line);
+          jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS, line);
+          jint lineBufferSize = SETTINGS.bufferSize;
 
-        while (!ulistIsTail(uList, uNode)) {
-            struct AudioSource *audioSource = uNode->audioSource;
-            jboolean isPaused=asHasFlag(&SETTINGS,audioSource,PAUSED);
-            if(!isPaused){
+          // Processing is too fast, skip.
+          if (frameIndex - lastPlayedFrameIndex > SETTINGS.bufferSize - 1) {
+              continue;
+          }
 
-                jboolean loop = asHasFlag(&SETTINGS,audioSource,LOOP);
-                jint nchannels = asGetNumChannels(&SETTINGS,audioSource);
+          struct UList *uList = line->uList;
+          struct UListNode *uNode = uList->head->next;
+          jfloat *inFrame;
+          jfloat *outFrame;
 
-                inFrame = nchannels==1?Temp.monoFrame1:Temp.frame1;
+          jint mixerQueueSize = 0;
+#ifdef INCLUDE_SIMPLE_REVERB
+          jint reverbMixerQueueSize = 0;
+#endif
 
+          while (!ulistIsTail(uList, uNode)) {
+              struct AudioSource *audioSource = uNode->audioSource;
+              jboolean isPaused = asHasFlag(&SETTINGS, audioSource, PAUSED);
+              if (!isPaused) {
 
-                if (asReadNextFrame(&SETTINGS, audioSource,inFrame)) {
-                    // Reached end
-                    if (!loop) {
-                        asSetStopAt(&SETTINGS, audioSource,frameIndex);
-                        ulistRemove(uNode);
-                    }
-                }                
-                jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
-                jboolean hasReverb = asHasFlag(&SETTINGS,audioSource,REVERB);
-        
- 
-                if (SETTINGS.isPassthrough || !isPositional) {
-                    passThrough(&SETTINGS, inFrame, 
-                    #ifdef INCLUDE_SIMPLE_REVERB
-                        ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
-                    #else
-                        Temp.mixerQueue[mixerQueueSize++]
-                    #endif
-                    , nchannels);
-                } else {
-                    //Positional source is always mono
-                    phProcessFrame(&SETTINGS, GLOBAL_LISTENER,audioSource, inFrame,
-                    #ifdef INCLUDE_SIMPLE_REVERB
-                        ((isPositional && hasReverb) ?Temp.reverbMixerQueue[reverbMixerQueueSize++]:Temp.mixerQueue[mixerQueueSize++])
-                    #else
-                        Temp.mixerQueue[mixerQueueSize++]
-                    #endif                
-                    );
-                }
-            }
-           
+                  jboolean loop = asHasFlag(&SETTINGS, audioSource, LOOP);
+                  jint nchannels = asGetNumChannels(&SETTINGS, audioSource);
 
-            uNode = uNode->next;
-        }  
-        
-        if(mixerQueueSize==1){
-            outFrame = Temp.mixerQueue[0];
-        } else {
-            outFrame = Temp.frame1;
-            if(SETTINGS.isPassthrough){
-                passThroughMixer(&SETTINGS,Temp.mixerQueue,mixerQueueSize, outFrame);
-            }else{
-                phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize , outFrame);
-            }
-        }          
-           
-        // At this point outFrame points to the mixed output (that can be stored either in Temp.frame1 or Temp.mixerQueue[0])
-        #ifdef INCLUDE_SIMPLE_REVERB 
-            // We need to mix the simple reverb queue to the outFrame
+                  inFrame = nchannels == 1 ? Temp.monoFrame1 : Temp.frame1;
 
-            if (reverbMixerQueueSize > 0){ // only if there is something to mix...               
-                // We will store the mixed result of reverbMixerQueue in Temp.frame2.
-                if (SETTINGS.isPassthrough) {
-                    passThroughMixer(&SETTINGS, Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.frame2);
-                }else{
-                    phMixOutputBuffers(Temp.reverbMixerQueue, reverbMixerQueueSize , Temp.frame2);
-                }
+                  if (asReadNextFrame(&SETTINGS, audioSource, inFrame)) {
+                      // Reached end
+                      if (!loop) {
+                          asSetStopAt(&SETTINGS, audioSource, frameIndex);
+                          ulistRemove(uNode);
+                      }
+                  }
+                  jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
+                  jboolean hasReverb = asHasFlag(&SETTINGS, audioSource, REVERB);
 
-                // Now Temp.frame2 contains the mixed reverb queue.
+                  if (SETTINGS.isPassthrough || !isPositional) {
+                      passThrough(&SETTINGS, inFrame,
+#ifdef INCLUDE_SIMPLE_REVERB
+                                  ((isPositional && hasReverb) ? Temp.reverbMixerQueue[reverbMixerQueueSize++] : Temp.mixerQueue[mixerQueueSize++])
+#else
+                                  Temp.mixerQueue[mixerQueueSize++]
+#endif
+                                      ,
+                                  nchannels);
+                  } else {
+                      //Positional source is always mono
+                      phProcessFrame(&SETTINGS, GLOBAL_LISTENER, audioSource, inFrame,
+#ifdef INCLUDE_SIMPLE_REVERB
+                                     ((isPositional && hasReverb) ? Temp.reverbMixerQueue[reverbMixerQueueSize++] : Temp.mixerQueue[mixerQueueSize++])
+#else
+                                     Temp.mixerQueue[mixerQueueSize++]
+#endif
+                      );
+                  }
+              }
 
-                // For the next step we'll need to reuse the first three slots of the reverMixerQueue
-                // The first two slots may be changed to point somewhere else, so we store here their actual addresses
-                // to revert them back later
-                jfloat *mixerQueue0 = Temp.reverbMixerQueue[0];
-                jfloat *mixerQueue1 = Temp.reverbMixerQueue[1];
-                   
-                if(srHasValidEnvironment(&SETTINGS)){ // if reverb is enabled
-                    srApplyReverb(&SETTINGS,Temp.frame2, Temp.reverbMixerQueue[0]);//we apply the reverb on the mixed result ( Temp.frame2) and we store the result on Temp.reverbMixerQueue[0]
-                }else{ // if reverb is disabled,we will just make the first slot of the reverbMixerQueue point to Temp.frame2
-                    Temp.reverbMixerQueue[0] = Temp.frame2; // thats why we saved the addr before.
-                }
-                Temp.reverbMixerQueue[1] = outFrame; // We make the second slot of reverbMixerQueue point to
-                                                     // outFrame (that can be either a pointer to Temp.frame1 or a pointer to Temp.mixerQueue[0])
-                                                    // thats why we saved the addr before...
+              uNode = uNode->next;
+          }
 
-                // Now we'll mix the first two slots of the reverbMixerQueue and we'll save the result on the third slot of reverbMixerQueue 
-                reverbMixerQueueSize = 2; // we need to mix only the first 2 slots
+          if (mixerQueueSize == 1) {
+              outFrame = Temp.mixerQueue[0];
+          } else {
+              outFrame = Temp.frame1;
+              if (SETTINGS.isPassthrough) {
+                  passThroughMixer(&SETTINGS, Temp.mixerQueue, mixerQueueSize, outFrame);
+              } else {
+                  phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize, outFrame);
+              }
+          }
 
-                if (SETTINGS.isPassthrough) {
-                    passThroughMixer(&SETTINGS, Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.reverbMixerQueue[2]);
-                }else{
-                    phMixOutputBuffers(Temp.reverbMixerQueue, reverbMixerQueueSize , Temp.reverbMixerQueue[2]);
-                }
+  // At this point outFrame points to the mixed output (that can be stored either in Temp.frame1 or Temp.mixerQueue[0])
+#ifdef INCLUDE_SIMPLE_REVERB
+          // We need to mix the simple reverb queue to the outFrame
 
-                // The final outFrame is Temp.reverbMixerQueue[2]
-                outFrame = Temp.reverbMixerQueue[2];
+          if (reverbMixerQueueSize > 0) { // only if there is something to mix...
+              // We will store the mixed result of reverbMixerQueue in Temp.frame2.
+              if (SETTINGS.isPassthrough) {
+                  passThroughMixer(&SETTINGS, Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.frame2);
+              } else {
+                  phMixOutputBuffers(Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.frame2);
+              }
 
-                // we also need to revert reverbMixerQueue [0] and [1]  to their original addresses
-                Temp.reverbMixerQueue[0] = mixerQueue0;
-                Temp.reverbMixerQueue[1] = mixerQueue1;
-                
-            }
-        #endif
- 
+              // Now Temp.frame2 contains the mixed reverb queue.
 
+              // For the next step we'll need to reuse the first three slots of the reverMixerQueue
+              // The first two slots may be changed to point somewhere else, so we store here their actual addresses
+              // to revert them back later
+              jfloat *mixerQueue0 = Temp.reverbMixerQueue[0];
+              jfloat *mixerQueue1 = Temp.reverbMixerQueue[1];
 
-       
-        jfloat *masterVolume = lsGetVolume(&SETTINGS,GLOBAL_LISTENER);
+              if (srHasValidEnvironment(&SETTINGS)) {                              // if reverb is enabled
+                  srApplyReverb(&SETTINGS, Temp.frame2, Temp.reverbMixerQueue[0]); //we apply the reverb on the mixed result ( Temp.frame2) and we store the result on Temp.reverbMixerQueue[0]
+              } else {                                                             // if reverb is disabled,we will just make the first slot of the reverbMixerQueue point to Temp.frame2
+                  Temp.reverbMixerQueue[0] = Temp.frame2;                          // thats why we saved the addr before.
+              }
+              Temp.reverbMixerQueue[1] = outFrame; // We make the second slot of reverbMixerQueue point to
+                                                   // outFrame (that can be either a pointer to Temp.frame1 or a pointer to Temp.mixerQueue[0])
+                                                   // thats why we saved the addr before...
 
-        olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
-        olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
-    }
+              // Now we'll mix the first two slots of the reverbMixerQueue and we'll save the result on the third slot of reverbMixerQueue
+              reverbMixerQueueSize = 2; // we need to mix only the first 2 slots
+
+              if (SETTINGS.isPassthrough) {
+                  passThroughMixer(&SETTINGS, Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.reverbMixerQueue[2]);
+              } else {
+                  phMixOutputBuffers(Temp.reverbMixerQueue, reverbMixerQueueSize, Temp.reverbMixerQueue[2]);
+              }
+
+              // The final outFrame is Temp.reverbMixerQueue[2]
+              outFrame = Temp.reverbMixerQueue[2];
+
+              // we also need to revert reverbMixerQueue [0] and [1]  to their original addresses
+              Temp.reverbMixerQueue[0] = mixerQueue0;
+              Temp.reverbMixerQueue[1] = mixerQueue1;
+          }
+#endif
+
+          jfloat *masterVolume = lsGetVolume(&SETTINGS, GLOBAL_LISTENER);
+
+          olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
+          olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+      }
 }
 
 

@@ -69,7 +69,27 @@
 
 
 
+void* phCreateStaticMesh(struct GlobalSettings *settings,jint numTriangles,
+    jint numVertices,jint* indexBuffer,jfloat* vertexBuffer, jint* materials){
+    IPLhandle mesh;
+    iplCreateStaticMesh(PhSharedContext.scene,
+                        (IPLint32)numVertices,
+                       (IPLint32) numTriangles,
+                        (IPLVector3*)vertexBuffer,
+                        (IPLTriangle*)indexBuffer,
+                        (IPLint32*)materials,
+                        &mesh);
+    return mesh;
+}
 
+void phDestroyStaticMesh(struct GlobalSettings *settings,void* mesh){
+    iplDestroyStaticMesh(mesh);
+}
+
+void phSaveStaticMeshAsObj(struct GlobalSettings *settings, void*mesh,jbyte* path){
+    iplSaveSceneAsObj(PhSharedContext.scene,(IPLstring) path);
+    printf("Save scene in %s\n", path);
+}
 
 void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
     PhSharedContext.scene = NULL;
@@ -175,7 +195,7 @@ void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *aud
     context->directSoundEffectOptions.applyDistanceAttenuation = true;
     context->directSoundEffectOptions.applyAirAbsorption = true;
     context->directSoundEffectOptions.applyDirectivity = true;
-    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_NONE;
+    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_NOTRANSMISSION;
 
     // Direct sound
     iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer, 
@@ -240,7 +260,7 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                                                     (*listenerUp),
                                                     source,
                                                     sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
-                                                    IPL_DIRECTOCCLUSION_NONE,
+                                                    IPL_DIRECTOCCLUSION_NOTRANSMISSION,
                                                     IPL_DIRECTOCCLUSION_RAYCAST);
 
     //  path.distanceAttenuation *= 1.9;

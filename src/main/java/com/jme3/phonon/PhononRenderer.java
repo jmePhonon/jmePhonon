@@ -31,7 +31,9 @@
 */
 package com.jme3.phonon;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -50,8 +52,10 @@ import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.phonon.scene.PhononAudioSourcesDataManager;
 import com.jme3.phonon.scene.PhononListener;
+import com.jme3.phonon.scene.PhononMesh;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.phonon.utils.JmeEnvToSndEnv;
+import com.jme3.scene.Node;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
 
@@ -120,44 +124,39 @@ public class PhononRenderer implements AudioRenderer {
 			throws Exception{
 		SOUND_SYSTEM=settings.system;
 		SOUND_DEVICE=settings.device;
-		SAMPLE_RATE = settings.sampleRate;
-		OUTPUT_LINES = new PhononOutputLine[settings.nOutputLines];
-		SOURCES_PER_OUTPUT_LINE = settings.nSourcesPerLine;
-		OUTPUT_CHANNELS_NUM = settings.nOutputChannels;
-		FRAME_SIZE = settings.frameSize;
-		BUFFER_SIZE = settings.bufferSize;
-		MAX_PLAYER_PREBUFFERING = settings.maxPreBuffering;
+		SAMPLE_RATE=settings.sampleRate;
+		OUTPUT_LINES=new PhononOutputLine[settings.nOutputLines];
+		SOURCES_PER_OUTPUT_LINE=settings.nSourcesPerLine;
+		OUTPUT_CHANNELS_NUM=settings.nOutputChannels;
+		FRAME_SIZE=settings.frameSize;
+		BUFFER_SIZE=settings.bufferSize;
+		MAX_PLAYER_PREBUFFERING=settings.maxPreBuffering;
 		THREAD_MODE=settings.threadMode;
-		
-		OUTPUT_SAMPLE_SIZE = settings.outputSampleSize;
 
-		PHONON_LISTENER = new PhononListener();
-		PHONON_ASDATA_MANAGER =
-				new PhononAudioSourcesDataManager(settings.nOutputLines, settings.nSourcesPerLine);
-		
-	
-		PLAYERS = new PhononSoundPlayer[settings.nOutputLines];
+		OUTPUT_SAMPLE_SIZE=settings.outputSampleSize;
 
-		NativeLibraryLoader.loadNativeLibrary("Phonon", true);
-		NativeLibraryLoader.loadNativeLibrary("JMEPhonon", true);
+		PHONON_LISTENER=new PhononListener();
+		PHONON_ASDATA_MANAGER=new PhononAudioSourcesDataManager(settings.nOutputLines,settings.nSourcesPerLine);
+
+		PLAYERS=new PhononSoundPlayer[settings.nOutputLines];
+
+		NativeLibraryLoader.loadNativeLibrary("Phonon",true);
+		NativeLibraryLoader.loadNativeLibrary("JMEPhonon",true);
 		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
-		initNative(SAMPLE_RATE, OUTPUT_LINES.length, SOURCES_PER_OUTPUT_LINE, OUTPUT_CHANNELS_NUM,
-				FRAME_SIZE, BUFFER_SIZE, THREAD_MODE.isNative, THREAD_MODE.isDecoupled,
-				PHONON_LISTENER.getAddress(),
-				PHONON_ASDATA_MANAGER.memoryAddresses(),
+		initNative(SAMPLE_RATE,OUTPUT_LINES.length,SOURCES_PER_OUTPUT_LINE,OUTPUT_CHANNELS_NUM,FRAME_SIZE,BUFFER_SIZE,THREAD_MODE.isNative,THREAD_MODE.isDecoupled,PHONON_LISTENER.getAddress(),PHONON_ASDATA_MANAGER.memoryAddresses(),
 				// Effects
 				settings.passThrough);
 
-		for (int i = 0; i < OUTPUT_LINES.length; i++) {
-			OUTPUT_LINES[i] = new PhononOutputLine(FRAME_SIZE, OUTPUT_CHANNELS_NUM, BUFFER_SIZE);
-			initLineNative(i, OUTPUT_LINES[i].getAddress());
-			if (settings.initPlayers) {
+		for(int i=0;i<OUTPUT_LINES.length;i++){
+			OUTPUT_LINES[i]=new PhononOutputLine(FRAME_SIZE,OUTPUT_CHANNELS_NUM,BUFFER_SIZE);
+			initLineNative(i,OUTPUT_LINES[i].getAddress());
+			if(settings.initPlayers){
 				PLAYERS[i]=SOUND_SYSTEM.newPlayer();
-				PLAYERS[i].init(SOUND_SYSTEM,SOUND_DEVICE,OUTPUT_LINES[i], SAMPLE_RATE, OUTPUT_CHANNELS_NUM,
-						OUTPUT_SAMPLE_SIZE, MAX_PLAYER_PREBUFFERING);
+				PLAYERS[i].init(SOUND_SYSTEM,SOUND_DEVICE,OUTPUT_LINES[i],SAMPLE_RATE,OUTPUT_CHANNELS_NUM,OUTPUT_SAMPLE_SIZE,MAX_PLAYER_PREBUFFERING);
 			}
 		}
 	}
+	
 
 	public PhononOutputLine getLine(int i) {
 		return OUTPUT_LINES[i];
@@ -182,10 +181,11 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void cleanup() {
-		for (PhononSoundPlayer p:PLAYERS){
+		for(PhononSoundPlayer p:PLAYERS){
 			p.close();
 		}
-		destroyNative();
+		unsetScene();
+		destroyNative();	
 	}
 
 	native void setEnvironmentNative(float[] envdata);
@@ -226,6 +226,12 @@ public class PhononRenderer implements AudioRenderer {
 	native void destroyNative();
 
 
+	native long createStaticMeshNative(int nTris,int nVerts,long tris,long vert,long mats);
+	native void destroyStaticMeshNative(long sceneAddr);
+
+	native void saveSceneAsObjNative(long sceneAddr,byte[] fileBaseName);
+
+
 
 	public int connectSource(F32leAudioData audioData) {
 		System.out.println("Connect source [" + audioData.getAddress() + "] of size "
@@ -245,6 +251,33 @@ public class PhononRenderer implements AudioRenderer {
 	public void disconnectSourceRaw(long addr) {
 		disconnectSourceNative(addr);
 	}
+
+	PhononMesh currentScene;
+
+	public void setScene(PhononMesh mesh) {
+		if(currentScene!=null){
+			unsetScene();
+		}
+		currentScene=mesh;
+		mesh.nativeAddr=createStaticMeshNative(mesh.numTriangles,
+				mesh.numVertices,
+				DirectBufferUtils.getAddr(mesh.indices),
+				DirectBufferUtils.getAddr(mesh.vertices),
+				DirectBufferUtils.getAddr(mesh.materials)
+		);
+	}
+
+	public void unsetScene() {
+		if(currentScene==null) return;
+		destroyStaticMeshNative(currentScene.nativeAddr);
+		currentScene=null;
+	}
+
+	public void saveSceneAsObj(String nativeFileBaseName) {
+		saveSceneAsObjNative(currentScene.nativeAddr,nativeFileBaseName.getBytes(Charset.forName("UTF-8")));
+	}
+	
+
 
 
 	// long UPDATE_RATE = 50* 1000000l;
