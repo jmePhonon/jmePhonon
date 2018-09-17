@@ -66,9 +66,6 @@ void ulistRemove(struct UListNode* node) {
     node->next->prev = node->prev;
 
     node->connected = false;
-
-    // node->next = NULL;
-    // node->prev = NULL;
 }
 
 jboolean ulistIsTail(struct UList* uList, struct UListNode* node) {
@@ -77,14 +74,11 @@ jboolean ulistIsTail(struct UList* uList, struct UListNode* node) {
 
 void ulistDestroy(struct UList* uList) {
     ulistDestroyNode(uList->head);
+    ulistDestroyNode(uList->tail);
 
     free(uList);
 }
 
 void ulistDestroyNode(struct UListNode* node) {
-    if(node->next != NULL) {
-        ulistDestroyNode(node->next);
-    }
-
     free(node);
 }
