@@ -116,6 +116,7 @@ public class PhononRenderer implements AudioRenderer {
 	final ThreadMode THREAD_MODE;
 
 
+	private volatile boolean playing=false;
 
 	private final PhononSoundSystem SOUND_SYSTEM;
 	private final PhononSoundDevice SOUND_DEVICE;
@@ -289,7 +290,7 @@ public class PhononRenderer implements AudioRenderer {
 	
 
 
-
+	
 	public void runDecoder() {
 		do {
 			if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
@@ -306,9 +307,10 @@ public class PhononRenderer implements AudioRenderer {
 			if (!THREAD_MODE.isNative)
 				updateNative();
 
-	
-			for (PhononSoundPlayer player:PLAYERS){
-				player.loop();
+			if(playing){
+				for(PhononSoundPlayer player:PLAYERS){
+					player.loop();
+				}
 			}
 
 
@@ -433,6 +435,7 @@ public class PhononRenderer implements AudioRenderer {
 	public void update(float tpf) {
 		PHONON_LISTENER.update(jmeListener);
 		PHONON_ASDATA_MANAGER.updateData();
+		playing=true;
 	}
 
 
