@@ -69,24 +69,21 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 	// private final List<PhononPlayer> enqueuedPlayers = new LinkedList<>();
 
 	static {
-		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux32,
-				"linux-x86/libphonon.so");
+	
 		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux64,
-				"linux-x86-64/libphonon.so");
-		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux32,
-				"linux-x86/libjmephonon.so");
+				"native/Linux/x86_64/libphonon.so");
 		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux64,
-				"linux-x86-64/libjmephonon.so");
+				"native/Linux/x86_64/libjmephonon.so");
 
-		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Windows32,
-				"windows-x86/phonon.dll");
 		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Windows64,
-				"windows-x86-64/phonon.dll");
-		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Windows32,
-				"windows-x86/jmephonon.dll");
+				"native/Windows/x86_64/phonon.dll");
 		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Windows64,
-				"windows-x86-64/jmephonon.dll");
+				"native/Windows/x86_64/jmephonon.dll");
 		
+		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.MacOSX64,
+				"native/OSX/x86_64/phonon.dll");
+		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.MacOSX64,
+				"native/OSX/x86_64/jmephonon.dll");
 		// TODO: OSX
 		// MAYBE TODO: Android
 	}

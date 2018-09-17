@@ -35,21 +35,24 @@ function prepareWorkspace {
     forceUpdate=$1
          
     jni_md_folder="jni_md_Windows"
-    if [ "$OS_WINDOWS" != "" -a ! -f "tmp/$jni_md_folder/jni_md.h"  ];
+    # "$OS_WINDOWS" != "" -a
+    if [  ! -f "tmp/$jni_md_folder/jni_md.h"  ];
     then
         mkdir -p tmp/$jni_md_folder/
         wget "http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/fd4e976e01bf/src/windows/javavm/export/jni_md.h" -O tmp/$jni_md_folder/jni_md.h
     fi
 
     jni_md_folder="jni_md_OSX"
-    if [ "$OS_OSX" != "" -a ! -f "tmp/$jni_md_folder/jni_md.h"  ];
+    # "$OS_OSX" != "" -a
+    if [  ! -f "tmp/$jni_md_folder/jni_md.h"  ];
     then
         mkdir -p tmp/$jni_md_folder/
         wget "http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/raw-file/fd4e976e01bf/src/macosx/javavm/export/jni_md.h" -O tmp/$jni_md_folder/jni_md.h
     fi
 
     jni_md_folder="jni_md_Linux"  
-    if [ "$OS_LINUX" != "" -a ! -f "tmp/$jni_md_folder/jni_md.h" ];
+    # "$OS_LINUX" != "" -a 
+    if [ ! -f "tmp/$jni_md_folder/jni_md.h" ];
     then
             mkdir -p tmp/$jni_md_folder/
 
@@ -142,100 +145,6 @@ function downloadResources {
 }
 
 
-function build {
-    compiler="$1"
-    platform="$2"
-    arch="$3"
-        liboutfolder="$4"
-    args="$5"
-    args2="$6"
-    libs="$7"
-
-    echo "Compile for $platofrm $arch with $compiler"
-
-    arch_flag="-m64"
-    if [ "$arch" = "x86" ];
-    then
-        arch_flag="-m32"
-    fi
-
-    echo '' > tmp/build_IIlist.txt.tmp
-    for line in $(cat  tmp/build_IIlist.txt); do
-        echo "-I$line " >>  tmp/build_IIlist.txt.tmp 
-    done
-    cat tmp/build_IIlist.txt.tmp > tmp/build_IIlist.txt
-    
-    platform_libprefix="lib"
-    platform_libsuffix=".so"
-   
-    if [ "$platform" = "Windows" ];
-    then
-        platform_libprefix=""
-        platform_libsuffix=".dll"
-    elif [ "$platform" = "OSX" ];
-    then
-        platform_libprefix=""
-        platform_libsuffix=".dylib"
-    fi
-
-    echo "" > tmp/ext_cpplist.txt
-      find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
-
-
-    build_script="
-    $compiler -mtune=generic  
-    -fmessage-length=0 
-    -fpermissive 
-    -O0 -fno-rtti -shared
-    -fPIC  
-    -Wall -Werror=implicit-function-declaration 
-    -Lsrc/steamaudio/lib/$platform/$arch
-    -Isrc/steamaudio/include
-    -Isrc/ext
-    -Itmp/jni_md_$platform
-    -I$JDK_ROOT/include
-    $arch_flag   
-    $(cat  tmp/build_IIlist.txt)
-    $args 
-    $(cat  tmp/build_cpplist.txt) 
-    $(cat  tmp/ext_cpplist.txt) 
-    $args2  -Wl,-Bdynamic -lphonon $libs $BUILD_ARGS"
-    cp "src/steamaudio/lib/$platform/$arch/${platform_libprefix}phonon${platform_libsuffix}" "$liboutfolder/"
-    echo "Run $build_script"
-
-    $build_script
-    if [ $? -ne 0 ]; then exit 1; fi
-}
-
-
-
-function buildNativeTests {
-    echo '' > tmp/build_cpplist.txt
-    echo '' > tmp/build_IIlist.txt
-
-    # rm -Rvf build/tests
-    mkdir -p build/tests
-    cp -Rf src/tests/resources/* build/tests/
-    cp -Rf src/steamaudio/lib/Linux/x64/* build/tests/
-    
-    cd build/tests/resources/
-    safeRm inputaudio.raw
-    ffmpeg -i 399354__romariogrande__eastandw_mono.ogg -f f32be -acodec pcm_f32le inputaudio.raw
-    cd ../../..
-    
-
-    build "g++"  \
-    "Linux" "x64" \
-    "build/test/" \
-    "--std=c++11 -obuild/test/SampleApplication1.64" src/test/native/SampleApplication1.cpp
-    
-    #build "g++"  "Linux" "x64" "--std=c++11 -obuild/tests/SampleApplication2.64" src/tests/SampleApplication2.cpp
-
-  
-}
-#ffmpeg -i 399354__romariogrande__eastandw_mono.ogg -f f32be -acodec pcm_f32le inputaudio.raw
-
-
 
 # buildTests
 function removeEmptyJNIh {
@@ -284,82 +193,132 @@ function updateJNIHeaders {
 
 
 function buildNatives {
-    safeRm tmp/natives
     mkdir -p tmp/natives
 
-    echo '' > tmp/build_cpplist.txt
-    echo '' > tmp/build_IIlist.txt
-    
-    find src/main/natives -type f -name '*.c' >> tmp/build_cpplist.txt
-    
-    if [ "$OS_LINUX" != "" ];
-    then
-        #Linux 64
-        dest="tmp/natives/linux-x86-64"
-        mkdir -p $dest
-        build "gcc" \
-        "Linux" "x64" \
-        "$dest" \
-        "--std=gnu99 
-        -Isrc/main/natives/include
-        -Isrc/main/natives"\
-        "-Wl,-soname,jmephonon.so  -otmp/natives/linux-x86-64/libjmephonon.so" \
-        ""
 
-        #Linux 32
-        dest="tmp/natives/linux-x86"
-        mkdir -p $dest
-        build "gcc" \
-        "Linux" "x86" \
-        "$dest" \
-        "--std=gnu99
-        -Wint-to-pointer-cast
-        -Isrc/main/natives/include
-        -Isrc/main/natives" \
-        "-Wl,-soname,jmephonon.so  -otmp/natives/linux-x86/libjmephonon.so" \
-        ""
+
+    
+    # echo '' > tmp/build_IIlist.txt
+    # echo '' > tmp/build_IIlist.txt.tmp
+    # for line in $(cat  tmp/build_IIlist.txt); do
+    #     echo "-I$line " >>  tmp/build_IIlist.txt.tmp 
+    # done
+    # cat tmp/build_IIlist.txt.tmp > tmp/build_IIlist.txt
+
+
+    echo '' > tmp/build_cpplist.txt    
+    find -L src/main/natives -type f -name '*.c' >> tmp/build_cpplist.txt
+
+
+    echo "" > tmp/ext_cpplist.txt
+    find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
+
+    platform="Linux"
+    platform2="?"
+    arch="x86_64"
+    platform_libprefix="lib"
+    platform_libsuffix=".so"
+    liboutfolder="tmp/natives/native/linux/x86_64"
+    args="-O0 -g"
+    args2=""
+    compiler="clang"
+    largs=""
+    largs2=""
+    if [ "$DEBUG" == "" ];
+    then
+        args="-O3"
     fi
 
-
-    if [ "$OS_WINDOWS" != "" ];
+    if [ "$CROSS_TRIPLE" == "" ];
     then
-        #Windows 64
-        dest="tmp/natives/windows-x86-64"
-        mkdir -p $dest
-        build "x86_64-w64-mingw32-gcc" \
-        "Windows" "x64" \
-        "$dest" \
-        "-static --std=gnu99 
-        -Isrc/main/natives/include
-        -Isrc/main/natives" \
-        "-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon.dll
-          -otmp/natives/windows-x86-64/jmephonon.dll" \
-        ""
-
-        #Windows 32
-        dest="tmp/natives/windows-x86"
-        mkdir -p $dest
-           build "i686-w64-mingw32-gcc" \
-        "Windows" "x86" \
-        "$dest" \
-        "-static  --std=gnu99 
-        -Isrc/main/natives/include
-        -Isrc/main/natives" \
-        "-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon.dll
-          -otmp/natives/windows-x86/jmephonon.dll" \
-        ""
-      
+        CROSS_TRIPLE="x86_64-"
+        if [ "$OS_LINUX" != "" ];
+        then
+            CROSS_TRIPLE="$CROSS_TRIPLE-linux-gnu"
+        elif [ "$OS_WINDOWS" != "" ];
+        then
+            CROSS_TRIPLE="$CROSS_TRIPLE-w64-mingw32"
+        elif [ "$OS_OSX" != "" ];
+        then
+            CROSS_TRIPLE="$CROSS_TRIPLE-apple-darwin"
+        fi
     fi
+    
+    if [ "$CROSS_TRIPLE" != "" ];
+    then
+    
+        #x86_64-linux-gnu
+        #x86_64-w64-mingw32
+        #x86_64-apple-darwin
+        IFS=- read arch platform platform2 <<< "$CROSS_TRIPLE"
+        if [ "$platform" = "w64" ];
+        then
+            compiler="x86_64-w64-mingw32-gcc"
+            platform="Windows"
+            platform_libprefix=""
+            platform_libsuffix=".dll"
+            args="$args "
+            args2="-static"
+            largs2="-Wl,-Bdynamic"
+            largs="-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon${platform_libsuffix}"
+        elif [ "$platform" = "apple" ];
+        then
+            compiler="cc"
+            platform="OSX"
+            args="$args -dynamiclib  -flat_namespace -undefined suppress "
+            args2="-static"
+            platform_libprefix="lib"
+            platform_libsuffix=".dylib"
+            largs=""
+        else
+            compiler="cc"
+            platform="Linux"
+            args="$args "
+            platform_libprefix="lib"
+            platform_libsuffix=".so"
+            largs2="-Wl,-Bdynamic"
+            largs="-Wl,-soname,jmephonon${platform_libsuffix}"
+        fi
+        liboutfolder="tmp/natives/native/$platform/$arch"
+        safeRm "$liboutfolder"
 
-    #Force update vscode
-    # if [ -d build/resources ];
-    # then
-    #     cp -Rf tmp/natives/* build/resources/
-    # fi
-    # if [ -d bin ];
-    # then
-    #     cp -Rf tmp/natives/* bin/
-    # fi
+        mkdir -p $liboutfolder
+    fi
+    if [ "$arch" = "x86_64" ];
+    then
+        arch="x64"
+    else
+        arch="x86"
+    fi
+    if [ "$platform" = "OSX" ];
+    then
+        arch=""
+    fi
+# 
+    build_script="
+    $compiler -mtune=generic  
+    -fmessage-length=0 
+    -fpermissive 
+    $args
+    -fno-rtti -shared
+    -fPIC  
+    -Wall -Werror=implicit-function-declaration 
+    -Lsrc/steamaudio/lib/$platform/$arch
+    -Isrc/steamaudio/include
+    -Isrc/ext
+    -Itmp/jni_md_$platform
+    -I$JDK_ROOT/include
+    $args2 -m64 --std=gnu99 
+    -Isrc/main/natives/include
+    -Isrc/main/natives
+    $(cat  tmp/build_cpplist.txt) 
+    $(cat  tmp/ext_cpplist.txt) 
+    ${largs}  -o$liboutfolder/${platform_libprefix}jmephonon${platform_libsuffix}
+    $largs2 -lphonon ${BUILD_ARGS}"
+    cp "src/steamaudio/lib/$platform/$arch/${platform_libprefix}phonon${platform_libsuffix}" "$liboutfolder/"
+    echo "Run $build_script"
+    `$build_script`
+  
 }
 
 

@@ -1,4 +1,19 @@
 #!/bin/bash
+source build.dep/findOs.sh
+
+
+DENVS=""
+OIFS="$IFS"
+IFS=',' 
+for i in $1;
+do
+    export "$i"
+    DENVS="$DENVS -e$i"
+done
+echo "$DENVS"
+IFS="$OIFS"
+
+set -e
 
 if [ "$USE_IMAGE" = "" ];
 then
@@ -23,7 +38,7 @@ then
         echo "Install local image $INSTALL_LOCAL_IMAGE"
         curdir="$PWD"
         cd "$INSTALL_LOCAL_IMAGE"
-        docker rmi localjmephononbuilder
+        docker rmi localjmephononbuilder || true
         docker build -t localjmephononbuilder .
         cd "$curdir"
     fi
@@ -42,15 +57,23 @@ else
     export RUN_AS=""
 fi
 
-DENVS=""
-OIFS="$IFS"
-IFS=',' 
-for i in $1;
-do
-    DENVS="$DENVS -e$i"
-done
-echo "$DENVS"
-
-IFS="$OIFS"
+if [ "$2" == "bash" ];
+then
+    docker run --rm $DENVS -it  -v$PWD:/workspace $USE_IMAGE bash
+    exit
+fi
 echo "Launch $USE_IMAGE as $RUN_AS"
-docker run --rm $DENVS -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE gradle ${@:2}
+if [ "$OS_LINUX" != "" ];
+then
+    docker run --rm $DENVS -e CROSS_TRIPLE=x86_64-linux-gnu -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE crossbuild gradle ${@:2}
+fi
+
+if [ "$OS_WINDOWS" != "" ];
+then
+    docker run --rm $DENVS -e CROSS_TRIPLE=x86_64-w64-mingw32 -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE crossbuild gradle ${@:2}
+fi
+
+if [ "$OS_OSX" != "" ];
+then
+    docker run --rm $DENVS -e CROSS_TRIPLE=x86_64-apple-darwin -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE crossbuild gradle ${@:2}
+fi
