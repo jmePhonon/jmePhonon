@@ -112,8 +112,6 @@ public class PhononRenderer implements AudioRenderer {
 
 	private Listener jmeListener;
 
-	private volatile boolean UPDATE_FLAG;
-	private Thread decoderThread;
 	final ThreadMode THREAD_MODE;
 
 	boolean SIMULATE_LOAD = false;
@@ -164,14 +162,50 @@ public class PhononRenderer implements AudioRenderer {
 		return OUTPUT_LINES[i];
 	}
 
+	private PhononJavaThread decoderThread = new PhononJavaThread() {
+		@Override
+		public void run() {
+			do {
+				if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
+					try {
+						Thread.sleep(1);
+					} catch (Exception e) {
+
+					}
+				}
+
+				PHONON_LISTENER.finalizeUpdate();
+				PHONON_ASDATA_MANAGER.finalizeDataUpdates();
+
+				if (SIMULATE_LOAD) {
+					try {
+						Thread.sleep((int) (Math.random() * 10));
+					} catch (Exception e) {	}
+				}
+
+				if (!THREAD_MODE.isNative)
+					updateNative();
+
+				if (SIMULATE_LOAD) {
+					try {
+						Thread.sleep((int) (Math.random() * 10));
+					} catch (Exception e) {
+					}
+				}
+
+				for (PhononSoundPlayer player:PLAYERS){
+					byte res = player.loop();
+				}
+			} while ((!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) && keepUpdating());
+		}
+	};
+
 	@Override
 	public void initialize() {
 		if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
-			decoderThread = new Thread(() -> runDecoder());
 			decoderThread.setName("Phonon Java Thread");
 			decoderThread.setPriority(Thread.MAX_PRIORITY);
 			decoderThread.setDaemon(true);
-			UPDATE_FLAG = true;
 			decoderThread.start();
 		}
 
@@ -184,7 +218,7 @@ public class PhononRenderer implements AudioRenderer {
 
 	@Override
 	public void cleanup() {
-		UPDATE_FLAG = false;	
+		decoderThread.stopUpdate();
 		
 		do {
 			try {
@@ -290,43 +324,10 @@ public class PhononRenderer implements AudioRenderer {
 	public void saveSceneAsObj(String nativeFileBaseName) {
 		saveSceneAsObjNative(currentScene.nativeAddr,nativeFileBaseName.getBytes(Charset.forName("UTF-8")));
 	}
-	
-
-
 
 	// long UPDATE_RATE = 50* 1000000l;
 	public void runDecoder() {
-		do {
-			if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
-				try {
-					Thread.sleep(1);
-				} catch (Exception e) {
-
-				}
-			}
-
-			PHONON_LISTENER.finalizeUpdate();
-			PHONON_ASDATA_MANAGER.finalizeDataUpdates();
-
-			if (SIMULATE_LOAD) {
-				try {
-					Thread.sleep((int) (Math.random() * 10));
-				} catch (Exception e) {
-				}
-			}
-			if (!THREAD_MODE.isNative)
-				updateNative();
-
-			if (SIMULATE_LOAD) {
-				try {
-					Thread.sleep((int) (Math.random() * 10));
-				} catch (Exception e) {
-				}
-			}
-			for (PhononSoundPlayer player:PLAYERS){
-				byte res = player.loop();
-			}
-		} while ((!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) && UPDATE_FLAG);
+	
 	}
 
 
