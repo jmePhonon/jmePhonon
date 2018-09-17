@@ -69,6 +69,49 @@
 
 
 
+
+/**
+ * Allocates one PhContext for the audioSource
+ */
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource){
+    struct PhContext *context = malloc(sizeof(struct PhContext));
+
+    // TODO make this configurable
+    context->directSoundEffectOptions.applyDistanceAttenuation = true;
+    context->directSoundEffectOptions.applyAirAbsorption = true;
+    context->directSoundEffectOptions.applyDirectivity = true;
+    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_NOTRANSMISSION;
+
+    // Direct sound
+    iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer, 
+    PhSharedContext.monoFormat,PhSharedContext.monoFormat, &context->directSoundEffect);
+
+    iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, PhSharedContext.outputFormat, &context->binauralEffect);
+    audioSource->phononContext = context;
+}
+
+/**
+ * Deallocates the PhContext of the audioSource
+ */
+void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+    struct PhContext *context = audioSource->phononContext;
+
+    iplDestroyBinauralEffect(&context->binauralEffect);
+    iplDestroyDirectSoundEffect(&context->directSoundEffect);
+    
+    free(audioSource->phononContext);
+}
+
+
+void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+    struct PhContext *context = audioSource->phononContext;
+
+    iplFlushBinauralEffect(context->binauralEffect);
+    iplFlushDirectSoundEffect(context->directSoundEffect);    
+}
+
+
+
 void* phCreateStaticMesh(struct GlobalSettings *settings,jint numTriangles,
     jint numVertices,jint* indexBuffer,jfloat* vertexBuffer, jint* materials){
     IPLhandle mesh;
@@ -83,7 +126,7 @@ void* phCreateStaticMesh(struct GlobalSettings *settings,jint numTriangles,
 }
 
 void phDestroyStaticMesh(struct GlobalSettings *settings,void* mesh){
-    iplDestroyStaticMesh(mesh);
+    iplDestroyStaticMesh(&mesh);
 }
 
 void phSaveStaticMeshAsObj(struct GlobalSettings *settings, void*mesh,jbyte* path){
@@ -177,44 +220,22 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
 }
 
 void phDestroy(struct GlobalSettings *settings){
+
+
+    iplDestroyBinauralRenderer(&PhSharedContext.binauralRenderer);
+    iplDestroyEnvironmentalRenderer(&PhSharedContext.environmentalRenderer);
+    iplDestroyEnvironment(&PhSharedContext.environment);
+    iplDestroyScene(&PhSharedContext.scene);
+    iplDestroyContext(&PhSharedContext.context);
+    iplCleanup();
     free(PhSharedContext.mixerQueue);
     free(PhSharedContext.auxMonoFrame);
     free(PhSharedContext.materials);
-    // TODO: properly destroy phonon
-}
-
-
-
-/**
- * Allocates one PhContext for the audioSource
- */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource){
-    struct PhContext *context = malloc(sizeof(struct PhContext));
-
-    // TODO make this configurable
-    context->directSoundEffectOptions.applyDistanceAttenuation = true;
-    context->directSoundEffectOptions.applyAirAbsorption = true;
-    context->directSoundEffectOptions.applyDirectivity = true;
-    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_NOTRANSMISSION;
-
-    // Direct sound
-    iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer, 
-    PhSharedContext.monoFormat,PhSharedContext.monoFormat, &context->directSoundEffect);
-
-    iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, PhSharedContext.outputFormat, &context->binauralEffect);
-    audioSource->phononContext = context;
-}
-
-/**
- * Deallocates the PhContext of the audioSource
- */
-void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSource){
-    free(audioSource->phononContext);
-}
-
-void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
 
 }
+
+
+
 
 
 

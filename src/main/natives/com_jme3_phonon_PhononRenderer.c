@@ -116,7 +116,7 @@ JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_createStaticMeshNati
   JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyStaticMeshNative
   (JNIEnv *env, jobject obj, jlong mesh){
       void *meshp=(void*)(intptr_t)mesh;
-phDestroyStaticMesh(&SETTINGS, meshp);
+        phDestroyStaticMesh(&SETTINGS, meshp);
   }
 
   JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_saveSceneAsObjNative

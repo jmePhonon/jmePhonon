@@ -220,9 +220,10 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 		for(PhononSoundPlayer p:PLAYERS){
 			p.close();
 		}
-
 		unsetScene();
-		destroyNative();	
+
+		destroyNative();
+	
 	}
 
 	native void setEnvironmentNative(float[] envdata);
