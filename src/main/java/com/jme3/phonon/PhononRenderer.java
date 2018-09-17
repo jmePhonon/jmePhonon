@@ -81,9 +81,9 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 				"native/Windows/x86_64/jmephonon.dll");
 		
 		NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.MacOSX64,
-				"native/OSX/x86_64/phonon.dll");
+				"native/OSX/x86_64/libphonon.dylib");
 		NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.MacOSX64,
-				"native/OSX/x86_64/jmephonon.dll");
+				"native/OSX/x86_64/libjmephonon.dylib");
 		// TODO: OSX
 		// MAYBE TODO: Android
 	}
