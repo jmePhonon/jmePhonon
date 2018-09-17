@@ -165,44 +165,19 @@ public class PhononRenderer implements AudioRenderer {
 	private PhononJavaThread decoderThread = new PhononJavaThread() {
 		@Override
 		public void run() {
-			do {
-				if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
-					try {
-						Thread.sleep(1);
-					} catch (Exception e) {
 
-					}
-				}
-
-				PHONON_LISTENER.finalizeUpdate();
-				PHONON_ASDATA_MANAGER.finalizeDataUpdates();
-
-				if (SIMULATE_LOAD) {
-					try {
-						Thread.sleep((int) (Math.random() * 10));
-					} catch (Exception e) {	}
-				}
-
-				if (!THREAD_MODE.isNative)
-					updateNative();
-
-				if (SIMULATE_LOAD) {
-					try {
-						Thread.sleep((int) (Math.random() * 10));
-					} catch (Exception e) {
-					}
-				}
-
-				for (PhononSoundPlayer player:PLAYERS){
-					byte res = player.loop();
-				}
-			} while ((!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) && keepUpdating());
 		}
 	};
 
 	@Override
 	public void initialize() {
 		if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
+			decoderThread = new PhononJavaThread() {
+				public void run() {
+					runDecoder();
+				}
+			};
+
 			decoderThread.setName("Phonon Java Thread");
 			decoderThread.setPriority(Thread.MAX_PRIORITY);
 			decoderThread.setDaemon(true);
@@ -214,6 +189,46 @@ public class PhononRenderer implements AudioRenderer {
 		// playeThread.setDaemon(true);
 		// playeThread.start();
 
+	}
+
+
+	public void runDecoder() {
+		do {
+			if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {
+
+				}
+			}
+
+			PHONON_LISTENER.finalizeUpdate();
+			PHONON_ASDATA_MANAGER.finalizeDataUpdates();
+
+			if (SIMULATE_LOAD) {
+				try {
+					Thread.sleep((int) (Math.random() * 10));
+				} catch (Exception e) {	}
+			}
+
+			if (!THREAD_MODE.isNative)
+				updateNative();
+
+			if (SIMULATE_LOAD) {
+				try {
+					Thread.sleep((int) (Math.random() * 10));
+				} catch (Exception e) { }
+			}
+
+			for (PhononSoundPlayer player:PLAYERS){
+				byte res = player.loop();
+			}
+
+			if(!decoderThread.isUpdating()) {
+				return;
+			}
+
+		} while ((!THREAD_MODE.isNative || THREAD_MODE.isDecoupled));
 	}
 
 	@Override
@@ -324,12 +339,6 @@ public class PhononRenderer implements AudioRenderer {
 	public void saveSceneAsObj(String nativeFileBaseName) {
 		saveSceneAsObjNative(currentScene.nativeAddr,nativeFileBaseName.getBytes(Charset.forName("UTF-8")));
 	}
-
-	// long UPDATE_RATE = 50* 1000000l;
-	public void runDecoder() {
-	
-	}
-
 
 	private F32leAudioData toF32leData(AudioData d) {
 		F32leAudioData o = CONVERSION_CACHE.get(d);
