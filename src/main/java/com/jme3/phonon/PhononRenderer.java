@@ -115,7 +115,6 @@ public class PhononRenderer implements AudioRenderer {
 	private Thread decoderThread;
 	final ThreadMode THREAD_MODE;
 
-	boolean SIMULATE_LOAD = false;
 
 
 	private final PhononSoundSystem SOUND_SYSTEM;
@@ -144,9 +143,10 @@ public class PhononRenderer implements AudioRenderer {
 		NativeLibraryLoader.loadNativeLibrary("Phonon",true);
 		NativeLibraryLoader.loadNativeLibrary("JMEPhonon",true);
 		// DELTA_S= 1./(44100 / FRAME_SIZE) ;
-		initNative(SAMPLE_RATE,OUTPUT_LINES.length,SOURCES_PER_OUTPUT_LINE,OUTPUT_CHANNELS_NUM,FRAME_SIZE,BUFFER_SIZE,THREAD_MODE.isNative,THREAD_MODE.isDecoupled,PHONON_LISTENER.getAddress(),PHONON_ASDATA_MANAGER.memoryAddresses(),
-				// Effects
-				settings.passThrough);
+	
+		initNative(SAMPLE_RATE,OUTPUT_LINES.length,SOURCES_PER_OUTPUT_LINE,OUTPUT_CHANNELS_NUM,FRAME_SIZE,BUFFER_SIZE,PHONON_LISTENER.getAddress(),PHONON_ASDATA_MANAGER.memoryAddresses(),
+		// Effects
+		settings.passThrough);
 
 		for(int i=0;i<OUTPUT_LINES.length;i++){
 			OUTPUT_LINES[i]=new PhononOutputLine(FRAME_SIZE,OUTPUT_CHANNELS_NUM,BUFFER_SIZE);
@@ -156,6 +156,8 @@ public class PhononRenderer implements AudioRenderer {
 				PLAYERS[i].init(SOUND_SYSTEM,SOUND_DEVICE,OUTPUT_LINES[i],SAMPLE_RATE,OUTPUT_CHANNELS_NUM,OUTPUT_SAMPLE_SIZE,MAX_PLAYER_PREBUFFERING);
 			}
 		}
+
+	
 	}
 	
 
@@ -171,6 +173,10 @@ public class PhononRenderer implements AudioRenderer {
 			decoderThread.setPriority(Thread.MAX_PRIORITY);
 			decoderThread.setDaemon(true);
 			decoderThread.start();
+		}
+		
+		if(THREAD_MODE.isNative){
+			startThreadNative(THREAD_MODE.isDecoupled);
 		}
 
 		// playeThread = new Thread(() -> runPlayer());
@@ -222,12 +228,12 @@ public class PhononRenderer implements AudioRenderer {
 	native void updateNative();
 
 	native void initNative(int sampleRate, int nOutputLines, int nSourcesPerLine,
-			int nOutputChannels, int frameSize, int bufferSize, boolean nativeThread,
-			boolean decoupledNativeThread, long listenerDataPointer, long[] audioSourcesSceneDataArrayPointer,
+			int nOutputChannels, int frameSize, int bufferSize,  long listenerDataPointer, long[] audioSourcesSceneDataArrayPointer,
 			// effects
 			boolean isPassThrough);
 
 	native void destroyNative();
+	native void startThreadNative(boolean decoupled);
 
 
 	native long createStaticMeshNative(int nTris,int nVerts,long tris,long vert,long mats);
@@ -284,7 +290,6 @@ public class PhononRenderer implements AudioRenderer {
 
 
 
-	// long UPDATE_RATE = 50* 1000000l;
 	public void runDecoder() {
 		do {
 			if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
@@ -298,23 +303,12 @@ public class PhononRenderer implements AudioRenderer {
 			PHONON_LISTENER.finalizeUpdate();
 			PHONON_ASDATA_MANAGER.finalizeDataUpdates();
 
-			if (SIMULATE_LOAD) {
-				try {
-					Thread.sleep((int) (Math.random() * 10));
-				} catch (Exception e) {
-				}
-			}
 			if (!THREAD_MODE.isNative)
 				updateNative();
 
-			if (SIMULATE_LOAD) {
-				try {
-					Thread.sleep((int) (Math.random() * 10));
-				} catch (Exception e) {
-				}
-			}
+	
 			for (PhononSoundPlayer player:PLAYERS){
-				byte res = player.loop();
+				player.loop();
 			}
 
 

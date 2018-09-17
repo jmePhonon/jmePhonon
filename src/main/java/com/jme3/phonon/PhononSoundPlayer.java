@@ -39,5 +39,5 @@ public interface PhononSoundPlayer<SYSTEM extends PhononSoundSystem,DEVICE exten
         DEVICE device,
     PhononOutputLine chan, int sampleRate,int outputChannels,int outputSampleSize,int maxPreBufferingSamples) throws Exception;
     public void close();
-    public byte loop();
+    public void loop();
 }

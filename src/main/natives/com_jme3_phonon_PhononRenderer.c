@@ -270,8 +270,6 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     jint nOutputChannels,
     jint frameSize,
     jint bufferSize,
-    jboolean nativeThread,
-    jboolean decoupledNativeThread,
 
     jlong listenerDataPointer,
     jlongArray audioSourcesSceneDataArrayPointer,
@@ -332,12 +330,16 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
         srInit(&SETTINGS);
     #endif
 
-    #ifdef HAS_NATIVE_THREAD_SUPPORT    
-        if(nativeThread){
-            nuInit(env, &obj, decoupledNativeThread, Java_com_jme3_phonon_PhononRenderer_updateNative);
-        }
-    #endif
+
 }
+
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_startThreadNative
+  (JNIEnv *env, jobject obj,jboolean decoupled){
+    #ifdef HAS_NATIVE_THREAD_SUPPORT    
+            nuInit(env, &obj, decoupled, Java_com_jme3_phonon_PhononRenderer_updateNative);
+        
+    #endif
+  }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj){
     for(jint i=0;i<SETTINGS.nOutputLines;i++){

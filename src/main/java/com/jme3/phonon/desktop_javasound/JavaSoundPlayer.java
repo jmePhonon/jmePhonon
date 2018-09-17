@@ -93,7 +93,7 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
     }
 
     @Override
-    public byte loop() {
+    public void loop() {
 
      
        
@@ -136,7 +136,6 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
         } catch (EOFException e) {
             // Channel over;
             System.err.println("TO BE IMPLEMENTED: End of channel");
-            return -1;
         } catch (Exception e) {
             System.out.println("Writable " + writableBytes+" read "+read);
 
@@ -147,7 +146,6 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
       
 
        
-        return out;
 
     }
 
