@@ -37,7 +37,8 @@ package com.jme3.phonon;
 public enum ThreadMode {
     JAVA(false,false),
     NATIVE(true,false),
-    NATIVE_DECOUPLED(true, true);
+    NATIVE_DECOUPLED(true,true),
+    NONE(false,false);
     
     public final boolean isNative,isDecoupled;
     ThreadMode(boolean nnative,boolean decoupled){

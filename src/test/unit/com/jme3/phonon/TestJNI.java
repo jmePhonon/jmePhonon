@@ -64,6 +64,7 @@ public class TestJNI extends TestCase {
         settings.nOutputLines=1;
         settings.nSourcesPerLine=1;
         settings.nOutputChannels=1;
+        settings.threadMode=ThreadMode.NONE;
         
         PhononRenderer renderer=Phonon.init(settings,null);
    

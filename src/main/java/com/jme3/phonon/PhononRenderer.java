@@ -165,6 +165,7 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 	
 	@Override
 	public void initialize() {
+		if(THREAD_MODE==ThreadMode.NONE) return;
 		if (!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) {
 			decoderThread = new PhononJavaThread(this);
 
