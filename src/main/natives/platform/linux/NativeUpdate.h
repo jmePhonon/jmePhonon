@@ -87,7 +87,7 @@ void *nuLoop() {
 
         if(!ThreadContext.decoupled){
             jclass class = (*ThreadContext.env)->GetObjectClass(ThreadContext.env, ThreadContext.renderer);
-            jmethodID mid = (*ThreadContext.env)->GetMethodID(ThreadContext.env, class, "runDecoder", "()V");  
+            jmethodID mid = (*ThreadContext.env)->GetMethodID(ThreadContext.env, class, "run", "()V");  
             (*ThreadContext.env)->CallVoidMethod(ThreadContext.env, ThreadContext.renderer, mid);      
         }             
     }
