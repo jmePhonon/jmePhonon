@@ -76,7 +76,6 @@ task prepareWorkspace(type:Exec){
     commandLine 'bash','prepare.sh','prepareWorkspace'
 }
 
-downloadResources.dependsOn(prepareWorkspace)
 
 
 task updateJNIHeaders(type:Exec) {
@@ -84,19 +83,16 @@ task updateJNIHeaders(type:Exec) {
     def classpath = configurations.compile.join(":")+ ":"+javapth;
     commandLine 'bash','prepare.sh',"updateJNIHeaders",classpath,javapth,"src/main/natives/include"
 }
-updateJNIHeaders.dependsOn(classes)
 
 task deepClean(type:Exec){
     commandLine 'bash','prepare.sh',"deepClean"
 }
-deepClean.dependsOn(clean);
 
 
 task buildNatives(type :Exec){
     commandLine 'bash','prepare.sh',"buildNatives"
 }
-buildNatives.dependsOn(prepareWorkspace)
-processResources.dependsOn(buildNatives)
+
 
 task buildStandaloneTests(type: Jar) {
 
@@ -116,4 +112,10 @@ task buildStandaloneTests(type: Jar) {
 task deploy (type :Exec) {
         commandLine 'bash','prepare.sh',"deploy"
 }
+
+downloadResources.dependsOn(prepareWorkspace)
+updateJNIHeaders.dependsOn(classes)
+deepClean.dependsOn(clean);
+clean.finalizedBy(cleanEclipse)
+processResources.dependsOn(buildNatives)
 deploy.dependsOn(build);
