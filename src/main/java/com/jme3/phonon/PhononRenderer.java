@@ -194,8 +194,10 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 			if (!THREAD_MODE.isNative)
 				updateNative();
 	
-			for (PhononSoundPlayer player:PLAYERS){
-				player.loop();
+			if(playing){
+				for(PhononSoundPlayer player:PLAYERS){
+					player.loop();
+				}
 			}
 		} while ((!THREAD_MODE.isNative || THREAD_MODE.isDecoupled) && decoderThread.isUpdating());
 	}
