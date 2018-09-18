@@ -53,7 +53,7 @@ Example:
 - **deploy** moves releases into a deploy folder
 
 
-### I don't like docker/I'm not afraid by dependencies/Install Gentoo
+### I don't like docker/I'm not afraid of dependencies/Install Gentoo
 
 You can still run the build tasks without using docker by replacing `make.sh` with `gradle`. eg.
 ```bash 
