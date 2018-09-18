@@ -49,7 +49,6 @@
 
    
         IPLhandle scene;
-        IPLMaterial *materials;
 
         IPLhandle environment;
         IPLhandle environmentalRenderer;
@@ -58,6 +57,8 @@
         IPLhandle binauralRenderer;
 
         IPLAudioBuffer *mixerQueue;
+
+        IPLhandle sceneMesh;
 
     } PhSharedContext; // This context is shared between every source
 
@@ -88,6 +89,7 @@ void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *aud
 
     iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, PhSharedContext.outputFormat, &context->binauralEffect);
     audioSource->phononContext = context;
+    PhSharedContext.sceneMesh = NULL;
 }
 
 /**
@@ -112,29 +114,28 @@ void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSour
 
 
 
-void* phCreateStaticMesh(struct GlobalSettings *settings,jint numTriangles,
-    jint numVertices,jint* indexBuffer,jfloat* vertexBuffer, jint* materials){
-    IPLhandle mesh;
+void phCreateSceneMesh(struct GlobalSettings *settings,jint numTriangles,
+    jint numVertices,jint* indexBuffer,jfloat* vertexBuffer, jint* materialIndices){
     iplCreateStaticMesh(PhSharedContext.scene,
                         (IPLint32)numVertices,
                        (IPLint32) numTriangles,
                         (IPLVector3*)vertexBuffer,
                         (IPLTriangle*)indexBuffer,
-                        (IPLint32*)materials,
-                        &mesh);
-    return mesh;
+                        (IPLint32*)materialIndices,
+                        &PhSharedContext.sceneMesh);
 }
 
-void phDestroyStaticMesh(struct GlobalSettings *settings,void* mesh){
-    iplDestroyStaticMesh(&mesh);
+void phDestroySceneMesh(struct GlobalSettings *settings){
+    iplDestroyStaticMesh(&PhSharedContext.sceneMesh);
+    PhSharedContext.sceneMesh = NULL;
 }
 
-void phSaveStaticMeshAsObj(struct GlobalSettings *settings, void*mesh,jbyte* path){
+void phSaveSceneMeshAsObj(struct GlobalSettings *settings,jbyte* path){
     iplSaveSceneAsObj(PhSharedContext.scene,(IPLstring) path);
     printf("Save scene in %s\n", path);
 }
 
-void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
+void phInit(struct GlobalSettings *settings,jint mixerQueueSize,jint nMaterials,jfloat* materials){
     PhSharedContext.scene = NULL;
 
     /** TODO : make this configurable **/
@@ -176,20 +177,30 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize){
     PhSharedContext.outputBuffer.numSamples = PhSharedContext.settings.frameSize ;
 
     // Scene
-    //{"generic",{0.10f,0.20f,0.30f,0.05f,0.100f,0.050f,0.030f}}
-    PhSharedContext.materials = malloc(sizeof(IPLMaterial) * 1);
-    PhSharedContext.materials[0].lowFreqAbsorption = .1f;
-    PhSharedContext.  materials[0].midFreqAbsorption = .2f;
-      PhSharedContext.materials[0].highFreqAbsorption =.3f;
-      PhSharedContext.materials[0].scattering = .5f;
-      PhSharedContext.materials[0].lowFreqTransmission = .1f;
-      PhSharedContext.materials[0].midFreqTransmission = .04f;
-      PhSharedContext.materials[0].highFreqTransmission = .03f;
-    
-    iplCreateScene(PhSharedContext.context, NULL /*compute device*/, PhSharedContext.simulationSettings, 1,
-                    PhSharedContext.materials,
+    iplCreateScene(PhSharedContext.context, NULL /*compute device*/, PhSharedContext.simulationSettings, nMaterials,
+                   (IPLMaterial*) materials,
                    NULL, NULL, NULL, NULL, NULL,
                    &PhSharedContext.scene);
+    printf("Create scene with materials: \n");
+    for (jint i = 0; i < nMaterials; i++) {
+        IPLMaterial mat = ((IPLMaterial*)materials)[i];
+        printf("Mat %d :\n\
+        lowFreqAbsorption %f\n\
+        midFreqAbsorption %f\n\
+        highFreqAbsorption %f \n\
+        scattering %f \n\
+        lowFreqTransmission %f\n\
+        midFreqTransmission %f\n\
+        highFreqTransmission %f\n",
+        i,
+        mat.lowFreqAbsorption,
+        mat.midFreqAbsorption,
+        mat.highFreqAbsorption,
+        mat.scattering, 
+        mat.lowFreqTransmission, 
+        mat.midFreqTransmission,
+        mat.highFreqTransmission);
+    }
 
     // Environment
     iplCreateEnvironment(PhSharedContext.context,
@@ -226,11 +237,13 @@ void phDestroy(struct GlobalSettings *settings){
     iplDestroyEnvironmentalRenderer(&PhSharedContext.environmentalRenderer);
     iplDestroyEnvironment(&PhSharedContext.environment);
     iplDestroyScene(&PhSharedContext.scene);
+    if(PhSharedContext.sceneMesh !=NULL)
+        phDestroySceneMesh(settings);
     iplDestroyContext(&PhSharedContext.context);
     iplCleanup();
     free(PhSharedContext.mixerQueue);
     free(PhSharedContext.auxMonoFrame);
-    free(PhSharedContext.materials);
+    // free(PhSharedContext.materials);
 
 }
 

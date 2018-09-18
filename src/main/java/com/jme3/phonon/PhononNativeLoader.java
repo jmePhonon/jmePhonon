@@ -31,47 +31,33 @@
 */
 package com.jme3.phonon;
 
-import com.jme3.phonon.scene.material.MaterialGenerator;
-import com.jme3.phonon.scene.material.SingleMaterialGenerator;
+import com.jme3.system.NativeLibraryLoader;
+import com.jme3.system.Platform;
+
 /**
- * PhononEffects
+ * PhononNativeLoader
  */
-public class PhononSettings{
- 
+public class PhononNativeLoader {
 
-    public int sampleRate=44100;
-    public int nOutputLines=1;
-    public int nSourcesPerLine=255;
-    public int nOutputChannels=2;
-    public int frameSize=1024;
-    public int bufferSize=3; 
-    public int maxPreBuffering=1024*2*4; 
-    public ThreadMode threadMode=ThreadMode.JAVA;
+    public static void loadAll() {
+        NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Linux64,
+            "native/Linux/x86_64/libphonon.so");
+        NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Linux64,
+            "native/Linux/x86_64/libjmephonon.so");
 
-    public int outputSampleSize=-1; // -1=best
+        NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.Windows64,
+            "native/Windows/x86_64/phonon.dll");
+        NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.Windows64,
+            "native/Windows/x86_64/jmephonon.dll");
 
-    public PhononSoundSystem system;
-    public PhononSoundDevice device;
+        NativeLibraryLoader.registerNativeLibrary("Phonon", Platform.MacOSX64,
+            "native/OSX/x86_64/libphonon.dylib");
+        NativeLibraryLoader.registerNativeLibrary("JMEPhonon", Platform.MacOSX64,
+                "native/OSX/x86_64/libjmephonon.dylib");
+            
 
-    public MaterialGenerator materialGenerator=new SingleMaterialGenerator();
-
-       
-    public PhononSettings(PhononSoundSystem ss){
-        system=ss;
+        NativeLibraryLoader.loadNativeLibrary("Phonon",true);
+        NativeLibraryLoader.loadNativeLibrary("JMEPhonon",true);
     }
 
-    /**
-     * Debug only: Disable everything
-     * 
-     */
-    public boolean passThrough = false;
-    public boolean initPlayers=true;
-    
-    @Override
-    public String toString(){
-        return "SampleRate "+sampleRate+" OutputLines "+nOutputLines+" SourcesPerLine "+nSourcesPerLine+
-        " nOutputChannels "+nOutputChannels+" frameSize "+frameSize+" bufferSize "+bufferSize+" maxPreBuffering "
-                +maxPreBuffering+" threadMode "+threadMode+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
-
-    }
 }

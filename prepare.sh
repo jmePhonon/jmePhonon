@@ -298,9 +298,8 @@ function buildNatives {
     build_script="
     $compiler -mtune=generic  
     -fmessage-length=0 
-    -fpermissive 
     $args
-    -fno-rtti -shared
+    -shared
     -fPIC  
     -Wall -Werror=implicit-function-declaration 
     -Lsrc/steamaudio/lib/$platform/$arch

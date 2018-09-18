@@ -29,49 +29,25 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-package com.jme3.phonon;
+package com.jme3.phonon.scene.material;
 
-import com.jme3.phonon.scene.material.MaterialGenerator;
-import com.jme3.phonon.scene.material.SingleMaterialGenerator;
 /**
- * PhononEffects
+ * PhononMaterials
  */
-public class PhononSettings{
- 
+public final class PhononMaterialPresets {
 
-    public int sampleRate=44100;
-    public int nOutputLines=1;
-    public int nSourcesPerLine=255;
-    public int nOutputChannels=2;
-    public int frameSize=1024;
-    public int bufferSize=3; 
-    public int maxPreBuffering=1024*2*4; 
-    public ThreadMode threadMode=ThreadMode.JAVA;
-
-    public int outputSampleSize=-1; // -1=best
-
-    public PhononSoundSystem system;
-    public PhononSoundDevice device;
-
-    public MaterialGenerator materialGenerator=new SingleMaterialGenerator();
-
-       
-    public PhononSettings(PhononSoundSystem ss){
-        system=ss;
-    }
-
-    /**
-     * Debug only: Disable everything
-     * 
-     */
-    public boolean passThrough = false;
-    public boolean initPlayers=true;
+    // Values from: https://valvesoftware.github.io/steam-audio/doc/capi/struct_i_p_l_material.html#details
+    public static final PhononMaterial generic=new PhononMaterial("generic",0.10f,0.20f,0.30f,0.05f,0.100f,0.050f,0.030f);
+    public static final PhononMaterial brick=new PhononMaterial("brick",0.03f,0.04f,0.07f,0.05f,0.015f,0.015f,0.015f);
+    public static final PhononMaterial concrete=new PhononMaterial("concrete",0.05f,0.07f,0.08f,0.05f,0.015f,0.002f,0.001f);
+    public static final PhononMaterial ceramic=new PhononMaterial("ceramic",0.01f,0.02f,0.02f,0.05f,0.060f,0.044f,0.011f);
+    public static final PhononMaterial gravel=new PhononMaterial("gravel",0.60f,0.70f,0.80f,0.05f,0.031f,0.012f,0.008f);
+    public static final PhononMaterial carpet=new PhononMaterial("carpet",0.24f,0.69f,0.73f,0.05f,0.020f,0.005f,0.003f);
+    public static final PhononMaterial glass=new PhononMaterial("glass",0.06f,0.03f,0.02f,0.05f,0.060f,0.044f,0.011f);
+    public static final PhononMaterial plaster=new PhononMaterial("plaster",0.12f,0.06f,0.04f,0.05f,0.056f,0.056f,0.004f);
+    public static final PhononMaterial wood=new PhononMaterial("wood",0.11f,0.07f,0.06f,0.05f,0.070f,0.014f,0.005f);
+    public static final PhononMaterial metal=new PhononMaterial("metal",0.20f,0.07f,0.06f,0.05f,0.200f,0.025f,0.010f);
+    public static final PhononMaterial rock=new PhononMaterial("rock",0.13f,0.20f,0.24f,0.05f,0.015f,0.002f,0.001f);
     
-    @Override
-    public String toString(){
-        return "SampleRate "+sampleRate+" OutputLines "+nOutputLines+" SourcesPerLine "+nSourcesPerLine+
-        " nOutputChannels "+nOutputChannels+" frameSize "+frameSize+" bufferSize "+bufferSize+" maxPreBuffering "
-                +maxPreBuffering+" threadMode "+threadMode+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
 
-    }
 }

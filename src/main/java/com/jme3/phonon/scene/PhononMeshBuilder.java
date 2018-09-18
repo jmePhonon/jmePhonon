@@ -39,9 +39,12 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import com.jme3.math.Transform;
 import com.jme3.math.Vector3f;
+import com.jme3.phonon.scene.material.MaterialGenerator;
+import com.jme3.phonon.scene.material.PhononMaterial;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
@@ -68,7 +71,8 @@ public class PhononMeshBuilder{
         return buff;
     }
 
-    private static void composeScene(Spatial sx,SpatialFilter filter,Vector3f tmp1,Vector3f tmp2,Collection<Vector3f> positions,Collection<Integer> indices,Collection<Integer> materials){
+    private static void composeMesh(Spatial sx, SpatialFilter filter,MaterialGenerator matsel, Vector3f tmp1, Vector3f tmp2,
+    List<Vector3f> positions,List<Integer> indices,List<PhononMaterial> materials,List<Integer> materialIndices){
             if(filter!=null&&!filter.filter(sx)) return;
 			if(sx instanceof Geometry){
                 Transform worldtr=sx.getWorldTransform();
@@ -101,35 +105,39 @@ public class PhononMeshBuilder{
                             component=0;
                         }
                     }
-                    // Full triangle loaded
-                    materials.add(0);// TODO: support actual materials
+                // Full triangle loaded
+                PhononMaterial mat=matsel.materialFor(geom,triangle);
+                int matIndex=materials.indexOf(mat);
+                if(matIndex==-1)matIndex=0;            
+                    materialIndices.add(matIndex);
                 }while(element<ibuf.getNumElements());
               
         }else if(sx instanceof Node){
             for(Spatial child:((Node)sx).getChildren()){
-                composeScene(child,filter,tmp1,tmp2,positions,indices,materials);
+                composeMesh(child,filter,matsel,tmp1,tmp2,positions,indices,materials,materialIndices);
             }
         }
     }
     
-    public static PhononMesh build(Node n, SpatialFilter filter) {
-        // ByteArrayOutputStream bsod=new ByteArrayOutputStream();
-        // ByteBuffer pbbf=ByteBuffer.allocate(4*3).order(ByteOrder.LITTLE_ENDIAN);
-        Collection<Vector3f> positions=new ArrayList<Vector3f>();
-        Collection<Integer> indices=new ArrayList<Integer>();
-        Collection<Integer> materials=new ArrayList<Integer>();
+    public static PhononMesh build(Node n, SpatialFilter filter,MaterialGenerator matsel) {
+        List<Vector3f> positions=new ArrayList<Vector3f>();
+        List<Integer> indices=new ArrayList<Integer>();
+        List<Integer> materialIndices=new ArrayList<Integer>();
         
         Vector3f tmp1=new Vector3f();
         Vector3f tmp2=new Vector3f();
-        composeScene(n,filter,tmp1,tmp2,positions,indices,materials);
+
+        List<PhononMaterial> materials=matsel.getAllMaterials();
+        composeMesh(n,filter,matsel,tmp1,tmp2,positions,indices,materials,materialIndices);
       
         
         FloatBuffer positionBuffer=BufferUtils.createFloatBuffer((Vector3f[])positions.toArray(new Vector3f[0]));
         IntBuffer indexBuffer=createIntBuffer((Integer[])indices.toArray(new Integer[0]));
-        IntBuffer materialsBuffer=createIntBuffer((Integer[])materials.toArray(new Integer[0]));
+        IntBuffer materialsBuffer=createIntBuffer((Integer[])materialIndices.toArray(new Integer[0]));
         int numTriangles=indexBuffer.limit()/3;
         int numVertices=positionBuffer.limit()/3;
         PhononMesh mesh=new PhononMesh(numTriangles,numVertices,positionBuffer,indexBuffer,materialsBuffer);
+
         return mesh;
     }
 }

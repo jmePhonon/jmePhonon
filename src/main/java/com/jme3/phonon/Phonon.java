@@ -38,12 +38,19 @@ import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.Listener;
+import com.jme3.phonon.scene.PhononMesh;
+import com.jme3.phonon.scene.PhononMeshBuilder;
+import com.jme3.phonon.scene.SpatialFilter;
+import com.jme3.scene.Node;
 
 /**
  * Phonon main class. Contains helpers methods to initialize and configure Phonon.
  * 
  */
-public final class Phonon {
+public final class Phonon{
+    static{
+        PhononNativeLoader.loadAll();
+    }
     static enum PhononAudioParam {
         DipoleWeight("phonon.dipole_weight"),
         DipolePower("phonon.dipole_power");
@@ -63,8 +70,19 @@ public final class Phonon {
      * @return Initialized PhononRenderer
      * @throws Exception Generic initialization exception, check messages for more informations.
      */
-    public static PhononRenderer init(PhononSettings settings, Application app) throws Exception {
-        return PhononInitializer.initInApplication(settings, app);
+    public static PhononRenderer init(PhononSettings settings,Application app) throws Exception {
+        return PhononInitializer.initInApplication(settings,app);
+    }
+
+    public static void loadScene(PhononSettings settings,Application app,Node root, SpatialFilter filter) {
+        PhononMesh scene=PhononMeshBuilder.build(root,filter,settings.materialGenerator);
+        PhononRenderer renderer=(PhononRenderer)app.getAudioRenderer();
+        renderer.setMesh(scene);
+    }
+    
+    public static void unloadScene(PhononSettings settings,Application app) {
+        PhononRenderer renderer=(PhononRenderer)app.getAudioRenderer();
+        renderer.setMesh(null);
     }
 
     /**

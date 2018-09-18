@@ -81,10 +81,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    initNative
- * Signature: (IIIIIIJ[JZ)V
+ * Signature: (IIIIIIJ[JZIJ)V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jlong, jlongArray, jboolean);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jlong, jlongArray, jboolean, jint, jlong);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
@@ -104,27 +104,27 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_startThreadNative
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
- * Method:    createStaticMeshNative
- * Signature: (IIJJJ)J
+ * Method:    setMeshNative
+ * Signature: (IIJJJ)V
  */
-JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_createStaticMeshNative
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setMeshNative
   (JNIEnv *, jobject, jint, jint, jlong, jlong, jlong);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
- * Method:    destroyStaticMeshNative
- * Signature: (J)V
+ * Method:    unsetMeshNative
+ * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyStaticMeshNative
-  (JNIEnv *, jobject, jlong);
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_unsetMeshNative
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer
- * Method:    saveSceneAsObjNative
- * Signature: (J[B)V
+ * Method:    saveMeshAsObjNative
+ * Signature: ([B)V
  */
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_saveSceneAsObjNative
-  (JNIEnv *, jobject, jlong, jbyteArray);
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_saveMeshAsObjNative
+  (JNIEnv *, jobject, jbyteArray);
 
 #ifdef __cplusplus
 }

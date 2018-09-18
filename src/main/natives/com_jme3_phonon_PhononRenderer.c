@@ -90,7 +90,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNativ
     olDisconnectSource(&SETTINGS, source);
 }
 
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initLineNative(JNIEnv *env, jobject obj,jint lineId, jlong outputBufferAddr) {
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initLineNative(JNIEnv *env, 
+jobject obj,jint lineId, jlong outputBufferAddr) {
     olInit(&SETTINGS,&OUTPUT_LINES[lineId], (jfloat *)(intptr_t)outputBufferAddr);
 }
 
@@ -103,28 +104,25 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setEnvironmentNative(
 }
 
 
-JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_createStaticMeshNative
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setMeshNative
   (JNIEnv *env, jobject obj, jint nTris, jint nVerts, jlong tris, jlong verts, jlong mat){
     jint *trisb=(jint *)(intptr_t)tris;
     jfloat *vertsb=(jfloat *)(intptr_t)verts;
     jint *matb=(jint *)(intptr_t)mat;
     
-    return (intptr_t)phCreateStaticMesh(&SETTINGS, nTris, nVerts, trisb, vertsb, matb);
+    phCreateSceneMesh(&SETTINGS, nTris, nVerts, trisb, vertsb, matb);
 
   }
 
-  JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyStaticMeshNative
-  (JNIEnv *env, jobject obj, jlong mesh){
-      void *meshp=(void*)(intptr_t)mesh;
-        phDestroyStaticMesh(&SETTINGS, meshp);
+  JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_unsetMeshNative
+  (JNIEnv *env, jobject obj){
+        phDestroySceneMesh(&SETTINGS);
   }
 
-  JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_saveSceneAsObjNative
-  (JNIEnv *env, jobject obj, jlong addr, jbyteArray pathArray){
+  JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_saveMeshAsObjNative
+  (JNIEnv *env, jobject obj,  jbyteArray pathArray){
       jbyte *path=  (*env)->GetByteArrayElements(env, pathArray, 0); 
-
-      void *meshp=(void*)(intptr_t)addr;
-      phSaveStaticMeshAsObj(&SETTINGS,meshp, path);
+      phSaveSceneMeshAsObj(&SETTINGS, path);
   }
 
   JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
@@ -170,8 +168,10 @@ JNIEXPORT jlong JNICALL Java_com_jme3_phonon_PhononRenderer_createStaticMeshNati
                       }
                   }
                   jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
-                  jboolean hasReverb = asHasFlag(&SETTINGS, audioSource, REVERB);
+#ifdef INCLUDE_SIMPLE_REVERB
 
+                  jboolean hasReverb = asHasFlag(&SETTINGS, audioSource, REVERB);
+#endif
                   if (SETTINGS.isPassthrough || !isPositional) {
                       passThrough(&SETTINGS, inFrame,
 #ifdef INCLUDE_SIMPLE_REVERB
@@ -275,7 +275,9 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     jlongArray audioSourcesSceneDataArrayPointer,
 
     // effects
-    jboolean isPassthrough
+    jboolean isPassthrough,
+    jint nMaterials,
+    jlong materials
 ) {
 
     SETTINGS.nOutputLines = nOutputLines;
@@ -313,7 +315,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
         }
     #endif
 
-    phInit(&SETTINGS,nSourcesPerLine); 
+    phInit(&SETTINGS,nSourcesPerLine,nMaterials,(jfloat*)(intptr_t)materials); 
 
     jlong* audioSourcesSceneDataArray = (*env)->GetLongArrayElements(env, audioSourcesSceneDataArrayPointer, 0); 
     for(jint i=0;i<SETTINGS.nOutputLines;i++){

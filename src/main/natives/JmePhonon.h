@@ -40,13 +40,13 @@
 
 #include "Listener.h"
 
-void* phCreateStaticMesh(struct GlobalSettings *settings,jint numTriangles,
+void phCreateSceneMesh(struct GlobalSettings *settings,jint numTriangles,
 jint numVertices,jint* indexBuffer,jfloat* vertexBuffer, jint* materials);
-void phDestroyStaticMesh(struct GlobalSettings *settings, void *mesh);
-void phSaveStaticMeshAsObj(struct GlobalSettings *settings, void *mesh, jbyte *path);
+void phDestroySceneMesh(struct GlobalSettings *settings);
+void phSaveSceneMeshAsObj(struct GlobalSettings *settings,  jbyte *path);
 
-void phInit(struct GlobalSettings *settings, jint mixQueueMaxSize);
-void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener , struct AudioSource *source,jfloat *inFrame, jfloat *outFrame);
+void phInit(struct GlobalSettings *settings, jint mixerQueueSize, jint nMaterials, jfloat *materials);
+void phProcessFrame(struct GlobalSettings *settings, struct Listener *listener, struct AudioSource *source, jfloat *inFrame, jfloat *outFrame);
 void phDestroy(struct GlobalSettings *settings);
  
  

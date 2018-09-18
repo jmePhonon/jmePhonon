@@ -29,49 +29,31 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-package com.jme3.phonon;
+package com.jme3.phonon.utils;
 
-import com.jme3.phonon.scene.material.MaterialGenerator;
-import com.jme3.phonon.scene.material.SingleMaterialGenerator;
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import com.jme3.audio.AudioData;
+import com.jme3.phonon.format.F32leAudioData;
+
 /**
- * PhononEffects
+ * F32leCachedConverter
  */
-public class PhononSettings{
- 
-
-    public int sampleRate=44100;
-    public int nOutputLines=1;
-    public int nSourcesPerLine=255;
-    public int nOutputChannels=2;
-    public int frameSize=1024;
-    public int bufferSize=3; 
-    public int maxPreBuffering=1024*2*4; 
-    public ThreadMode threadMode=ThreadMode.JAVA;
-
-    public int outputSampleSize=-1; // -1=best
-
-    public PhononSoundSystem system;
-    public PhononSoundDevice device;
-
-    public MaterialGenerator materialGenerator=new SingleMaterialGenerator();
-
-       
-    public PhononSettings(PhononSoundSystem ss){
-        system=ss;
-    }
-
-    /**
-     * Debug only: Disable everything
-     * 
-     */
-    public boolean passThrough = false;
-    public boolean initPlayers=true;
+public class F32leCachedConverter {
+	private static final Map<AudioData, F32leAudioData> CONVERSION_CACHE =
+			new WeakHashMap<AudioData, F32leAudioData>();
     
-    @Override
-    public String toString(){
-        return "SampleRate "+sampleRate+" OutputLines "+nOutputLines+" SourcesPerLine "+nSourcesPerLine+
-        " nOutputChannels "+nOutputChannels+" frameSize "+frameSize+" bufferSize "+bufferSize+" maxPreBuffering "
-                +maxPreBuffering+" threadMode "+threadMode+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
+    public static F32leAudioData toF32le(AudioData d) {
+		F32leAudioData o = CONVERSION_CACHE.get(d);
+		if (o == null) {
+			o = new F32leAudioData(d);
+			CONVERSION_CACHE.put(d, o);
+		}
+		return o;
+	}
 
-    }
+
+
+
 }
