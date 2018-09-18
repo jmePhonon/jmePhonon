@@ -1,48 +1,31 @@
-# Work in progress: Nothing to see here
+# **jmePhonon** : _Steam® Audio for jMonkeyEngine_
+<img align=right width="300px" src="https://media.githubusercontent.com/media/jmePhonon/jmePhonon/docs/misc/logo.png" />
 
-## The repo is public only for convenience.
+[Steam® Audio](https://valvesoftware.github.io/steam-audio/) (phonon) implementation for [jMonkeyEngine](http://jmonkeyengine.org/).
 
-_______
-_______
-_______
-_______
-_______
-_______
-_______
-_______
-_______
-_______
-_______
-_______
-_______
+## Supported platforms
+- Linux 64bit
+- OSX (64bit)
+- Windows 64bit
 
-```bash
-GIT_LFS_SKIP_SMUDGE=1 git clone <REPO
-```
-_______
-```bash
-gradle downloadsResources
-```
-_______
+## Documentation
 
-```bash
-gradle updateJNIHeaders
-```
-_______
+- I want to use jmePhonon
+  - [Usage guide](docs/Usage.md)
+- I want to develop jmePhonon
+  - [Contribution & Development (how to build stuff)](docs/ContributionAndDevelopment.md)
+  - [Implementation details](docs/ImplementationDetails.md)
+  - [Javadoc](todo)
 
-```bash
-gradle updateJNIHeaders build
-```
-_______
 
-```bash
-gradle clean
-```
+## License
+The code in this repo is released under the BSD-3-Clause license, see [LICENSE.md](LICENSE.md) for more details.
 
-_______
+## Legal note
+Please ensure that you have read and understood [LICENSE.md](LICENDE.md) and expecially  [legal/LICENSE.SteamAudio.md](legal/LICENSE.SteamAudio.md).
 
-```bash
-gradle deepClean 
-```
-^^^^^ clears trash folder and cache.
-_______
+This code uses Steam® Audio SDK, that is a closed source library licensed under the [VALVE CORPORATION STEAM® AUDIO SDK LICENSE](legal/LICENSE.SteamAudio.md).
+
+_Steam® is a trademark or registered trademark of Valve Corporation in the United States of America and elsewhere_
+
+_Steam® Audio, Copyright 2017 – 2018, Valve Corp. All rights reserved._

@@ -1,6 +1,7 @@
 #!/bin/bash
-source build.dep/findOs.sh
 
+set -e
+tasks="${@:2}"
 
 DENVS=""
 OIFS="$IFS"
@@ -12,8 +13,7 @@ do
 done
 echo "$DENVS"
 IFS="$OIFS"
-
-set -e
+    
 
 if [ "$USE_IMAGE" = "" ];
 then
@@ -57,20 +57,31 @@ else
     export RUN_AS=""
 fi
 
-if [ "$2" == "bash" ];
+
+
+echo "Launch $USE_IMAGE as $RUN_AS"
+
+
+if [ "$1" = "generic" -o "$tasks" == "bash" ];
 then
-    docker run --rm $DENVS -it  -v$PWD:/workspace $USE_IMAGE bash
+    if [ "$tasks" != "bash" ];
+    then
+        tasks="gradle $tasks"
+    else 
+        RUN_AS=""
+    fi
+    docker run --rm $DENVS -it $RUN_AS -v$PWD:/workspace $USE_IMAGE $tasks
     exit
 fi
-echo "Launch $USE_IMAGE as $RUN_AS"
+
 if [ "$OS_LINUX" != "" ];
 then
-    docker run --rm $DENVS -e CROSS_TRIPLE=x86_64-linux-gnu -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE crossbuild gradle ${@:2}
+    docker run --rm $DENVS -e CROSS_TRIPLE=x86_64-linux-gnu -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE crossbuild gradle $tasks
 fi
 
 if [ "$OS_WINDOWS" != "" ];
 then
-    docker run --rm $DENVS -e CROSS_TRIPLE=x86_64-w64-mingw32 -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE crossbuild gradle ${@:2}
+    docker run --rm $DENVS -e CROSS_TRIPLE=x86_64-w64-mingw32 -it $RUN_AS  -v$PWD:/workspace $USE_IMAGE crossbuild gradle $tasks
 fi
 
 if [ "$OS_OSX" != "" ];
