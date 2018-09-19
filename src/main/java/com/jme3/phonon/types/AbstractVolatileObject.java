@@ -39,6 +39,10 @@ public abstract class AbstractVolatileObject<A,B> implements VolatileObject<A,B>
 
     public volatile boolean needUpdate=true;
     public volatile boolean needUpdateFinalization;
+    private Thread updateThread;
+    private Thread commitThread;
+    private volatile boolean forcedCommit=false;
+    private volatile  boolean forcedUpdate=false;
 
     @Override
     public void setUpdateNeeded() {
@@ -47,25 +51,48 @@ public abstract class AbstractVolatileObject<A,B> implements VolatileObject<A,B>
 
 
     @Override
-    public void finalizeUpdate(B out,int i) {
-        if (!needUpdateFinalization)
-            return;
-        onFinalizeUpdate(out, i);          
-        needUpdateFinalization = false;
-    }
-    public abstract void onFinalizeUpdate(B out, int i);
-
-    @Override
-    public void updateFrom(A v) {
-        if (!needUpdate || needUpdateFinalization) 
-            return;
-        
-
-        onUpdateFrom(v);
-        needUpdate = false;
-        needUpdateFinalization = true;
+    public void commit(B out, int i) {
+        assert forcedCommit||(commitThread==null&&(commitThread=Thread.currentThread())!=null)||Thread.currentThread()==commitThread:"Commiting from wrong thread "+Thread.currentThread()+" =/= "+updateThread;
+        if(!forcedCommit&&!needUpdateFinalization) return;
+        onCommit(out,i);
+        needUpdateFinalization=false;
+        forcedCommit=false;
     }
     
-    public abstract void onUpdateFrom(A out);
+
+
+    public abstract void onCommit(B out, int i);
+
+    @Override
+    public void update(A v) {
+        assert forcedUpdate||(updateThread==null&&(updateThread=Thread.currentThread())!=null)||Thread.currentThread()==updateThread:"Updating from wrong thread "+Thread.currentThread()+" =/= "+updateThread;
+        if(!forcedUpdate&&(!needUpdate||needUpdateFinalization)) return;
+
+        onUpdate(v);
+        needUpdate=false;
+        needUpdateFinalization=true;
+        forcedUpdate=false;
+    }
+    
+
+    /**
+     * Tells the instance to ignore every check for the next commit
+     * @return
+     */
+    public AbstractVolatileObject forceCommit() {
+        forcedCommit=true;
+        return this;
+    }
+    
+     /**
+     * Tells the instance to ignore every check for the next update
+     * @return
+     */
+    public AbstractVolatileObject forceUpdate(){
+        forcedUpdate=true;
+        return this;
+    }
+
+    public abstract void onUpdate(A out);
 
 }

@@ -36,6 +36,7 @@ import com.jme3.audio.Listener;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
+import com.jme3.phonon.types.CommitableMemoryObject;
 import com.jme3.phonon.types.VFloat;
 import com.jme3.phonon.types.VVector3f;
 import com.jme3.util.BufferUtils;
@@ -44,8 +45,7 @@ import static com.jme3.phonon.memory_layout.LISTENER_LAYOUT.*;
 /**
  * PhononListener
  */
-public class PhononListener {
-    public volatile boolean needNativeUpdate = false;
+public class PhononListener extends CommitableMemoryObject {
     private final ByteBuffer MEMORY;
 
     private final VVector3f POS = new VVector3f();
@@ -55,32 +55,43 @@ public class PhononListener {
     private final VFloat VOL = new VFloat();
 
     /**debug */
-    final boolean LIVE_ON_THE_EDGE = false, UPDATE_EVERYTHING = true;
-    
+    final boolean LIVE_ON_THE_EDGE = false, UPDATE_EVERYTHING = false;
+    private volatile Listener listener;
+
     public PhononListener() {
         MEMORY = BufferUtils.createByteBuffer(LISTENER_size);
         // initialization
-        
-        POS.updateFrom(Vector3f.ZERO);
-        DIR.updateFrom(Vector3f.UNIT_Z);
-        UP.updateFrom(Vector3f.UNIT_Y);
-        VEL.updateFrom(Vector3f.ZERO);
-        VOL.updateFrom(1f);
-        finalizeUpdate();
+        POS.forceUpdate().update(Vector3f.ZERO);
+        DIR.forceUpdate().update(Vector3f.UNIT_Z);
+        UP.forceUpdate().update(Vector3f.UNIT_Y);
+        VEL.forceUpdate().update(Vector3f.ZERO);
+        VOL.forceUpdate().update(1f);
+
+        POS.forceCommit();
+        DIR.forceCommit();
+        UP.forceCommit();
+        VEL.forceCommit();
+        VOL.forceCommit();
+        forceCommit().commit(0);
     }
 
+    public void setListener(Listener l) {
+        listener=l;
+    }
     
-
-    public void finalizeUpdate() {
-        POS.finalizeUpdate(MEMORY, POSX);
-        DIR.finalizeUpdate(MEMORY,DIRX);
-        VEL.finalizeUpdate(MEMORY,VELX);
-        VOL.finalizeUpdate(MEMORY, VOLUME);
-        UP.finalizeUpdate(MEMORY,UPX);
+    @Override
+    public void onCommit(float tpf) {
+        POS.commit(MEMORY, POSX);
+        DIR.commit(MEMORY,DIRX);
+        VEL.commit(MEMORY,VELX);
+        VOL.commit(MEMORY, VOLUME);
+        UP.commit(MEMORY,UPX);
 
     }
 
-    public void update(Listener listener) {
+    @Override
+    public void onUpdate(float tpf) {
+        assert listener!=null:"Listener is null?";
         if(UPDATE_EVERYTHING){
             POS.setUpdateNeeded();
             DIR.setUpdateNeeded();
@@ -88,11 +99,11 @@ public class PhononListener {
             VOL.setUpdateNeeded();
             UP.setUpdateNeeded();            
         }
-        POS.updateFrom(listener.getLocation());
-        DIR.updateFrom(listener.getDirection());
-        VEL.updateFrom(listener.getVelocity());
-        VOL.updateFrom(listener.getVolume());
-        UP.updateFrom(listener.getUp());
+        POS.update(listener.getLocation());
+        DIR.update(listener.getDirection());
+        VEL.update(listener.getVelocity());
+        VOL.update(listener.getVolume());
+        UP.update(listener.getUp());
     }
 
     public void setPosUpdateNeeded() {

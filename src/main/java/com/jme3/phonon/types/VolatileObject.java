@@ -38,6 +38,6 @@ package com.jme3.phonon.types;
  */
 public interface VolatileObject<A,B> {  
     public void setUpdateNeeded();
-    public void finalizeUpdate(B out,int i);
-    public void updateFrom(A v);
+    public void commit(B out,int i);
+    public void update(A v);
 }

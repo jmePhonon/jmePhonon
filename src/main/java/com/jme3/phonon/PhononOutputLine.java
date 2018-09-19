@@ -41,14 +41,19 @@ import static com.jme3.phonon.memory_layout.OUTPUT_LINE_LAYOUT.*;
 
 /**
  * This class is used to store processed data
+ * Note: Unless otherwise specified, methods in here must be call only withing the audio renderer thread.
  */
-public class PhononOutputLine {
+public class PhononOutputLine{
     private static final int SAMPLE_SIZE = 4;//Always 4 byte (float32) sample
     private final ByteBuffer BUFFER;
     private final int BUFFER_SIZE;    // Buffersize in frames
     private final long BUFFER_ADDRESS;
     private final int CHANNELS;
-    private final int FRAMESIZE;    // Frame size in samples, total framesize is CHANNELS*FRAMESIZE
+    private final int FRAMESIZE; // Frame size in samples, total framesize is CHANNELS*FRAMESIZE
+    
+    
+
+    private Thread rendererThread;
 
     public static enum LineStatus {
         OVER, NODATA, READY
@@ -82,13 +87,17 @@ public class PhononOutputLine {
         BUFFER_ADDRESS = DirectBufferUtils.getAddr(BUFFER);
     }
 
-
+    /**
+     * Thread-safe
+     * @return
+     */
     public int getChannels() {
         return CHANNELS;
     }
    
     /**
      * How many samples per frame
+     * Thread-safe
      */
     public int getFrameSize() {
         return FRAMESIZE;
@@ -96,6 +105,7 @@ public class PhononOutputLine {
     
     /**
      * How many frames for this buffer. 
+     * Thread-safe
      */
     public int getBufferSize() {
         return BUFFER_SIZE;
@@ -103,6 +113,7 @@ public class PhononOutputLine {
     
     /**
      * Get native address for this buffer
+     * Thread-safe
      */
     public long getAddress() {
         return BUFFER_ADDRESS;
@@ -112,23 +123,25 @@ public class PhononOutputLine {
     /**
      * Reset buffer
      */
-    public void reset() {
+    private void reset() {
         setLastProcessedFrameId(0);
         setLastPlayedFrameId(0);
     }
 
   
-    protected void setLastProcessedFrameId(int v) {
-        BUFFER.putInt(LAST_PROCESSED_FRAME, v);
+    private void setLastProcessedFrameId(int v) {
+        assert (rendererThread==null&&(rendererThread=Thread.currentThread())!=null)|| Thread.currentThread()==rendererThread;
+        BUFFER.putInt(LAST_PROCESSED_FRAME,v);
     }
 
     /**
      * Get id of the latest frame processed by phonon
      */
     public int getLastProcessedFrameId() {
+        assert (rendererThread==null&&(rendererThread=Thread.currentThread())!=null)|| Thread.currentThread()==rendererThread;
         int n = BUFFER.getInt(LAST_PROCESSED_FRAME);
         if (n < 0)
-            n = -n;
+            n=-n;
         return n;
     }
     
@@ -136,6 +149,7 @@ public class PhononOutputLine {
      * Returns true if the entire audio has been processed, will always return false for loops.
      */
     public boolean isProcessingCompleted() {
+        assert (rendererThread==null&&(rendererThread=Thread.currentThread())!=null)|| Thread.currentThread()==rendererThread;
         return BUFFER.getInt(LAST_PROCESSED_FRAME) < 0;
     }
 
@@ -144,6 +158,7 @@ public class PhononOutputLine {
      * Set id of last played frame, internal use only
      */
     private void setLastPlayedFrameId(int v) {
+        assert (rendererThread==null&&(rendererThread=Thread.currentThread())!=null)|| Thread.currentThread()==rendererThread;
         BUFFER.putInt(LAST_PLAYED_FRAME, v);
     }
 
@@ -151,12 +166,18 @@ public class PhononOutputLine {
      * Get id of latest played frame
      */
     public int getLastPlayedFrameId() {
+        assert (rendererThread==null&&(rendererThread=Thread.currentThread())!=null)|| Thread.currentThread()==rendererThread;
         int n = BUFFER.getInt(LAST_PLAYED_FRAME);
         return n;
     }
 
 
+
+
+   
     public LineStatus readNextFrameForPlayer(byte le_out[]) {
+        assert (rendererThread==null&&(rendererThread=Thread.currentThread())!=null)|| Thread.currentThread()==rendererThread;
+
         int rawIndex = getLastPlayedFrameId();
         int phononIndex = getLastProcessedFrameId();
         if(rawIndex>=phononIndex){

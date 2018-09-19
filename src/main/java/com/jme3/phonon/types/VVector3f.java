@@ -41,14 +41,14 @@ public class VVector3f extends AbstractVolatileObject<Vector3f,ByteBuffer> {
     public volatile float x, y, z;
   
     @Override
-    public void onFinalizeUpdate(ByteBuffer out,int i) {
+    public void onCommit(ByteBuffer out,int i) {
         out.putFloat(i,x);
         out.putFloat(i+4,y);
         out.putFloat(i+4+4,z);        
     }
 
     @Override
-    public void onUpdateFrom(Vector3f v) {
+    public void onUpdate(Vector3f v) {
         x = v.x;
         y = v.y;
         z = v.z;

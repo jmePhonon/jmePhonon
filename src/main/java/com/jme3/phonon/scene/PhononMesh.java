@@ -44,7 +44,6 @@ public class PhononMesh{
     public final FloatBuffer vertices;
     public final IntBuffer indices;
     public final IntBuffer materials;
-    public long nativeAddr;
 
     public PhononMesh(int numTriangles,int numVertices,FloatBuffer vertices,IntBuffer indices,IntBuffer materials){
         this.numTriangles=numTriangles;

@@ -63,7 +63,7 @@ public final class Phonon{
     }
     
     /**
-     * Initializes phonon context in the given application
+     * Initializes phonon context for the given application
      * 
      * @param settings Phonon initialization settings
      * @param app Application in which Phonon must be inizialized
@@ -74,6 +74,7 @@ public final class Phonon{
         return PhononInitializer.initInApplication(settings,app);
     }
 
+  
     public static void loadScene(PhononSettings settings,Application app,Node root, SpatialFilter filter) {
         PhononMesh scene=PhononMeshBuilder.build(root,filter,settings.materialGenerator);
         PhononRenderer renderer=(PhononRenderer)app.getAudioRenderer();

@@ -41,12 +41,12 @@ public class VFloat extends AbstractVolatileObject<Float,ByteBuffer> {
     public volatile float x;
 
     @Override
-    public void onFinalizeUpdate(ByteBuffer out,int i) {
+    public void onCommit(ByteBuffer out,int i) {
         out.putFloat(i, x);
     }
 
     @Override
-    public void onUpdateFrom(Float v) {       
+    public void onUpdate(Float v) {       
         x = v;       
     }
 

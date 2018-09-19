@@ -41,16 +41,16 @@ import com.jme3.audio.AudioSource.Status;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.Phonon;
 import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.types.CommitableMemoryObject;
 import com.jme3.phonon.types.VByte;
 import com.jme3.phonon.types.VFloat;
 import com.jme3.phonon.types.VVector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 
-public class PhononAudioSourceData {
+public class PhononSourceSlot extends CommitableMemoryObject{
     private final ByteBuffer MEMORY;
-    private  PhononOutputLine connectedLine;
-    private AudioSource source;
+
     
     private final VVector3f POS = new VVector3f();
     private final VByte CHANNELS = new VByte();
@@ -60,31 +60,45 @@ public class PhononAudioSourceData {
     private final VFloat DWEIGHT = new VFloat();
     private final VFloat DPOWER = new VFloat();
     private final VFloat VOL = new VFloat();
-
-    private final VByte FLS = new VByte();
-
-
-    private volatile int stopAt;
+    private final VByte FLS=new VByte();
     
-    // private final boolean UPDATE_EVERYTHING = true;
+    private volatile PhononOutputLine connectedLine;
+    private volatile AudioSource source;
+    private volatile boolean isOver;
+    
 
-    public PhononAudioSourceData() {
-        MEMORY = BufferUtils.createByteBuffer(SIZE);
-        FLS.updateFrom((byte) 0);
-        CHANNELS.updateFrom((byte) 1);
-        POS.updateFrom(Vector3f.ZERO);
-        AHEAD.updateFrom(Vector3f.UNIT_Z);
-        UP.updateFrom(Vector3f.UNIT_Y);
-        RIGHT.updateFrom(Vector3f.UNIT_X);
-        DWEIGHT.updateFrom(0f);
-        DPOWER.updateFrom(0f);
-        VOL.updateFrom(1f);
+    public PhononSourceSlot(){
+        MEMORY=BufferUtils.createByteBuffer(SIZE);
+      
+        MEMORY.putInt(STOPAT,-1);
 
-        MEMORY.putInt(STOPAT, -1);
+        source=null;
+        POS.forceUpdate();
+        CHANNELS.forceUpdate();
+        AHEAD.forceUpdate();
+        UP.forceUpdate();
+        RIGHT.forceUpdate();
+        DWEIGHT.forceUpdate();
+        DPOWER.forceUpdate();
+        VOL.forceUpdate();
+        FLS.forceUpdate();
 
-        source = null;
+        POS.forceCommit();
+        CHANNELS.forceCommit();
+        AHEAD.forceCommit();
+        UP.forceCommit();
+        RIGHT.forceCommit();
+        DWEIGHT.forceCommit();
+        DPOWER.forceCommit();
+        VOL.forceCommit();
+        FLS.forceCommit();
 
-        finalizeUpdate();
+        forceUpdate().update(0);
+        forceCommit().commit(0);
+    }
+
+    public boolean isConnected() {
+        return source!=null;
     }
 
     public void setLine(PhononOutputLine line) {
@@ -95,9 +109,7 @@ public class PhononAudioSourceData {
         return source;
     }
 
-    private boolean isOver() {
-        return stopAt!=-1&&connectedLine.getLastPlayedFrameId() >= stopAt;
-    }
+   
 
     public void setSource(AudioSource src) {
         source = src;
@@ -108,8 +120,8 @@ public class PhononAudioSourceData {
             AudioNode node = (AudioNode) src;
         }
 
-        CHANNELS.setUpdateNeeded();
-        CHANNELS.updateFrom((byte) src.getAudioData().getChannels());
+        // CHANNELS.setUpdateNeeded();
+        CHANNELS.forceUpdate().update((byte) src.getAudioData().getChannels());
         FLS.setUpdateNeeded();
         POS.setUpdateNeeded();
         AHEAD.setUpdateNeeded();
@@ -117,17 +129,16 @@ public class PhononAudioSourceData {
         RIGHT.setUpdateNeeded();
         DWEIGHT.setUpdateNeeded();
         DPOWER.setUpdateNeeded();
-        VOL.setUpdateNeeded();
-        
+        VOL.setUpdateNeeded();        
     }
 
-    public void update() {
+    public void onUpdate(float tpf) {
         if (source != null) {
-            if (isOver()) {
+            if (isOver) {
               source.setStatus(Status.Stopped);
             }
 
-            POS.updateFrom(source.getPosition());
+            POS.update(source.getPosition());
             if (FLS.needUpdate) {
                 int f = 0;
                 if (source.isPositional())
@@ -141,39 +152,40 @@ public class PhononAudioSourceData {
                 if (source.isReverbEnabled()) 
                     f|=FLAG_REVERB;
                 
-                FLS.updateFrom((byte) f);
+                FLS.update((byte) f);
             }
 
-            AHEAD.updateFrom(source.getDirection());
+            AHEAD.update(source.getDirection());
 
             if(source instanceof AudioNode) {
                 AudioNode node = (AudioNode) source;
-                UP.updateFrom(node.getWorldRotation().getRotationColumn(1));
-                RIGHT.updateFrom(node.getWorldRotation().getRotationColumn(0).negate());
-                DWEIGHT.updateFrom(Phonon.getAudioNodeDipoleWeight(node));
-                DPOWER.updateFrom(Phonon.getAudioNodeDipolePower(node));
+                UP.update(node.getWorldRotation().getRotationColumn(1));
+                RIGHT.update(node.getWorldRotation().getRotationColumn(0).negate());
+                DWEIGHT.update(Phonon.getAudioNodeDipoleWeight(node));
+                DPOWER.update(Phonon.getAudioNodeDipolePower(node));
             }
 
-            VOL.updateFrom(source.getVolume());
+            VOL.update(source.getVolume());
         }
     }
 
-    public void finalizeUpdate() {
-        POS.finalizeUpdate(MEMORY, POSX);
-        AHEAD.finalizeUpdate(MEMORY, AHEADX);
-        CHANNELS.finalizeUpdate(MEMORY,NUM_CHANNELS);
+    public void onCommit(float tpf) {
+        POS.commit(MEMORY, POSX);
+        AHEAD.commit(MEMORY, AHEADX);
+        CHANNELS.commit(MEMORY,NUM_CHANNELS);
         if(source instanceof AudioNode) {
-            UP.finalizeUpdate(MEMORY, UPX);
-            RIGHT.finalizeUpdate(MEMORY, RIGHTX);
+            UP.commit(MEMORY, UPX);
+            RIGHT.commit(MEMORY, RIGHTX);
         }
 
-        DWEIGHT.finalizeUpdate(MEMORY, DIPOLEWEIGHT);
-        DPOWER.finalizeUpdate(MEMORY, DIPOLEPOWER);
-        VOL.finalizeUpdate(MEMORY, VOLUME);
+        DWEIGHT.commit(MEMORY, DIPOLEWEIGHT);
+        DPOWER.commit(MEMORY, DIPOLEPOWER);
+        VOL.commit(MEMORY, VOLUME);
 
-        FLS.finalizeUpdate(MEMORY, FLAGS);
+        FLS.commit(MEMORY, FLAGS);
 
-        stopAt = MEMORY.getInt(STOPAT);
+        int stopAt = MEMORY.getInt(STOPAT);
+        isOver=stopAt!=-1&&connectedLine.getLastPlayedFrameId()>=stopAt;
     }
 
     public void setPosUpdateNeeded() {
