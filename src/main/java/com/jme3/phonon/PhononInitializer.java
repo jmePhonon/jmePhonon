@@ -61,72 +61,57 @@ class PhononInitializer {
      * 
      */
 
-    public static PhononRenderer initInApplication(PhononSettings settings, Application app) throws Exception {
-        if(app!=null){
+    public static PhononRenderer init(PhononSettings settings, Application app,boolean skipSoundDetection,boolean skipReflection) throws Exception {
+        if(!skipSoundDetection){
+            if(settings.system==null){ throw new Exception("No system found in settings"); }
+
+            List<PhononSoundDevice> devices=settings.system.getAudioDevices();
+            int lastTriedDevice=0;
+
+            boolean ready=false;
+            do{
+                PhononSoundDevice device=settings.device;
+                if(device==null){
+                    device=devices.get(lastTriedDevice++);
+                }
+
+                List<Integer> formats=settings.system.getOutputFormats(device,settings.nOutputChannels);
+                if(formats.size()>0){
+                    // If format unset or not available, pick the best one available
+                    if(settings.outputSampleSize==-1||(!formats.contains(settings.outputSampleSize))){
+                        settings.outputSampleSize=formats.get(0);
+                    }
+                    settings.device=device;
+                    ready=true;
+                }
+
+            }while((!ready)&&settings.device==null&&lastTriedDevice<devices.size());
+            if(!ready){ throw new Exception("Error initializing output device."); }
+        }
+        
+        if(app!=null&&!skipReflection){
             if(app.getAudioRenderer()!=null) app.getAudioRenderer().cleanup();
         }
-        initWithBestSettings(settings);
 
-        PhononRenderer phononRenderer = createPhononRenderer(settings);
-        Listener listener = createListener(phononRenderer);
-
-        if(app != null && app instanceof LegacyApplication) {
-           
-            forceFieldsReplace((LegacyApplication)app, phononRenderer, listener);          
-        }
-
-        phononRenderer.initialize();
-
-        return phononRenderer;
-    }
-
-    private static void initWithBestSettings(PhononSettings settings) throws Exception {
-        if(settings.system == null) {
-            throw new Exception("No system found in settings");
-        }
-
-        List<PhononSoundDevice> devices= settings.system.getAudioDevices();
-        int lastTriedDevice=0;
-
-        boolean ready=false;
-        do{
-            PhononSoundDevice device=settings.device;
-            if(device==null){
-                device=devices.get(lastTriedDevice++);
-            }
-            
-            List<Integer> formats = settings.system.getOutputFormats(device,settings.nOutputChannels);
-            if(formats.size()>0){
-                // If format unset or not available, pick the best one available
-                if(settings.outputSampleSize==-1||(!formats.contains(settings.outputSampleSize))){
-                    settings.outputSampleSize=formats.get(0);
-                }
-                settings.device=device;
-                ready=true;
-            }
-       
-        }while((!ready)&&settings.device==null&&lastTriedDevice<devices.size());
-        if(!ready){
-            throw new Exception("Error initializing output device.");
-        }
-    }
-   
-    private static PhononRenderer createPhononRenderer(PhononSettings settings) throws Exception {
         PhononRenderer phononRenderer = new PhononRenderer(settings);
         AudioContext.setAudioRenderer(phononRenderer);
 
-        return phononRenderer;
-    }
-
-    private static Listener createListener(PhononRenderer phononRenderer) {
         Listener listener = new Listener();
         listener.setRenderer(phononRenderer);
         listener.setVolume(1f);
         phononRenderer.setListener(listener);
 
-        return listener;
-    }
 
+        if(app != null && app instanceof LegacyApplication&&!skipReflection) {           
+            forceFieldsReplace((LegacyApplication)app, phononRenderer, listener);          
+        }
+
+
+        return phononRenderer;
+    }
+   
+  
+   
     private static void forceFieldsReplace(LegacyApplication app, PhononRenderer phononRenderer, Listener listener) throws Exception {
         Field fields[] = LegacyApplication.class.getDeclaredFields();
 

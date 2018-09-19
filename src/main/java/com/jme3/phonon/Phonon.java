@@ -71,7 +71,9 @@ public final class Phonon{
      * @throws Exception Generic initialization exception, check messages for more informations.
      */
     public static PhononRenderer init(PhononSettings settings,Application app) throws Exception {
-        return PhononInitializer.initInApplication(settings,app);
+        PhononRenderer phononRenderer=PhononInitializer.init(settings,app,false,false);
+        phononRenderer.initialize();
+        return phononRenderer;
     }
 
   

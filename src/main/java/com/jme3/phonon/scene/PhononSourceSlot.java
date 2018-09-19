@@ -83,6 +83,16 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         VOL.forceUpdate();
         FLS.forceUpdate();
 
+        CHANNELS.update((byte) 1);
+        POS.update(Vector3f.ZERO);
+        AHEAD.update(Vector3f.UNIT_Z);
+        UP.update(Vector3f.UNIT_Y);
+        RIGHT.update(Vector3f.UNIT_X);
+        DWEIGHT.update(0f);
+        DPOWER.update(0f);
+        VOL.update(1f);
+        FLS.update((byte) 0);
+
         POS.forceCommit();
         CHANNELS.forceCommit();
         AHEAD.forceCommit();
@@ -120,8 +130,10 @@ public class PhononSourceSlot extends CommitableMemoryObject{
             AudioNode node = (AudioNode) src;
         }
 
-        // CHANNELS.setUpdateNeeded();
-        CHANNELS.forceUpdate().update((byte) src.getAudioData().getChannels());
+        CHANNELS.setUpdateNeeded();
+        CHANNELS.forceUpdate();
+        CHANNELS.update((byte)src.getAudioData().getChannels());
+        
         FLS.setUpdateNeeded();
         POS.setUpdateNeeded();
         AHEAD.setUpdateNeeded();
@@ -132,6 +144,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         VOL.setUpdateNeeded();        
     }
 
+    @Override
     public void onUpdate(float tpf) {
         if (source != null) {
             if (isOver) {
@@ -169,6 +182,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         }
     }
 
+    @Override
     public void onCommit(float tpf) {
         POS.commit(MEMORY, POSX);
         AHEAD.commit(MEMORY, AHEADX);

@@ -8,8 +8,8 @@ package com.jme3.phonon.types;
  */
 
 public abstract class CommitableMemoryObject {
-    private Thread updateThread;
-    private Thread commitThread;
+    private volatile Thread updateThread;
+    private volatile Thread commitThread;
     private volatile boolean forcedCommit=false;
     private volatile  boolean forcedUpdate=false;
 

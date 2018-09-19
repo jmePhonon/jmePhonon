@@ -89,6 +89,8 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 		int nTotalSource = SETTINGS.nOutputLines * SETTINGS.nSourcesPerLine;
 		SOURCES=new PhononSourceSlot[nTotalSource];
 		PLAYERS=new PhononSoundPlayer[SETTINGS.nOutputLines];
+
+		
 	}
 	
 
@@ -127,6 +129,15 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 			decoderThread.setPriority(Thread.MAX_PRIORITY);
 			decoderThread.setDaemon(true);
 			decoderThread.start();
+
+			while(!renderedInitialized){
+				try{
+					Thread.sleep(1);
+				}catch(InterruptedException e){
+					e.printStackTrace();
+				}
+
+			}
 		}
 
 		if(SETTINGS.threadMode.isNative){
@@ -135,30 +146,38 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 	}
 
 
-	private void initializeRenderer(){
+	void initializeRenderer(){
 		try{
+			// Materials
+			ByteBuffer materials=BufferUtils.createByteBuffer(SETTINGS.materialGenerator.getAllMaterials().size()*PhononMaterial.SERIALIZED_SIZE).order(ByteOrder.nativeOrder());
+			for(PhononMaterial mat:SETTINGS.materialGenerator.getAllMaterials())mat.serialize(materials);
+			
+			// Source slots
+			long srcAddrs[]=new long[SOURCES.length];
 			for(int i=0;i<SOURCES.length;++i){
 				SOURCES[i]=new PhononSourceSlot();
-			}
-
-			ByteBuffer materials=BufferUtils.createByteBuffer(SETTINGS.materialGenerator.getAllMaterials().size()*PhononMaterial.SERIALIZED_SIZE).order(ByteOrder.nativeOrder());
-			for(PhononMaterial mat:SETTINGS.materialGenerator.getAllMaterials()){
-				mat.serialize(materials);
-			}
-
-			long srcAddrs[]=new long[SOURCES.length];
-			for(int i=0;i<SOURCES.length;i++){
 				srcAddrs[i]=SOURCES[i].getAddress();
-			}
+			}	
 
-			initNative(SETTINGS.sampleRate,OUTPUT_LINES.length,SETTINGS.nSourcesPerLine,SETTINGS.nOutputChannels,SETTINGS.frameSize,SETTINGS.bufferSize,PHONON_LISTENER.getAddress(),srcAddrs,
+			// init
+			initNative(SETTINGS.sampleRate,
+					OUTPUT_LINES.length,
+					SETTINGS.nSourcesPerLine,
+					SETTINGS.nOutputChannels,
+					SETTINGS.frameSize,
+					SETTINGS.bufferSize,
+					PHONON_LISTENER.getAddress(),
+					srcAddrs,
+					SETTINGS.passThrough,
+					SETTINGS.materialGenerator.getAllMaterials().size(),
+					DirectBufferUtils.getAddr(materials)
+			);
 
-					// Effects
-					SETTINGS.passThrough,SETTINGS.materialGenerator.getAllMaterials().size(),DirectBufferUtils.getAddr(materials));
+			// Output lines
 			for(int i=0;i<OUTPUT_LINES.length;i++){
 				OUTPUT_LINES[i]=new PhononOutputLine(SETTINGS.frameSize,SETTINGS.nOutputChannels,SETTINGS.bufferSize);
 				initLineNative(i,OUTPUT_LINES[i].getAddress());
-				if(SETTINGS.initPlayers){
+				if(SETTINGS.initPlayers){ // player
 					PLAYERS[i]=SETTINGS.system.newPlayer();
 					PLAYERS[i].init(SETTINGS.system,SETTINGS.device,OUTPUT_LINES[i],SETTINGS.sampleRate,SETTINGS.nOutputChannels,SETTINGS.outputSampleSize,SETTINGS.maxPreBuffering);
 				}
@@ -193,11 +212,11 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 	@Override
 	public void run() {
 		do{
+
 			if(!renderedInitialized){
 				initializeRenderer();
 				renderedInitialized=true;
-			}
-			
+			}		
 			if (!SETTINGS.threadMode.isNative || SETTINGS.threadMode.isDecoupled) {
 				try {
 					Thread.sleep(1);
@@ -219,13 +238,13 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 					player.loop();
 				}
 			}
-		} while ((!SETTINGS.threadMode.isNative || SETTINGS.threadMode.isDecoupled) && decoderThread.isUpdating());
+		} while (SETTINGS.threadMode!=ThreadMode.NONE&&((!SETTINGS.threadMode.isNative || SETTINGS.threadMode.isDecoupled) && decoderThread.isUpdating()));
 	}
 
 	/* Game loop */
 	@Override
 	public void update(float tpf) {
-		if(!renderedInitialized) return;
+		// if(!renderedInitialized) return;
 		PHONON_LISTENER.update(0);
 		for(PhononSourceSlot sourceData:SOURCES){
 			if(!sourceData.isConnected()) continue;

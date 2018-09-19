@@ -65,12 +65,12 @@ public class TestJNI extends TestCase {
         settings.nSourcesPerLine=1;
         settings.nOutputChannels=1;
         settings.threadMode=ThreadMode.NONE;
-        
-        PhononRenderer renderer=Phonon.init(settings,null);
-   
-        
-        // renderer.preInit();        
+        PhononNativeLoader.loadAll();
+        PhononRenderer renderer=PhononInitializer.init(settings,null,true,true);
+        renderer.initializeRenderer();
         renderer.connectSourceRaw(bbf.limit()/4, bbf);
+
+        // renderer.preInit();        
 
 
         PhononOutputLine chan = renderer.getLine(0);

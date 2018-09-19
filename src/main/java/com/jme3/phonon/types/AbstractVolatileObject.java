@@ -39,8 +39,8 @@ public abstract class AbstractVolatileObject<A,B> implements VolatileObject<A,B>
 
     public volatile boolean needUpdate=true;
     public volatile boolean needUpdateFinalization;
-    private Thread updateThread;
-    private Thread commitThread;
+    private volatile Thread updateThread;
+    private volatile Thread commitThread;
     private volatile boolean forcedCommit=false;
     private volatile  boolean forcedUpdate=false;
 
