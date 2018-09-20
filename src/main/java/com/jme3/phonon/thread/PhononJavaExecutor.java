@@ -7,7 +7,10 @@ public class PhononJavaExecutor extends Thread implements PhononExecutor {
     private PhononUpdater updater;
 
     public PhononJavaExecutor() {
-        this.UPDATE_FLAG = true;
+        this.UPDATE_FLAG=true;
+        setName("Phonon Java Thread");
+        setPriority(Thread.MAX_PRIORITY);
+        setDaemon(true);
     }
 
     public void setUpdater(PhononUpdater u) {

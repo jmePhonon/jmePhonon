@@ -33,6 +33,8 @@ package com.jme3.phonon;
 
 import com.jme3.phonon.scene.material.MaterialGenerator;
 import com.jme3.phonon.scene.material.SingleMaterialGenerator;
+import com.jme3.phonon.thread.PhononExecutor;
+import com.jme3.phonon.thread.PhononJavaExecutor;
 /**
  * PhononEffects
  */
@@ -52,6 +54,7 @@ public class PhononSettings{
     public PhononSoundDevice device;
 
     public MaterialGenerator materialGenerator=new SingleMaterialGenerator();
+    public PhononExecutor executor = new PhononJavaExecutor();
 
        
     public PhononSettings(PhononSoundSystem ss){

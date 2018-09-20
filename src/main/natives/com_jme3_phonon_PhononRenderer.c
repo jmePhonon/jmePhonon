@@ -33,9 +33,6 @@
     #error This implementation runs only on little endian machines
 #endif
 
-#if defined(__linux__)
-    #include "platform/linux/NativeUpdate.h"
-#endif
 
 #include "Common.h" 
 

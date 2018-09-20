@@ -38,18 +38,35 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <time.h>
-// #include "types.h"
-// #include "platform/linux/NativeUpdate.h"
+
 
 #define HAS_NATIVE_THREAD_SUPPORT 1
 
 #define true 1
 #define false 0
 
-#define timespec2ns(x) (x.tv_sec * 1000000000LL + x.tv_nsec)
-#define CLOCK_TYPE CLOCK_MONOTONIC_COARSE
 
-void nuInit(void* (*)());
-void nuStop();
+struct {
+    pthread_t thread;
+} PlatformThreadContext;
+
+inline void plStartThread(void* (*updateFunction)()) {
+    jint c = pthread_create(&PlatformThreadContext.thread, NULL, updateFunction, NULL);
+    if (c) {
+        printf("Error - pthread_create() return code: %d\n", c);
+    }
+}
+
+inline void plStopThread() {
+    if(pthread_join(PlatformThreadContext.thread, NULL) != 0) {
+        perror("error joining native thread");
+    }
+}
+
+inline void plSleep(){
+  if (nanosleep((const struct timespec[]){{0, 1000000ll}}, NULL) < 0) {
+        printf("Error can't sleep \n");
+  }
+}
 
 #endif

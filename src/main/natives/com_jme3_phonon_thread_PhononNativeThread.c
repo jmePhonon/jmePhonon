@@ -33,8 +33,9 @@
 #include <jni.h>
 #include <pthread.h>
 
+
 #if defined(__linux__)
-    #include "platform/linux/NativeUpdate.h"
+    #include "platform/linux/Platform.h"    
 #endif
 
 #include "com_jme3_phonon_thread_PhononNativeExecutor.h"
@@ -59,32 +60,32 @@ inline void pntCallJMethod(char* name) {
 }
 
 inline void pntInitializeContext() {
-    JavaVMAttachArgs thread_arg;
-    thread_arg.version = JNI_VERSION_1_6;
-    thread_arg.name = "Phonon Native Thread";
-    thread_arg.group = NULL;
+    #ifdef HAS_NATIVE_THREAD_SUPPORT    
+        JavaVMAttachArgs thread_arg;
+        thread_arg.version = JNI_VERSION_1_6;
+        thread_arg.name = "Phonon Native Thread";
+        thread_arg.group = NULL;
 
-    (*ThreadContext.vm)->AttachCurrentThreadAsDaemon(ThreadContext.vm, (void **) &ThreadContext.env, &thread_arg);
-    
-    ThreadContext.loopClass = (*ThreadContext.env)->GetObjectClass(ThreadContext.env, ThreadContext.loopObject);
+        (*ThreadContext.vm)->AttachCurrentThreadAsDaemon(ThreadContext.vm, (void **) &ThreadContext.env, &thread_arg);
+        
+        ThreadContext.loopClass = (*ThreadContext.env)->GetObjectClass(ThreadContext.env, ThreadContext.loopObject);
 
-    ThreadContext.initialized = true;
-    ThreadContext.loop = true;
+        ThreadContext.initialized = true;
+        ThreadContext.loop = true;
+    #endif
 }
 
 void* pntLoop() {
-    if (!ThreadContext.initialized) {
-        pntInitializeContext();
-    }
-
-    while (ThreadContext.loop) {
-        if (nanosleep((const struct timespec[]){{0, 1000000ll}}, NULL) < 0) {
-            printf("Error can't sleep \n");
+    #ifdef HAS_NATIVE_THREAD_SUPPORT
+        if (!ThreadContext.initialized) {
+            pntInitializeContext();
         }
 
-        pntCallJMethod("run");
-    }
-
+        while (ThreadContext.loop) {
+            plSleep();
+            pntCallJMethod("run");
+        }
+    #endif 
     return NULL;
 }
 
@@ -96,13 +97,14 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_thread_PhononNativeExecutor_startUpd
         ThreadContext.endTime = 0;
         (*env)->GetJavaVM(env, &ThreadContext.vm);
         ThreadContext.loopObject = (*env)->NewGlobalRef(env, loopObj);
-        nuInit(pntLoop);
+        plStartThread(pntLoop);
     #endif
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_thread_PhononNativeExecutor_stopUpdateNative(JNIEnv* env, jobject object) {
-    ThreadContext.loop = false;
-
-    nuStop();
+    #ifdef HAS_NATIVE_THREAD_SUPPORT    
+        ThreadContext.loop = false;
+        plStopThread();
+    #endif
 }
 

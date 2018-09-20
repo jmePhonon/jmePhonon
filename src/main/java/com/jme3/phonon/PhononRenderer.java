@@ -75,13 +75,12 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	private final PhononSourceSlot[] SOURCES;
 	private final PhononSoundPlayer[] PLAYERS;
 	private final PhononListener PHONON_LISTENER;
-	private PhononExecutor PHONON_EXECUTOR;
 	private PhononMesh sceneMesh;
 	private volatile boolean playing=false,renderedInitialized=false;
 	
-	public PhononRenderer(PhononSettings settings, PhononExecutor phononExecutor) throws Exception{
+	public PhononRenderer(PhononSettings settings) throws Exception{
 		SETTINGS=settings;
-		PHONON_EXECUTOR = phononExecutor;
+		settings.executor.setUpdater(this);
 		OUTPUT_LINES=new PhononOutputLine[SETTINGS.nOutputLines];
 		PHONON_LISTENER=new PhononListener();
 		int nTotalSource = SETTINGS.nOutputLines * SETTINGS.nSourcesPerLine;
@@ -119,7 +118,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	
 	@Override
 	public void initialize() {
-		PHONON_EXECUTOR.startUpdate();
+		SETTINGS.executor.startUpdate();
 	}
 
 
@@ -167,7 +166,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	
 	@Override
 	public void cleanup() {
-		PHONON_EXECUTOR.stopUpdate();
+		SETTINGS.executor.stopUpdate();
 		
 		for(PhononSoundPlayer p : PLAYERS){
 			p.close();

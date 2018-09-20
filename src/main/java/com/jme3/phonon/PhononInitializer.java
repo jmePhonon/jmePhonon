@@ -97,7 +97,8 @@ class PhononInitializer {
             if(app.getAudioRenderer()!=null) app.getAudioRenderer().cleanup();
         }
 
-        PhononRenderer phononRenderer = createPhononRenderer(settings);
+
+        PhononRenderer phononRenderer = new PhononRenderer(settings);
         AudioContext.setAudioRenderer(phononRenderer);
 
         Listener listener = new Listener();
@@ -113,40 +114,9 @@ class PhononInitializer {
 
         return phononRenderer;
 }
-   
-    private static PhononRenderer createPhononRenderer(PhononSettings settings) throws Exception {
-        PhononExecutor phononExecutor = createPhononExecutor(settings);       
 
-        PhononRenderer phononRenderer = new PhononRenderer(settings, phononExecutor);
-        phononExecutor.setUpdater(phononRenderer);
-        AudioContext.setAudioRenderer(phononRenderer);
 
-        return phononRenderer;
-    }
-
-    private static PhononExecutor createPhononExecutor(PhononSettings settings) {
-        PhononExecutor phononExecutor = null;
-
-        switch(settings.threadMode) {
-            case JAVA:
-                phononExecutor = new PhononJavaExecutor();
-                PhononJavaExecutor jPhononExecutor = (PhononJavaExecutor) phononExecutor;
-
-                jPhononExecutor.setName("Phonon Java Thread");
-                jPhononExecutor.setPriority(Thread.MAX_PRIORITY);
-                jPhononExecutor.setDaemon(true);
-                break;
-            case NATIVE:
-                phononExecutor = new PhononNativeExecutor();
-                break;
-            case NONE:
-                phononExecutor = new PhononDummyExecutor(); 
-                break;
-        }
-
-        return phononExecutor;
-    }  
-   
+ 
     private static void forceFieldsReplace(LegacyApplication app, PhononRenderer phononRenderer, Listener listener) throws Exception {
         Field fields[] = LegacyApplication.class.getDeclaredFields();
 
