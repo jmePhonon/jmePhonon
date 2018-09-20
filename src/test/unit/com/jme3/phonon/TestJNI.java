@@ -67,8 +67,8 @@ public class TestJNI extends TestCase {
         settings.threadMode=ThreadMode.NONE;
         PhononNativeLoader.loadAll();
         PhononRenderer renderer=PhononInitializer.init(settings,null,true,true);
-        renderer.initializeRenderer();
-        renderer.connectSourceRaw(bbf.limit()/4, bbf);
+        renderer.initializePhonon();
+        renderer.playSourceDataRaw(bbf.limit()/4, bbf);
 
         // renderer.preInit();        
 

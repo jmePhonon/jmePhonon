@@ -26,10 +26,10 @@ JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    disconnectSourceNative
- * Signature: (J)V
+ * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative
-  (JNIEnv *, jobject, jlong);
+  (JNIEnv *, jobject, jint);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer

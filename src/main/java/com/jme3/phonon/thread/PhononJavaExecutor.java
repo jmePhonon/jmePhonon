@@ -5,7 +5,7 @@ import com.jme3.phonon.PhononUpdater;
 public class PhononJavaExecutor extends Thread implements PhononExecutor {
     private volatile boolean UPDATE_FLAG;
     private PhononUpdater updater;
-
+    private volatile boolean firstLoop=false;
     public PhononJavaExecutor() {
         this.UPDATE_FLAG=true;
         setName("Phonon Java Thread");
@@ -18,7 +18,14 @@ public class PhononJavaExecutor extends Thread implements PhononExecutor {
     }
 
     public void startUpdate() {
-        super.start(); 
+        super.start();
+        while(!firstLoop){
+			try{
+				Thread.sleep(1);
+			}catch(InterruptedException e){
+				e.printStackTrace();
+			}
+		}
     }
 
     public void stopUpdate() {
@@ -39,7 +46,7 @@ public class PhononJavaExecutor extends Thread implements PhononExecutor {
 			} catch (Exception e) { }
 
             updater.phononUpdate();
-
+            firstLoop=true;
 		} while (UPDATE_FLAG);
     }
 }

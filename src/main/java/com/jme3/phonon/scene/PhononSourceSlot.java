@@ -50,7 +50,6 @@ import com.jme3.util.BufferUtils;
 
 public class PhononSourceSlot extends CommitableMemoryObject{
     private final ByteBuffer MEMORY;
-
     
     private final VVector3f POS = new VVector3f();
     private final VByte CHANNELS = new VByte();
@@ -65,9 +64,12 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private volatile PhononOutputLine connectedLine;
     private volatile AudioSource source;
     private volatile boolean isOver;
-    
+    private volatile boolean instance;
+    private final int ID;
 
-    public PhononSourceSlot(){
+   
+    public PhononSourceSlot(int id){
+        ID=id;
         MEMORY=BufferUtils.createByteBuffer(SIZE);
       
         MEMORY.putInt(STOPAT,-1);
@@ -121,19 +123,35 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
    
 
-    public void setSource(AudioSource src) {
-        source = src;
-        if (src == null)
-            return;
+    public boolean isInstance() {
+        return instance;
+    }
 
-        if(src instanceof AudioNode) {
-            AudioNode node = (AudioNode) src;
+    public void setSource(AudioSource src, boolean instance) {
+       
+        if(source!=null){
+            if(getSource().getChannel()==ID){
+                getSource().setStatus(Status.Stopped);
+                getSource().setChannel(-1);
+            }else{
+                assert this.instance;
+            }
+        }
+        source=src;
+
+        this.instance=false;
+
+        if(src==null) return;
+        this.instance=instance;
+
+        if(src instanceof AudioNode){
+            AudioNode node=(AudioNode)src;
         }
 
         CHANNELS.setUpdateNeeded();
         CHANNELS.forceUpdate();
         CHANNELS.update((byte)src.getAudioData().getChannels());
-        
+
         FLS.setUpdateNeeded();
         POS.setUpdateNeeded();
         AHEAD.setUpdateNeeded();
@@ -141,15 +159,20 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         RIGHT.setUpdateNeeded();
         DWEIGHT.setUpdateNeeded();
         DPOWER.setUpdateNeeded();
-        VOL.setUpdateNeeded();        
+        VOL.setUpdateNeeded();
+        if(!instance)src.setChannel(ID);
+    }
+    
+    public boolean isOver() {
+        return isOver;
     }
 
     @Override
     public void onUpdate(float tpf) {
         if (source != null) {
-            if (isOver) {
-              source.setStatus(Status.Stopped);
-            }
+            // if (isOver) {
+            //   source.setStatus(Status.Stopped);
+            // }
 
             POS.update(source.getPosition());
             if (FLS.needUpdate) {
@@ -232,7 +255,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         VOL.setUpdateNeeded();
     }
 
-    public long getAddress() {
+    public long getDataAddress() {
         return DirectBufferUtils.getAddr(MEMORY);
     }
 }
