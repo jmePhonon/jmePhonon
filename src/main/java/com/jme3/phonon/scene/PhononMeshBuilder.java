@@ -42,28 +42,27 @@ import java.util.Collection;
 import java.util.List;
 
 import com.jme3.math.Transform;
+import com.jme3.math.Triangle;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.scene.material.MaterialGenerator;
 import com.jme3.phonon.scene.material.PhononMaterial;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.VertexBuffer;
+import com.jme3.scene.Mesh.Mode;
 import com.jme3.scene.VertexBuffer.Type;
 import com.jme3.util.BufferUtils;
-
 
 /**
  * PhononMeshBuilder
  */
 public class PhononMeshBuilder{
-    
 
     private static IntBuffer createIntBuffer(Integer... data) {
-        if (data == null) {
-            return null;
-        }
-        IntBuffer buff = BufferUtils.createIntBuffer(data.length);
+        if(data==null){ return null; }
+        IntBuffer buff=BufferUtils.createIntBuffer(data.length);
         buff.clear();
         for(int i:data)
             buff.put(i);
@@ -71,66 +70,72 @@ public class PhononMeshBuilder{
         return buff;
     }
 
-    private static void composeMesh(Spatial sx, SpatialFilter filter,MaterialGenerator matsel, Vector3f tmp1, Vector3f tmp2,
-    List<Vector3f> positions,List<Integer> indices,List<PhononMaterial> materials,List<Integer> materialIndices){
-            if(filter!=null&&!filter.filter(sx)) return;
-			if(sx instanceof Geometry){
-                Transform worldtr=sx.getWorldTransform();
-                Geometry geom=(Geometry)sx;
-                VertexBuffer pbuf=geom.getMesh().getBuffer(Type.Position);
-                for(int i=0;i<pbuf.getNumElements();i++){
-                    tmp1.x=(float)pbuf.getElementComponent(i,0);
-                    tmp1.y=(float)pbuf.getElementComponent(i,1);
-                    tmp1.z=(float)pbuf.getElementComponent(i,2);
-                    worldtr.transformVector(tmp1,tmp2);
-                    positions.add(tmp2.clone());
 
-                }
-                
-                VertexBuffer ibuf=geom.getMesh().getBuffer(Type.Index);
-                
-                // Some code sets the index buffer as a 3 component buffer, some sets it as 1,
-                // this code will hopefully support all use cases.
-                int element=0;
-                int component=0;
-                Integer triangle[]=new Integer[3];
-                do{
-                    for(int t=0;t<3;t++){
-                        int index=(int)ibuf.getElementComponent(element,component);
-                        triangle[t]=index;
-                        indices.add(index);
-                        component++;
-                        if(component>=ibuf.getNumComponents()){
-                            element++;
-                            component=0;
-                        }
+    private static void composeMesh(Spatial sx, SpatialFilter filter, MaterialGenerator matsel, Vector3f tmp1, Vector3f tmp2, List<Vector3f> positions, List<Integer> indices, List<PhononMaterial> materials, List<Integer> materialIndices) {
+        if(filter!=null&&!filter.filter(sx)) return;
+        if(sx instanceof Geometry){
+            Transform worldtr=sx.getWorldTransform();
+            Geometry geom=(Geometry)sx;
+            Mesh mesh=geom.getMesh();
+            Mode meshmode=mesh.getMode();
+            if(meshmode!=Mode.TriangleFan&&meshmode!=Mode.Triangles&&meshmode!=Mode.TriangleStrip){
+                System.err.println("Only triangles are supported");
+                return;
+            }
+            int baseIndex=positions.size();
+
+            VertexBuffer pbuf=geom.getMesh().getBuffer(Type.Position);
+            for(int i=0;i<pbuf.getNumElements();i++){
+                tmp1.x=(float)pbuf.getElementComponent(i,0);
+                tmp1.y=(float)pbuf.getElementComponent(i,1);
+                tmp1.z=(float)pbuf.getElementComponent(i,2);
+                worldtr.transformVector(tmp1,tmp2);
+                positions.add(tmp2.clone());
+
+            }
+            VertexBuffer ibuf=geom.getMesh().getBuffer(Type.Index);
+
+            // Some code sets the index buffer as a 3 component buffer, some sets it as 1,
+            // this code will hopefully support all use cases.
+            int element=0;
+            int component=0;
+            Integer triangle[]=new Integer[3];
+            do{
+                for(int t=0;t<3;t++){
+                    int index=(int)ibuf.getElementComponent(element,component);
+                    triangle[t]=index;
+                    indices.add(baseIndex+index);
+                    component++;
+                    if(component>=ibuf.getNumComponents()){
+                        element++;
+                        component=0;
                     }
+                }
                 // Full triangle loaded
                 PhononMaterial mat=matsel.materialFor(geom,triangle);
                 int matIndex=materials.indexOf(mat);
-                if(matIndex==-1)matIndex=0;            
-                    materialIndices.add(matIndex);
-                }while(element<ibuf.getNumElements());
-              
+                if(matIndex==-1) matIndex=0;
+                materialIndices.add(matIndex);
+            }while(element<ibuf.getNumElements());
+
         }else if(sx instanceof Node){
             for(Spatial child:((Node)sx).getChildren()){
                 composeMesh(child,filter,matsel,tmp1,tmp2,positions,indices,materials,materialIndices);
             }
         }
     }
-    
-    public static PhononMesh build(Node n, SpatialFilter filter,MaterialGenerator matsel) {
+
+    public static PhononMesh build(Node n, SpatialFilter filter, MaterialGenerator matsel) {
         List<Vector3f> positions=new ArrayList<Vector3f>();
         List<Integer> indices=new ArrayList<Integer>();
         List<Integer> materialIndices=new ArrayList<Integer>();
-        
+
         Vector3f tmp1=new Vector3f();
         Vector3f tmp2=new Vector3f();
 
         List<PhononMaterial> materials=matsel.getAllMaterials();
         composeMesh(n,filter,matsel,tmp1,tmp2,positions,indices,materials,materialIndices);
-      
-        
+
         FloatBuffer positionBuffer=BufferUtils.createFloatBuffer((Vector3f[])positions.toArray(new Vector3f[0]));
         IntBuffer indexBuffer=createIntBuffer((Integer[])indices.toArray(new Integer[0]));
         IntBuffer materialsBuffer=createIntBuffer((Integer[])materialIndices.toArray(new Integer[0]));
