@@ -39,6 +39,10 @@ import com.jme3.app.LegacyApplication;
 import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.Listener;
+import com.jme3.phonon.thread.PhononDummyExecutor;
+import com.jme3.phonon.thread.PhononExecutor;
+import com.jme3.phonon.thread.PhononJavaExecutor;
+import com.jme3.phonon.thread.PhononNativeExecutor;
 
 
 /**
@@ -61,8 +65,8 @@ class PhononInitializer {
      * 
      */
 
-    public static PhononRenderer init(PhononSettings settings, Application app,boolean skipSoundDetection,boolean skipReflection) throws Exception {
-        if(!skipSoundDetection){
+    public static PhononRenderer init(PhononSettings settings, Application app, boolean skipSoundDetection, boolean skipReflection) throws Exception {
+        if(!skipSoundDetection) {
             if(settings.system==null){ throw new Exception("No system found in settings"); }
 
             List<PhononSoundDevice> devices=settings.system.getAudioDevices();
@@ -85,15 +89,15 @@ class PhononInitializer {
                     ready=true;
                 }
 
-            }while((!ready)&&settings.device==null&&lastTriedDevice<devices.size());
+            } while((!ready)&&settings.device==null&&lastTriedDevice<devices.size());
             if(!ready){ throw new Exception("Error initializing output device."); }
         }
         
-        if(app!=null&&!skipReflection){
+        if(app!=null && !skipReflection){
             if(app.getAudioRenderer()!=null) app.getAudioRenderer().cleanup();
         }
 
-        PhononRenderer phononRenderer = new PhononRenderer(settings);
+        PhononRenderer phononRenderer = createPhononRenderer(settings);
         AudioContext.setAudioRenderer(phononRenderer);
 
         Listener listener = new Listener();
@@ -108,9 +112,40 @@ class PhononInitializer {
 
 
         return phononRenderer;
-    }
+}
    
-  
+    private static PhononRenderer createPhononRenderer(PhononSettings settings) throws Exception {
+        PhononExecutor phononExecutor = createPhononExecutor(settings);       
+
+        PhononRenderer phononRenderer = new PhononRenderer(settings, phononExecutor);
+        phononExecutor.setUpdater(phononRenderer);
+        AudioContext.setAudioRenderer(phononRenderer);
+
+        return phononRenderer;
+    }
+
+    private static PhononExecutor createPhononExecutor(PhononSettings settings) {
+        PhononExecutor phononExecutor = null;
+
+        switch(settings.threadMode) {
+            case JAVA:
+                phononExecutor = new PhononJavaExecutor();
+                PhononJavaExecutor jPhononExecutor = (PhononJavaExecutor) phononExecutor;
+
+                jPhononExecutor.setName("Phonon Java Thread");
+                jPhononExecutor.setPriority(Thread.MAX_PRIORITY);
+                jPhononExecutor.setDaemon(true);
+                break;
+            case NATIVE:
+                phononExecutor = new PhononNativeExecutor();
+                break;
+            case NONE:
+                phononExecutor = new PhononDummyExecutor(); 
+                break;
+        }
+
+        return phononExecutor;
+    }  
    
     private static void forceFieldsReplace(LegacyApplication app, PhononRenderer phononRenderer, Listener listener) throws Exception {
         Field fields[] = LegacyApplication.class.getDeclaredFields();

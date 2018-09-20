@@ -31,14 +31,11 @@
 */
 package com.jme3.phonon;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.WeakHashMap;
-
-import javax.sound.sampled.LineUnavailableException;
 
 import com.jme3.audio.AudioData;
 import com.jme3.audio.AudioParam;
@@ -53,12 +50,12 @@ import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.phonon.scene.PhononListener;
 import com.jme3.phonon.scene.PhononMesh;
+import com.jme3.phonon.thread.PhononExecutor;
 import com.jme3.phonon.scene.PhononSourceSlot;
 import com.jme3.phonon.scene.material.PhononMaterial;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.phonon.utils.F32leCachedConverter;
 import com.jme3.phonon.utils.JmeEnvToSndEnv;
-import com.jme3.scene.Node;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
 import com.jme3.util.BufferUtils;
@@ -66,7 +63,7 @@ import com.jme3.util.BufferUtils;
 /**
  * PhononRenderer
  */
-public class PhononRenderer implements AudioRenderer, Runnable {
+public class PhononRenderer implements AudioRenderer, PhononUpdater {
 
 
 	// private final List<PhononPlayer> enqueuedPlayers = new LinkedList<>();
@@ -78,12 +75,13 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 	private final PhononSourceSlot[] SOURCES;
 	private final PhononSoundPlayer[] PLAYERS;
 	private final PhononListener PHONON_LISTENER;
-	private PhononJavaThread decoderThread;
+	private PhononExecutor PHONON_EXECUTOR;
 	private PhononMesh sceneMesh;
 	private volatile boolean playing=false,renderedInitialized=false;
 	
-	public PhononRenderer( PhononSettings settings) throws Exception{
+	public PhononRenderer(PhononSettings settings, PhononExecutor phononExecutor) throws Exception{
 		SETTINGS=settings;
+		PHONON_EXECUTOR = phononExecutor;
 		OUTPUT_LINES=new PhononOutputLine[SETTINGS.nOutputLines];
 		PHONON_LISTENER=new PhononListener();
 		int nTotalSource = SETTINGS.nOutputLines * SETTINGS.nSourcesPerLine;
@@ -121,28 +119,7 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 	
 	@Override
 	public void initialize() {
-		if(SETTINGS.threadMode==ThreadMode.NONE) return;
-		if(!SETTINGS.threadMode.isNative||SETTINGS.threadMode.isDecoupled){
-			decoderThread=new PhononJavaThread(this);
-
-			decoderThread.setName("Phonon Java Thread");
-			decoderThread.setPriority(Thread.MAX_PRIORITY);
-			decoderThread.setDaemon(true);
-			decoderThread.start();
-
-			while(!renderedInitialized){
-				try{
-					Thread.sleep(1);
-				}catch(InterruptedException e){
-					e.printStackTrace();
-				}
-
-			}
-		}
-
-		if(SETTINGS.threadMode.isNative){
-			startThreadNative(SETTINGS.threadMode.isDecoupled);
-		}
+		PHONON_EXECUTOR.startUpdate();
 	}
 
 
@@ -190,55 +167,37 @@ public class PhononRenderer implements AudioRenderer, Runnable {
 	
 	@Override
 	public void cleanup() {
-		if(decoderThread!=null){
-			decoderThread.stopUpdate();
-
-			do{
-				try{
-					Thread.sleep(1);
-				}catch(Exception e){
-					e.printStackTrace();
-				}
-			}while(decoderThread.isAlive());
-		}
-
-		for(PhononSoundPlayer p:PLAYERS){
+		PHONON_EXECUTOR.stopUpdate();
+		
+		for(PhononSoundPlayer p : PLAYERS){
 			p.close();
 		}
+
 		destroyNative();
 	}
 
 	/*Phonon loop*/
 	@Override
-	public void run() {
-		do{
+	public void phononUpdate() {
+		if(!renderedInitialized){
+			initializeRenderer();
+			renderedInitialized=true;
+		}
 
-			if(!renderedInitialized){
-				initializeRenderer();
-				renderedInitialized=true;
-			}		
-			if (!SETTINGS.threadMode.isNative || SETTINGS.threadMode.isDecoupled) {
-				try {
-					Thread.sleep(1);
-				} catch (Exception e) { }
-			}
-		
-			PHONON_LISTENER.commit(0);
+		PHONON_LISTENER.commit(0);
 
-			for(PhononSourceSlot l:SOURCES){
-				l.isConnected();
-				l.commit(0);
-			}
+		for(PhononSourceSlot l:SOURCES){
+			l.isConnected();
+			l.commit(0);
+		}
 
-			if (!SETTINGS.threadMode.isNative)
-				updateNative();
-	
-			if(playing){
-				for(PhononSoundPlayer player:PLAYERS){
-					player.loop();
-				}
+		updateNative();
+
+		if(playing) {
+			for(PhononSoundPlayer player:PLAYERS){
+				player.loop();
 			}
-		} while (SETTINGS.threadMode!=ThreadMode.NONE&&((!SETTINGS.threadMode.isNative || SETTINGS.threadMode.isDecoupled) && decoderThread.isUpdating()));
+		}
 	}
 
 	/* Game loop */

@@ -37,8 +37,6 @@ import com.jme3.phonon.scene.material.SingleMaterialGenerator;
  * PhononEffects
  */
 public class PhononSettings{
- 
-
     public int sampleRate=44100;
     public int nOutputLines=1;
     public int nSourcesPerLine=255;
@@ -46,7 +44,7 @@ public class PhononSettings{
     public int frameSize=1024;
     public int bufferSize=3; 
     public int maxPreBuffering=1024*2*4; 
-    public ThreadMode threadMode=ThreadMode.JAVA;
+    public ThreadMode threadMode=ThreadMode.NATIVE;
 
     public int outputSampleSize=-1; // -1=best
 

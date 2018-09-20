@@ -39,8 +39,6 @@
 
 #include "Common.h" 
 
-
-
 #include "com_jme3_phonon_PhononRenderer.h"
 
 #include "JmePhonon.h"
@@ -331,17 +329,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     #ifdef INCLUDE_SIMPLE_REVERB
         srInit(&SETTINGS);
     #endif
-
-
 }
-
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_startThreadNative
-  (JNIEnv *env, jobject obj,jboolean decoupled){
-    #ifdef HAS_NATIVE_THREAD_SUPPORT    
-            nuInit(env, &obj, decoupled, Java_com_jme3_phonon_PhononRenderer_updateNative);
-        
-    #endif
-  }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj){
     for(jint i=0;i<SETTINGS.nOutputLines;i++){
