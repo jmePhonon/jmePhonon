@@ -78,9 +78,7 @@ void* pntLoop() {
     }
 
     while (ThreadContext.loop) {
-        if (nanosleep((const struct timespec[]){{0, 1000000ll}}, NULL) < 0) {
-            printf("Error can't sleep \n");
-        }
+        nuSleep(); 
 
         pntCallJMethod("run");
     }

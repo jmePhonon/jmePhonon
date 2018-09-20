@@ -50,6 +50,7 @@
 #define CLOCK_TYPE CLOCK_MONOTONIC_COARSE
 
 void nuInit(void* (*)());
+void nuSleep();
 void nuStop();
 
 #endif
