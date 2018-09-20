@@ -1,5 +1,5 @@
 # **jmePhonon** : _Steam® Audio for jMonkeyEngine_
-<img align=right width="300px" src="https://media.githubusercontent.com/media/jmePhonon/jmePhonon/docs/misc/logo.png" />
+<img align=right width="300px" src="https://media.githubusercontent.com/media/jmePhonon/jmePhonon/master/misc/logo.png" />
 
 [Steam® Audio](https://valvesoftware.github.io/steam-audio/) (phonon) implementation for [jMonkeyEngine](http://jmonkeyengine.org/).
 
