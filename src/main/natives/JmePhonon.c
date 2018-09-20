@@ -81,7 +81,7 @@ void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *aud
     context->directSoundEffectOptions.applyDistanceAttenuation = true;
     context->directSoundEffectOptions.applyAirAbsorption = true;
     context->directSoundEffectOptions.applyDirectivity = true;
-    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_NOTRANSMISSION;
+    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY;
 
     // Direct sound
     iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer, 
@@ -294,8 +294,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                                                     (*listenerUp),
                                                     source,
                                                     sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
-                                                    IPL_DIRECTOCCLUSION_NOTRANSMISSION,
-                                                    IPL_DIRECTOCCLUSION_RAYCAST);
+                                                    IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY,
+                                                    IPL_DIRECTOCCLUSION_VOLUMETRIC);
 
     //  path.distanceAttenuation *= 1.9;
 
