@@ -98,13 +98,15 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
 
     Node audioSourceNode;
     ArrayList<F32leAudioData> loadedSound = new ArrayList<F32leAudioData>();
-    AudioNode engine;
+    AudioNode engine, bg;
     @Override
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
         this.inputManager.addMapping("PAUSE", new KeyTrigger(KeyInput.KEY_P));
         this.inputManager.addMapping("DIRECTIONAL", new KeyTrigger(KeyInput.KEY_G));
-        this.inputManager.addListener(this, "PAUSE", "DIRECTIONAL");
+        this.inputManager.addMapping("PITCHUP", new KeyTrigger(KeyInput.KEY_Y));
+        this.inputManager.addMapping("PITCHDOWN", new KeyTrigger(KeyInput.KEY_H));
+        this.inputManager.addListener(this, "PAUSE", "DIRECTIONAL", "PITCHUP", "PITCHDOWN");
       
 
         try{
@@ -139,14 +141,15 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         engine.setLooping(false);
         engine.setReverbEnabled(true);
         Phonon.setAudioNodeDipoleWeight(engine, 1f);
-        engine.play();       
+        // engine.play();       
 
-        AudioNode bg = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
+        bg = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
         audioSourceNode.attachChild(bg);
         bg.setName("Background Audio Node");
         bg.setPositional(false);
         bg.setVolume(.1f);
         bg.setLooping(true);
+        bg.setPitch(1f);
         bg.play();
 
         rootNode.attachChild(audioSourceNode);
@@ -167,24 +170,24 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
     }
 
     @Override
-    public void simpleUpdate(float tpf) {
-        time += tpf;
-        float speed=3;
-        float radius = 10;
-        // audioSourceNode.setLocalTranslation(new Vector3f(FastMath.sin(time*speed)*radius,0,FastMath.cos(time*speed)*radius));
-        // System.out.println("Sound status: "+engine.getStatus());
-    }
+    public void simpleUpdate(float tpf) { }
 
     @Override
     public void onAction(String name, boolean isPressed, float tpf) {
-        if (name.equals("PAUSE")&&isPressed) {
-            if (engine.getStatus() != AudioSource.Status.Paused)
-                engine.pause();
-            else engine.play();
-            System.out.println("Pause");
-        } else if(name.equals("DIRECTIONAL") && isPressed) {
-            engine.setDirectional(!engine.isDirectional());
-            System.out.println("Engine is directional: " + engine.isDirectional());
+        if(isPressed) {
+            if (name.equals("PAUSE")) {
+                if (engine.getStatus() != AudioSource.Status.Paused)
+                    engine.pause();
+                else engine.play();
+                System.out.println("Pause");
+            } else if(name.equals("DIRECTIONAL")) {
+                engine.setDirectional(!engine.isDirectional());
+                System.out.println("Engine is directional: " + engine.isDirectional());
+            } else if(name.equals("PITCHUP")) {
+                bg.setPitch(1.5f);
+            } else if(name.equals("PITCHDOWN")) {
+                bg.setPitch(.5f);
+            }
         }
     }
 }

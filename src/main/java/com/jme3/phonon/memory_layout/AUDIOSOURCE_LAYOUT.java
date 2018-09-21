@@ -65,9 +65,9 @@ public class AUDIOSOURCE_LAYOUT {
     public static final byte DIPOLEPOWER_fieldsize = 4;
     
     public static final byte VOLUME_fieldsize = 4;
+    public static final byte PITCH_fieldsize = 4;
 
     public static final byte STOPAT_filesize = 4;
-
 
     public static final byte FLAGS = 0;
     public static final byte NUM_CHANNELS = FLAGS + FLAGS_fieldsize;
@@ -96,7 +96,8 @@ public class AUDIOSOURCE_LAYOUT {
 
     public static final byte VOLUME = DIPOLEPOWER + DIPOLEPOWER_fieldsize;
     
-    public static final byte STOPAT = VOLUME+VOLUME_fieldsize;
+    public static final byte PITCH = VOLUME+VOLUME_fieldsize;
+    public static final byte STOPAT = PITCH+PITCH_fieldsize;
 
     public static final byte SIZE = STOPAT+STOPAT_filesize;
 } 

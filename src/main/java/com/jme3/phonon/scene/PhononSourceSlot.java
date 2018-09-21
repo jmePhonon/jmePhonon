@@ -59,6 +59,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private final VFloat DWEIGHT = new VFloat();
     private final VFloat DPOWER = new VFloat();
     private final VFloat VOL = new VFloat();
+    private final VFloat PIT = new VFloat();
     private final VByte FLS=new VByte();
     
     private volatile PhononOutputLine connectedLine;
@@ -83,6 +84,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DWEIGHT.forceUpdate();
         DPOWER.forceUpdate();
         VOL.forceUpdate();
+        PIT.forceUpdate();
         FLS.forceUpdate();
 
         CHANNELS.update((byte) 1);
@@ -93,6 +95,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DWEIGHT.update(0f);
         DPOWER.update(0f);
         VOL.update(1f);
+        PIT.update(1f);
         FLS.update((byte) 0);
 
         POS.forceCommit();
@@ -103,6 +106,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DWEIGHT.forceCommit();
         DPOWER.forceCommit();
         VOL.forceCommit();
+        PIT.forceCommit();
         FLS.forceCommit();
 
         forceUpdate().update(0);
@@ -160,6 +164,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DWEIGHT.setUpdateNeeded();
         DPOWER.setUpdateNeeded();
         VOL.setUpdateNeeded();
+        PIT.setUpdateNeeded();
         if(!instance)src.setChannel(ID);
     }
     
@@ -202,6 +207,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
             }
 
             VOL.update(source.getVolume());
+            PIT.update(source.getPitch());
         }
     }
 
@@ -218,6 +224,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DWEIGHT.commit(MEMORY, DIPOLEWEIGHT);
         DPOWER.commit(MEMORY, DIPOLEPOWER);
         VOL.commit(MEMORY, VOLUME);
+        PIT.commit(MEMORY, PITCH);
 
         FLS.commit(MEMORY, FLAGS);
 
@@ -253,6 +260,10 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         
     public void setVolUpdateNeeded() {
         VOL.setUpdateNeeded();
+    }
+
+    public void setPitchUpdateNeeded() {
+        PIT.setUpdateNeeded();
     }
 
     public long getDataAddress() {

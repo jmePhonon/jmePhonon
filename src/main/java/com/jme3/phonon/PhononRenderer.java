@@ -480,6 +480,9 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 			case Volume:
 				psrc.setVolUpdateNeeded();
 				break;
+			case Pitch:
+				psrc.setPitchUpdateNeeded();;
+				break;
 			default:
 				return;	
 		}

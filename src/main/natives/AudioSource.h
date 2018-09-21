@@ -49,8 +49,6 @@ struct AudioSource {
     vec3 _right;    
     drt _directivity;
 
-    jfloat pitch; //source pitch
-
     jboolean loop;
 
     void *connectedLine; // Pointer to the line to which the source is connected
@@ -83,6 +81,7 @@ jboolean asIsConnected(struct AudioSource *source);
 jboolean asReadNextFrame(struct GlobalSettings *settings, struct AudioSource *source, jfloat *store);
 
 jfloat asGetVolume(struct GlobalSettings *settings, struct AudioSource *source);
+jfloat asGetPitch(struct GlobalSettings *settings, struct AudioSource *source);
 vec3 *asGetSourcePosition(struct GlobalSettings *settings, struct AudioSource *source);
 vec3 *asGetSourceDirection(struct GlobalSettings *settings, struct AudioSource *source);
 

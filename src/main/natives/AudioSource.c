@@ -35,15 +35,11 @@
 void asInit(struct GlobalSettings *settings, struct AudioSource *source){
     source->data = NULL;
     source->lastReadFrameIndex = 0;
-    
-
-    source->pitch = 1;
 
     source->connectedLine = NULL;
     source->phononContext = NULL;
 
     source->uNode = (struct UListNode*) malloc(sizeof(struct UListNode));
-
 
     ulistInitNode(source->uNode, source); 
 }
@@ -82,7 +78,8 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
     jboolean hasReachedEnd = false;
     for (jint i = 0; i < frameSize; i++) {
         jint sampleIndex = frameSize * source->lastReadFrameIndex + i;
-        sampleIndex *= source->pitch;
+        sampleIndex *= asGetPitch(settings, source);
+
         jfloat v;
         if (sampleIndex >= sourceSamples) {  // Write 0s if the frame size exceed the remaining source's bytes
             // printf("Phonon: trying to read sample n%d but source contains only %d samples. A zero sample will be returned instead.\n ", sampleIndex, sourceSamples);
@@ -91,7 +88,7 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
         } else {
             v = data[sampleIndex];
         }
-        v *=asGetVolume(settings, source);
+        v *= asGetVolume(settings, source);
 
         store[i] = v ;
     }
@@ -106,8 +103,12 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
 }
 
 
-jfloat asGetVolume(struct GlobalSettings *settings,struct AudioSource *source){
+jfloat asGetVolume(struct GlobalSettings *settings,struct AudioSource *source) {
     return source->sceneData[asSourceField(VOLUME)];
+}
+
+jfloat asGetPitch(struct GlobalSettings *settings, struct AudioSource *source) {
+    return source->sceneData[asSourceField(PITCH)];
 }
 
 vec3* asGetSourcePosition(struct GlobalSettings *settings,struct AudioSource *source) {
@@ -138,7 +139,6 @@ vec3* asGetSourceRight(struct GlobalSettings *settings,struct AudioSource *sourc
     return &source->_right;
 }
 
-
 jboolean _asHasFlag(struct GlobalSettings *settings,struct AudioSource *source,jint flag){
     jbyte *dataByte=(jbyte*)source->sceneData;
     jbyte flags = dataByte[asSourceFieldB(FLAGS)]; 
@@ -152,7 +152,6 @@ drt* asGetSourceDirectivity(struct GlobalSettings *settings,struct AudioSource *
     source->_directivity.callback = NULL;
     source->_directivity.userData = NULL;
 
-    // printf("directivity update with values: %f %f\n", source->_directivity.dipoleWeight, source->_directivity.dipolePower);
     return &source->_directivity;
 }
 
