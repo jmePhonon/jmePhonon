@@ -131,7 +131,7 @@ IFS=','
 for triplet in $MULTI_BUILD;
 do
     echo Run for $triplet
-    docker run -v"$PWD:/workspace" $DENVS $triplet $RUN_AS --rm -it $USE_IMAGE $WRAPPER $TASKS
+    docker run -v"$PWD:/workspace" -w /workspace $DENVS $triplet $RUN_AS --rm -it $USE_IMAGE $WRAPPER $TASKS
 done
 IFS="$OIFS"
 

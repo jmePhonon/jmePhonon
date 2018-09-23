@@ -10,11 +10,22 @@ To facilitate the building of this project we ship the entire build environment 
 
 *Note: the docker container will be automatically deleted after every build*
 
-### How to install docker
-- Linux: [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/), [CentOS](https://docs.docker.com/install/linux/docker-ce/centos/), [Debian](https://docs.docker.com/install/linux/docker-ce/debian/), [Fedora](https://docs.docker.com/install/linux/docker-ce/fedora/), [Others](https://docs.docker.com/install/linux/docker-ce/binaries/)
-- Windows 10 Pro or Enterprise: https://docs.docker.com/docker-for-windows/install/
-- Windows 10 Home, 8.1, 8, 7: https://docs.docker.com/toolbox/toolbox_install_windows/#what-you-get-and-how-it-works
+### How to install and configure docker
+- Linux: 
+     [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+    , [CentOS](https://docs.docker.com/install/linux/docker-ce/centos/)
+    , [Debian](https://docs.docker.com/install/linux/docker-ce/debian/)
+    , [Fedora](https://docs.docker.com/install/linux/docker-ce/fedora/)
+    , [Others](https://docs.docker.com/install/linux/docker-ce/binaries/)
+- Windows 10 Pro or Enterprise
+    - Download and install docker for windows: https://docs.docker.com/docker-for-windows/install/
+    - Share the driver where jmePhonon's folder is located https://docs.docker.com/docker-for-windows/#shared-drives
+    - Install git bash https://gitforwindows.org/
+- Windows 10 Home or 8.1, 8 or 7
+    - Install docker toolbox: https://docs.docker.com/toolbox/toolbox_install_windows/#what-you-get-and-how-it-works
 - MacOS: https://docs.docker.com/docker-for-mac/install/
+
+       
 
 
 ## The BuildSystem: `make.sh` / `make.bat`
