@@ -3,8 +3,10 @@ if [ "$TRASH" == "" ];
 then
     export TRASH="$PWD/.Trash"
 fi
-
-export SRMDATE="`date "+%F-%T"`"
+function timeNow {
+    date +"%Y-%m-%d-%H-%M-%S"
+}
+export SRMDATE="`timeNow`"
 function safeRm {
     if [ "$2" != "" ];
     then

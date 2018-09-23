@@ -4,16 +4,29 @@ _________
 **I don't have time for this, just tell me how to do stuff**: Ok, jump to [#TL;DR](#tldr)
 _______
 
-## The BuildSystem: make.sh and Docker
-
+## The BuildSystem: Docker
 
 To facilitate the building of this project we ship the entire build environment as a docker image, you'll only need a working installation of docker and an user with enough privileges to run it.
 
-ATM you'll still need a bash compatible environment (MinGW MSYS on windows) to run make.sh.
+*Note: the docker container will be automatically deleted after every build*
+
+### How to install docker
+- Linux: [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/), [CentOS](https://docs.docker.com/install/linux/docker-ce/centos/), [Debian](https://docs.docker.com/install/linux/docker-ce/debian/), [Fedora](https://docs.docker.com/install/linux/docker-ce/fedora/), [Others](https://docs.docker.com/install/linux/docker-ce/binaries/)
+- Windows 10 Pro or Enterprise: https://docs.docker.com/docker-for-windows/install/
+- Windows 10 Home, 8.1, 8, 7: https://docs.docker.com/toolbox/toolbox_install_windows/#what-you-get-and-how-it-works
+- MacOS: https://docs.docker.com/docker-for-mac/install/
 
 
-A quick overview of the usage of the build environment will follow, don't worry we'll see everything in details in the next sections.
+## The BuildSystem: `make.sh` / `make.bat`
 
+
+The build is triggered by either `make.sh` (on linux and macos) or `make.bat` on windows.
+
+The make script will take care of everything, from building the docker image (the first run might be slower because of this), to running and removing the containers.
+
+A quick overview of the usage of make.sh will follow, don't worry we'll see everything in details in the next sections.
+
+**Note: when running on windows, replace `make.sh` with `make.bat`**
 
 
 ```bash
@@ -71,7 +84,7 @@ OS_LINUX=1 OS_WINDOWS=1 gradle buildNatives
 ```
 *will not work, while it will if you use make.sh.*
 
-*Note also that you'll have to manually install all the required dependencies.*
+*Note also that you'll have to manually install all the required dependencies and a bash compatible environment for Windows < 10*
 
 
 ## Preparation
@@ -187,8 +200,9 @@ Nice, feel free to [submit a PR ](https://github.com/jmePhonon/jmePhonon/pulls)
 
 ### THINGS YOU NEED
 1. DOCKER
-2. BASH COMPATIBLE ENVIRONMENT (eg. GNU/Linux, OSX, MinGW on windows)
-3. USER CAPABLE OF RUNNING DOCKER
+2. USER CAPABLE OF RUNNING DOCKER
+
+NOTE: REPLACE `make.sh` WITH `make.bat` WHEN RUNNING ON WINDOWS.
 
 ###  PREPARE WORKSPACE (RUN ONLY ONCE):
 ```bash

@@ -1,4 +1,5 @@
 #!/bin/bash
+mkdir -p /workspace
 cd /workspace
 if [ "$NO_CACHE" != "" ];
 then
