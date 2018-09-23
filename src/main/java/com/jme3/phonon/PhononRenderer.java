@@ -180,6 +180,11 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 					PLAYERS[i].init(SETTINGS.system,SETTINGS.device,OUTPUT_LINES[i],SETTINGS.sampleRate,SETTINGS.nOutputChannels,SETTINGS.outputSampleSize,SETTINGS.maxPreBuffering);
 				}
 			}
+
+
+			for(int i=0;i<SOURCES.length;i++){
+				SOURCES[i].setLine(OUTPUT_LINES[i/SETTINGS.nSourcesPerLine]);
+			}
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -273,6 +278,8 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		}
 		if(psrc!=null&&!instance) return;
 
+		if(src.getStatus()==AudioSource.Status.Playing&&!instance) return;
+		src.setStatus(AudioSource.Status.Playing);
 
 		final F32leAudioData data=F32leCachedConverter.toF32le(src.getAudioData());
 		PHONON_QUEUE.enqueue(new Runnable(){
@@ -286,16 +293,13 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 					public void run() {
 						assert Thread.currentThread()==gameThread;
 						if(index==-1){ // not enought slots 
-							if(!instance){
-								src.setStatus(Status.Stopped);
-								if(psrc!=null) psrc.setFlagsUpdateNeeded();
-							}
+							if(!instance)src.setStatus(Status.Stopped);					
 						}else{
 							assert index<SOURCES.length:"Not enought source slots. Trying to bind index "+index+" but only "+SOURCES.length+" available";
-							SOURCES[index].setLine(OUTPUT_LINES[index/SETTINGS.nSourcesPerLine]);
+							AudioSource.Status cs=src.getStatus();
+							src.setStatus(AudioSource.Status.Stopped);
 							SOURCES[index].setSource(src,instance);
-							// if(!instance)src.setChannel(index);
-							src.setStatus(AudioSource.Status.Playing);
+							src.setStatus(cs);
 						}
 					}
 				});
