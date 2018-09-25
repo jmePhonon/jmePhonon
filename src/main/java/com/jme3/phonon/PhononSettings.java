@@ -38,7 +38,26 @@ import com.jme3.phonon.thread.PhononJavaExecutor;
 /**
  * PhononEffects
  */
-public class PhononSettings{
+public class PhononSettings {
+
+    /////// Inherited from Phonon's source ///////////
+
+    public enum PhononSceneType {
+        IPL_SCENETYPE_PHONON,
+        IPL_SCENETYPE_EMBREE,
+        IPL_SCENETYPE_RADEONRAYS,
+        IPL_SCENETYPE_CUSTOM
+    };
+
+    public enum PhononDirectOcclusionMode {
+        IPL_DIRECTOCCLUSION_NONE,
+        IPL_DIRECTOCCLUSION_NOTRANSMISSION,
+        IPL_DIRECTOCCLUSION_TRANSMISSIONBYVOLUME,
+        IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY
+    };
+
+    //////////////////////////////////////////////////
+
     public int sampleRate=44100;
     public int nOutputLines=1;
     public int nSourcesPerLine=255;
@@ -56,7 +75,16 @@ public class PhononSettings{
     public MaterialGenerator materialGenerator=new SingleMaterialGenerator();
     public PhononExecutor executor = new PhononJavaExecutor();
 
-       
+    public int sceneType = PhononSceneType.IPL_SCENETYPE_PHONON.ordinal(); // requires 64bit cpu
+    public int numRays = 1024;// typical values are in the range of 1024 to 131072
+    public int numDiffuseSamples = 32;//typical values are in the range of 32 to 4096. 
+    public int numBounces = 1;//typical values are in the range of 1 to 32. 
+    public int numThreads = 4;//The performance improves linearly with the number of threads upto the number of physical cores available on the CPU.
+    public double irDuration = 0.5; // 0.5 to 4.0.
+    public int ambisonicsOrder = 0;//Supported values are between 0 and 3.
+    public int maxConvolutionSources = 0; // TODO
+    public int bakingBatchSize=1;//IPL_SCENETYPE_RADEONRAYS
+
     public PhononSettings(PhononSoundSystem ss){
         system=ss;
     }

@@ -57,6 +57,7 @@ import com.jme3.phonon.PhononSoundDevice;
 import com.jme3.phonon.PhononSoundSystem;
 import com.jme3.phonon.Phonon;
 import com.jme3.phonon.ThreadMode;
+import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.desktop_javasound.JavaSoundPhononSettings;
 import com.jme3.phonon.desktop_javasound.JavaSoundSystem;
 import com.jme3.phonon.format.F32leAudioData;
@@ -141,7 +142,9 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         engine.setLooping(false);
         engine.setReverbEnabled(true);
         Phonon.setAudioNodeDipoleWeight(engine, 1f);
-        // engine.play();       
+        Phonon.setAudioNodeApplyAirAbsorption(engine, true);
+        Phonon.setAudioNodeDirectOcclusionMode(engine, PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY);
+        engine.play();       
 
         bg = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
         audioSourceNode.attachChild(bg);

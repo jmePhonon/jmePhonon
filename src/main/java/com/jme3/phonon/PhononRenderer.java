@@ -158,17 +158,12 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 			}	
 
 			// init
-			initNative(SETTINGS.sampleRate,
-					OUTPUT_LINES.length,
-					SETTINGS.nSourcesPerLine,
-					SETTINGS.nOutputChannels,
-					SETTINGS.frameSize,
-					SETTINGS.bufferSize,
+			initNative(
 					PHONON_LISTENER.getAddress(),
 					srcAddrs,
-					SETTINGS.passThrough,
 					SETTINGS.materialGenerator.getAllMaterials().size(),
-					DirectBufferUtils.getAddr(materials)
+					DirectBufferUtils.getAddr(materials),
+					SETTINGS
 			);
 
 			// Output lines
@@ -500,14 +495,21 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		PhononSourceSlot psrc=getSourceSlot(src);
 		if(psrc==null) return;
 		switch(param) {
+			case ApplyAirAbsorption:
+			case ApplyDistanceAttenuation:
+				psrc.setFlagsUpdateNeeded();
+				break;
 			case DipolePower:
 				psrc.setDipolePowerUpdateNeeded();
 				break;
 			case DipoleWeight:
 				psrc.setDipoleWeightUpdateNeeded();
 				break;
+			case DirectOcclusionMode:
+				psrc.setDirectOcclusionModeNeeded();
+				break;
 			default:
-				System.err.println("Unrecognized param while updating audio source.");
+				System.err.println("Unrecognized Phonon param while updating audio source.");
 				return;	
 		}
 	}
@@ -591,11 +593,9 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	native void disconnectSourceNative(int id);
 	native void initLineNative(int id, long addr);
 	native void updateNative();
-	native void initNative(int sampleRate, int nOutputLines, int nSourcesPerLine,
-			int nOutputChannels, int frameSize, int bufferSize,  long listenerDataPointer, 
-			long[] audioSourcesSceneDataArrayPointer,
-			// effects
-			boolean isPassThrough,int nMaterials,long materialsAddr);
+	native void initNative(long listenerDataPointer, long[] audioSourcesSceneDataArrayPointer,
+			int nMaterials,long materialsAddr,
+			PhononSettings settings);
 	native void destroyNative();
 	native void startThreadNative(boolean decoupled);
 	native void setMeshNative(int nTris,int nVerts,long tris,long vert,long mats);

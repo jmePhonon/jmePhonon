@@ -107,6 +107,11 @@ jfloat asGetVolume(struct GlobalSettings *settings,struct AudioSource *source) {
     return source->sceneData[asSourceField(VOLUME)];
 }
 
+jbyte asGetDirectOcclusionMode(struct GlobalSettings *settings, struct AudioSource *source) {
+    jbyte *dataByte=(jbyte*)source->sceneData;
+    return dataByte[asSourceFieldB(DIROCCMODE)];
+}
+
 jfloat asGetPitch(struct GlobalSettings *settings, struct AudioSource *source) {
     return source->sceneData[asSourceField(PITCH)];
 }

@@ -43,6 +43,7 @@
 #include "OutputLine.h"
 #include "Passthrough.h"
 #include "UList.h"
+#include "settings/settings.h"
 
 #ifdef INCLUDE_SIMPLE_REVERB
 #include "ext/ext_SimpleReverb.h"
@@ -249,40 +250,35 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env,
                                                                       jobject obj,
-                                                                      jint sampleRate,
-                                                                      jint nOutputLines,
-                                                                      jint nSourcesPerLine,
-                                                                      jint nOutputChannels,
-                                                                      jint frameSize,
-                                                                      jint bufferSize,
 
                                                                       jlong listenerDataPointer,
                                                                       jlongArray audioSourcesSceneDataArrayPointer,
 
-                                                                      // effects
-                                                                      jboolean isPassthrough,
                                                                       jint nMaterials,
-                                                                      jlong materials) {
+                                                                      jlong materials,
 
-    SETTINGS.nOutputLines = nOutputLines;
-    SETTINGS.nSourcesPerLine = nSourcesPerLine;
-    SETTINGS.nOutputChannels = nOutputChannels;
-    SETTINGS.frameSize = frameSize;
-    // SETTINGS.frameSize = frameSize * nOutputChannels;
-    SETTINGS.sampleRate = sampleRate;
-    SETTINGS.bufferSize = bufferSize;
-    SETTINGS.isPassthrough = isPassthrough;
+                                                                      jobject jSettings) {
+
+    jclass settingsClass = (*env)->GetObjectClass(env, jSettings);
+
+    SETTINGS.nOutputLines = GET_SETTINGS_INT(jSettings, settingsClass, "nOutputLines");
+    SETTINGS.nSourcesPerLine = GET_SETTINGS_INT(jSettings, settingsClass, "nSourcesPerLine");
+    SETTINGS.nOutputChannels = GET_SETTINGS_INT(jSettings, settingsClass, "nOutputChannels");
+    SETTINGS.frameSize = GET_SETTINGS_INT(jSettings, settingsClass, "frameSize");
+    SETTINGS.sampleRate = GET_SETTINGS_INT(jSettings, settingsClass, "sampleRate");
+    SETTINGS.bufferSize = GET_SETTINGS_INT(jSettings, settingsClass, "bufferSize");
+    SETTINGS.isPassthrough = GET_SETTINGS_BOOL(jSettings, settingsClass, "passThrough");
 
     GLOBAL_LISTENER = lsNew(&SETTINGS, (jfloat *)(intptr_t)listenerDataPointer);
 
-    OUTPUT_LINES = olNew(&SETTINGS, nOutputLines);
+    OUTPUT_LINES = olNew(&SETTINGS, SETTINGS.nOutputLines);
 
-    Temp.frame1 = (jfloat *)malloc(4 * SETTINGS.frameSize * nOutputChannels);
+    Temp.frame1 = (jfloat *)malloc(4 * SETTINGS.frameSize * SETTINGS.nOutputChannels);
 
     Temp.monoFrame1 = (jfloat *)malloc(4 * SETTINGS.frameSize);
-    Temp.mixerQueue = (jfloat **)malloc(sizeof(jfloat *) * nSourcesPerLine);
+    Temp.mixerQueue = (jfloat **)malloc(sizeof(jfloat *) * SETTINGS.nSourcesPerLine);
     for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
-        Temp.mixerQueue[i] = (jfloat *)malloc(4 * SETTINGS.frameSize * nOutputChannels);
+        Temp.mixerQueue[i] = (jfloat *)malloc(4 * SETTINGS.frameSize * SETTINGS.nOutputChannels);
     }
 
 #ifdef INCLUDE_SIMPLE_REVERB
@@ -294,12 +290,12 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     }
 #endif
 
-    phInit(&SETTINGS, nSourcesPerLine, nMaterials, (jfloat *)(intptr_t)materials);
+    phInit(&SETTINGS, SETTINGS.nSourcesPerLine, nMaterials, (jfloat *)(intptr_t)materials, env, jSettings);
 
     jlong *audioSourcesSceneDataArray = (*env)->GetLongArrayElements(env, audioSourcesSceneDataArrayPointer, 0);
     for (jint i = 0; i < SETTINGS.nOutputLines; i++) {
         for (jint j = 0; j < SETTINGS.nSourcesPerLine; j++) {
-            jfloat *audioSourceSceneData = (jfloat *)(intptr_t)audioSourcesSceneDataArray[i * nSourcesPerLine + j];
+            jfloat *audioSourceSceneData = (jfloat *)(intptr_t)audioSourcesSceneDataArray[i * SETTINGS.nSourcesPerLine + j];
             asSetSceneData(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j], audioSourceSceneData);
             phInitializeSource(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j]);
         }
