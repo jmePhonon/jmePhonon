@@ -95,8 +95,6 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		SOURCES=new PhononSourceSlot[nTotalSource];
 		PLAYERS=new PhononSoundPlayer[SETTINGS.nOutputLines];
 		assert (gameThread!=null||(gameThread=Thread.currentThread())!=null);
-
-		
 	}
 	
 

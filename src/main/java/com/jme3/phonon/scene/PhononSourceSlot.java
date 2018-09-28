@@ -31,10 +31,29 @@
 */
 package com.jme3.phonon.scene;
 
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.*;
-import static com.jme3.phonon.Phonon.*;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.DIPOLEPOWER;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.DIPOLEWEIGHT;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.DIROCCMODE;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAGS;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_AIRABSORPTION;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_DIRECTIONAL;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_LOOP;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_PAUSED;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_POSITIONAL;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_REVERB;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.NUM_CHANNELS;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.PITCH;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.SIZE;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.STOPAT;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPX;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.VOLUME;
+import static org.junit.Assert.assertArrayEquals;
 
 import java.nio.ByteBuffer;
+
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.AudioSource.Status;
@@ -45,7 +64,6 @@ import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.types.CommitableMemoryObject;
 import com.jme3.phonon.types.VByte;
 import com.jme3.phonon.types.VFloat;
-import com.jme3.phonon.types.VInteger;
 import com.jme3.phonon.types.VVector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
@@ -154,10 +172,6 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         if(src==null) return;
         this.instance=instance;
 
-        if(src instanceof AudioNode){
-            AudioNode node=(AudioNode)src;
-        }
-
         CHANNELS.setUpdateNeeded();
         CHANNELS.forceUpdate();
         CHANNELS.update((byte)src.getAudioData().getChannels());
@@ -199,8 +213,12 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                     f |= FLAG_LOOP;
                 if (source.isReverbEnabled()) 
                     f|=FLAG_REVERB;
-                
-                if(source instanceof AudioNode) {
+               
+                if(source instanceof PhononAudioEmitterControl) {
+                    PhononAudioEmitterControl emitter = (PhononAudioEmitterControl) source;
+                    if(emitter.isAirAbsorptionApplied()) 
+                        f |= FLAG_AIRABSORPTION;
+                } else if(source instanceof AudioNode) {
                     AudioNode node = (AudioNode) source;
                     if(Phonon.getAudioNodeApplyAirAbsorption(node))
                         f |= FLAG_AIRABSORPTION;
@@ -211,7 +229,14 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
             AHEAD.update(source.getDirection());
 
-            if(source instanceof AudioNode) {
+            if(source instanceof PhononAudioEmitterControl) {
+                PhononAudioEmitterControl emitter = (PhononAudioEmitterControl) source;
+                UP.update(emitter.getUp());
+                RIGHT.update(emitter.getRight());
+                DWEIGHT.update(emitter.getDipoleWeight());
+                DPOWER.update(emitter.getDipolePower());
+                DIROM.update((byte)(int) emitter.getDirectOcclusionMode().ordinal());
+            } else if(source instanceof AudioNode) {
                 AudioNode node = (AudioNode) source;
                 UP.update(node.getWorldRotation().getRotationColumn(1));
                 RIGHT.update(node.getWorldRotation().getRotationColumn(0).negate());
@@ -230,7 +255,8 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         POS.commit(MEMORY, POSX);
         AHEAD.commit(MEMORY, AHEADX);
         CHANNELS.commit(MEMORY,NUM_CHANNELS);
-        if(source instanceof AudioNode) {
+
+        if(source instanceof PhononAudioEmitterControl || source instanceof AudioNode) {
             UP.commit(MEMORY, UPX);
             RIGHT.commit(MEMORY, RIGHTX);
         }
@@ -259,7 +285,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     public void setDirUpdateNeeded() {
         AHEAD.setUpdateNeeded();
         
-        if(source instanceof AudioNode) {
+        if(source instanceof PhononAudioEmitterControl || source instanceof AudioNode) {
             UP.setUpdateNeeded();
             RIGHT.setUpdateNeeded();
         }
