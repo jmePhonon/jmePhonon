@@ -57,13 +57,13 @@ inline void plStartThread(void* (*updateFunction)()) {
     }
 }
 
-inline void plStopThread() {
+inline void plStopThread(void) {
     if(pthread_join(PlatformThreadContext.thread, NULL) != 0) {
         perror("error joining native thread");
     }
 }
 
-inline void plSleep(){
+inline void plSleep(void){
   if (nanosleep((const struct timespec[]){{0, 1000000ll}}, NULL) < 0) {
         printf("Error can't sleep \n");
   }

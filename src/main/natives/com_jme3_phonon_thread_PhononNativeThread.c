@@ -59,7 +59,7 @@ inline void pntCallJMethod(char* name) {
         (*ThreadContext.env)->GetMethodID(ThreadContext.env, ThreadContext.loopClass, name, "()V"));   
 }
 
-inline void pntInitializeContext() {
+inline void pntInitializeContext(void) {
     #ifdef HAS_NATIVE_THREAD_SUPPORT    
         JavaVMAttachArgs thread_arg;
         thread_arg.version = JNI_VERSION_1_6;
@@ -75,7 +75,7 @@ inline void pntInitializeContext() {
     #endif
 }
 
-void* pntLoop() {
+void* pntLoop(void) {
     #ifdef HAS_NATIVE_THREAD_SUPPORT
         if (!ThreadContext.initialized) {
             pntInitializeContext();
