@@ -32,12 +32,10 @@
 package com.jme3.phonon;
 
 import com.jme3.app.Application;
-import com.jme3.app.LegacyApplication;
 import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioNode;
-import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
-import com.jme3.audio.Listener;
+import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.scene.PhononMesh;
 import com.jme3.phonon.scene.PhononMeshBuilder;
 import com.jme3.phonon.scene.SpatialFilter;
@@ -53,7 +51,10 @@ public final class Phonon{
     }
     static enum PhononAudioParam {
         DipoleWeight("phonon.dipole_weight"),
-        DipolePower("phonon.dipole_power");
+        DipolePower("phonon.dipole_power"),
+        ApplyDistanceAttenuation("phonon.apply_distance_attenuation"),
+        ApplyAirAbsorption("phonon.apply_air_absorption"),
+        DirectOcclusionMode("phonon.direct_occlusion_mode");
 
         String key;
 
@@ -111,6 +112,28 @@ public final class Phonon{
     }
 
     /**
+     * Set audio node air absorption property.
+     * 
+     * @param node Audio node
+     * @param state True to apply air absorption, false otherwise
+     */
+    public static void setAudioNodeApplyAirAbsorption(AudioNode node, boolean state) {
+        node.setUserData(PhononAudioParam.ApplyAirAbsorption.key, state);
+        communicateUpdateToRenderer(node, PhononAudioParam.ApplyAirAbsorption);
+    }
+
+    /**
+     * Set audio node direct occlusion mode.
+     * 
+     * @param node Audio node
+     * @param mode Direct occlusion mode
+     */
+    public static void setAudioNodeDirectOcclusionMode(AudioNode node, PhononDirectOcclusionMode mode) {
+        node.setUserData(PhononAudioParam.DirectOcclusionMode.key, mode.ordinal());
+        communicateUpdateToRenderer(node, PhononAudioParam.DirectOcclusionMode);
+    }
+
+    /**
      * Return the given audio node's dipole weight.
      * 
      * @param node Audio node
@@ -133,7 +156,30 @@ public final class Phonon{
     }
 
     /**
-     * Auxiliary methods used by setters to communicate Phonon parameters updates
+     * Return the given audio node's air absorption property
+     * 
+     * @param node Audio node
+     * @return True if air absorption is applied to node, false otherwise
+     */
+
+    public static boolean getAudioNodeApplyAirAbsorption(AudioNode node) {
+        Object data = node.getUserData(PhononAudioParam.ApplyAirAbsorption.key);
+        return data == null ? false : (boolean) data;
+    }
+
+    /**
+     * Return the given audio node's direct occlusion mode
+     * 
+     * @param node Audio node
+     * @return node's direct occlusion mode ordinal
+     */
+    public static byte getAudioNodeDirectOcclusionMode(AudioNode node) {
+        Object data = node.getUserData(PhononAudioParam.DirectOcclusionMode.key);
+        return data == null ? 0 : (byte)(int)data;
+    }
+
+    /**
+     * Auxiliary method used by setters to communicate Phonon parameters updates
      * 
      * @param source Source in which the param has been updated
      * @param param Param that has been updated

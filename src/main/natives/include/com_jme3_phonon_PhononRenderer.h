@@ -50,10 +50,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative
 /*
  * Class:     com_jme3_phonon_PhononRenderer
  * Method:    initNative
- * Signature: (IIIIIIJ[JZIJ)V
+ * Signature: (J[JIJLcom/jme3/phonon/PhononSettings;)V
  */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jlong, jlongArray, jboolean, jint, jlong);
+  (JNIEnv *, jobject, jlong, jlongArray, jint, jlong, jobject);
 
 /*
  * Class:     com_jme3_phonon_PhononRenderer

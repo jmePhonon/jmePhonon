@@ -30,43 +30,13 @@
 *
 */
 
-#ifndef __JMEPHONON_H__
-#define __JMEPHONON_H__
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
-#include "phonon.h"
+#define GET_SETTINGS_INT(obj, class, name) (jint) (*env)->GetIntField(env, obj, (*env)->GetFieldID(env, class, name, "I"))
 
-#include "Common.h"
-#include "AudioSource.h"
+#define GET_SETTINGS_DOUBLE(obj, class, name) (jdouble) (*env)->GetIntField(env, obj, (*env)->GetFieldID(env, class, name, "D"))
 
-#include "Listener.h"
+#define GET_SETTINGS_BOOL(obj, class, name) (jboolean) (*env)->GetBooleanField(env, obj, (*env)->GetFieldID(env, class, name, "Z"))
 
-void phCreateSceneMesh(struct GlobalSettings *settings,jint numTriangles,
-jint numVertices,jint* indexBuffer,jfloat* vertexBuffer, jint* materials);
-void phDestroySceneMesh(struct GlobalSettings *settings);
-void phSaveSceneMeshAsObj(struct GlobalSettings *settings,  jbyte *path);
-
-void phInit(struct GlobalSettings *settings, jint mixerQueueSize, jint nMaterials, jfloat *materials, JNIEnv*, jobject);
-void phProcessFrame(struct GlobalSettings *settings, struct Listener *listener, struct AudioSource *source, jfloat *inFrame, jfloat *outFrame);
-void phDestroy(struct GlobalSettings *settings);
- 
- 
-/** 
- * Allocates one PhContext for the audioSour ce
- */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
-
-
-/**
- * Deallocates the PhContext of the audioSource
- */
-void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSource);
-
-/**
- * Reset the internal state for the audioSource.
- * This is used when the audioData for the source is changed
- */
-void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource);
-
-
-void phMixOutputBuffers(jfloat **input, jint numInputs, jfloat *output);
 #endif

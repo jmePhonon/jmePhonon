@@ -41,9 +41,11 @@ import com.jme3.audio.AudioSource.Status;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.Phonon;
 import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.types.CommitableMemoryObject;
 import com.jme3.phonon.types.VByte;
 import com.jme3.phonon.types.VFloat;
+import com.jme3.phonon.types.VInteger;
 import com.jme3.phonon.types.VVector3f;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
@@ -60,6 +62,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private final VFloat DPOWER = new VFloat();
     private final VFloat VOL = new VFloat();
     private final VFloat PIT = new VFloat();
+    private final VByte DIROM = new VByte();
     private final VByte FLS=new VByte();
     
     private volatile PhononOutputLine connectedLine;
@@ -85,6 +88,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DPOWER.forceUpdate();
         VOL.forceUpdate();
         PIT.forceUpdate();
+        DIROM.forceUpdate();
         FLS.forceUpdate();
 
         CHANNELS.update((byte) 1);
@@ -96,6 +100,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DPOWER.update(0f);
         VOL.update(1f);
         PIT.update(1f);
+        DIROM.update((byte) PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal());
         FLS.update((byte) 0);
 
         POS.forceCommit();
@@ -107,6 +112,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DPOWER.forceCommit();
         VOL.forceCommit();
         PIT.forceCommit();
+        DIROM.forceCommit();
         FLS.forceCommit();
 
         forceUpdate().update(0);
@@ -165,6 +171,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DPOWER.setUpdateNeeded();
         VOL.setUpdateNeeded();
         PIT.setUpdateNeeded();
+        DIROM.setUpdateNeeded();
         if(!instance)src.setChannel(ID);
     }
     
@@ -193,6 +200,12 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                 if (source.isReverbEnabled()) 
                     f|=FLAG_REVERB;
                 
+                if(source instanceof AudioNode) {
+                    AudioNode node = (AudioNode) source;
+                    if(Phonon.getAudioNodeApplyAirAbsorption(node))
+                        f |= FLAG_AIRABSORPTION;
+                }
+
                 FLS.update((byte) f);
             }
 
@@ -204,6 +217,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                 RIGHT.update(node.getWorldRotation().getRotationColumn(0).negate());
                 DWEIGHT.update(Phonon.getAudioNodeDipoleWeight(node));
                 DPOWER.update(Phonon.getAudioNodeDipolePower(node));
+                DIROM.update(Phonon.getAudioNodeDirectOcclusionMode(node));
             }
 
             VOL.update(source.getVolume());
@@ -225,6 +239,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DPOWER.commit(MEMORY, DIPOLEPOWER);
         VOL.commit(MEMORY, VOLUME);
         PIT.commit(MEMORY, PITCH);
+        DIROM.commit(MEMORY, DIROCCMODE);
 
         FLS.commit(MEMORY, FLAGS);
 
@@ -264,6 +279,10 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
     public void setPitchUpdateNeeded() {
         PIT.setUpdateNeeded();
+    }
+
+    public void setDirectOcclusionModeNeeded() {
+        DIROM.setUpdateNeeded();
     }
 
     public long getDataAddress() {

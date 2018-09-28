@@ -31,7 +31,7 @@
 */
 #define __JMEPHONON_INTERNAL__
 #include "JmePhonon.h"
-
+#include "settings/settings.h"
 
   struct {
         IPLhandle context;
@@ -78,10 +78,10 @@ void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *aud
     struct PhContext *context = malloc(sizeof(struct PhContext));
 
     // TODO make this configurable
-    context->directSoundEffectOptions.applyDistanceAttenuation = true;
+    /*context->directSoundEffectOptions.applyDistanceAttenuation = true;
     context->directSoundEffectOptions.applyAirAbsorption = true;
     context->directSoundEffectOptions.applyDirectivity = true;
-    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY;
+    context->directSoundEffectOptions.directOcclusionMode = IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY;*/
 
     // Direct sound
     iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer, 
@@ -135,26 +135,26 @@ void phSaveSceneMeshAsObj(struct GlobalSettings *settings,jbyte* path){
     printf("Save scene in %s\n", path);
 }
 
-void phInit(struct GlobalSettings *settings,jint mixerQueueSize,jint nMaterials,jfloat* materials){
+void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials, jfloat* materials, JNIEnv* env, jobject jSettings){
     PhSharedContext.scene = NULL;
 
-    /** TODO : make this configurable **/
-    PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON; // requires 64bit cpu
-    PhSharedContext.simulationSettings.numRays = 1024;// typical values are in the range of 1024 to 131072
-    PhSharedContext.simulationSettings.numDiffuseSamples = 32;//typical values are in the range of 32 to 4096. 
-    PhSharedContext.simulationSettings.numBounces = 1;//typical values are in the range of 1 to 32. 
-    PhSharedContext.simulationSettings.numThreads = 4;//The performance improves linearly with the number of threads upto the number of physical cores available on the CPU.
-    PhSharedContext.simulationSettings.irDuration = 0.5; // 0.5 to 4.0.
-    PhSharedContext.simulationSettings.ambisonicsOrder = 0;//Supported values are between 0 and 3.
-    PhSharedContext.simulationSettings.maxConvolutionSources = 0; // TODO
-    PhSharedContext.simulationSettings.bakingBatchSize=1;//IPL_SCENETYPE_RADEONRAYS
+    jclass settingsClass = (*env)->GetObjectClass(env, jSettings);
 
+    PhSharedContext.simulationSettings.sceneType = GET_SETTINGS_INT(jSettings, settingsClass, "sceneType");
+    PhSharedContext.simulationSettings.numRays = GET_SETTINGS_INT(jSettings, settingsClass, "numRays");
+    PhSharedContext.simulationSettings.numDiffuseSamples = GET_SETTINGS_INT(jSettings, settingsClass, "numDiffuseSamples");
+    PhSharedContext.simulationSettings.numBounces = GET_SETTINGS_INT(jSettings, settingsClass, "numBounces");
+    PhSharedContext.simulationSettings.numThreads = GET_SETTINGS_INT(jSettings, settingsClass, "numThreads");
+    PhSharedContext.simulationSettings.irDuration = GET_SETTINGS_DOUBLE(jSettings, settingsClass, "irDuration");
+    PhSharedContext.simulationSettings.ambisonicsOrder = GET_SETTINGS_INT(jSettings, settingsClass, "ambisonicsOrder");
+    PhSharedContext.simulationSettings.maxConvolutionSources = GET_SETTINGS_INT(jSettings, settingsClass, "maxConvolutionSources");
+    PhSharedContext.simulationSettings.bakingBatchSize = GET_SETTINGS_INT(jSettings, settingsClass, "bakingBatchSize");
 
     //////////////////
 
     iplCreateContext(NULL, NULL, NULL, &PhSharedContext.context);
     PhSharedContext.settings.samplingRate = settings->sampleRate;
-    PhSharedContext.settings.frameSize =settings->frameSize;
+    PhSharedContext.settings.frameSize = settings->frameSize;
     PhSharedContext.settings.convolutionType =IPL_CONVOLUTIONTYPE_PHONON ;
     
     PhSharedContext.monoFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
@@ -217,11 +217,7 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize,jint nMaterials,
 
     PhSharedContext.defaultHrtfParams.type = IPL_HRTFDATABASETYPE_DEFAULT;
     iplCreateBinauralRenderer(PhSharedContext.context, PhSharedContext.settings, PhSharedContext.defaultHrtfParams, 
-    &PhSharedContext.binauralRenderer);     
-  
-
-
-
+    &PhSharedContext.binauralRenderer);
 
     PhSharedContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
     for(jint i=0;i<mixerQueueSize;i++){
@@ -231,8 +227,6 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize,jint nMaterials,
 }
 
 void phDestroy(struct GlobalSettings *settings){
-
-
     iplDestroyBinauralRenderer(&PhSharedContext.binauralRenderer);
     iplDestroyEnvironmentalRenderer(&PhSharedContext.environmentalRenderer);
     iplDestroyEnvironment(&PhSharedContext.environment);
@@ -244,14 +238,7 @@ void phDestroy(struct GlobalSettings *settings){
     free(PhSharedContext.mixerQueue);
     free(PhSharedContext.auxMonoFrame);
     // free(PhSharedContext.materials);
-
 }
-
-
-
-
-
-
 
 void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame){
     // for(jint i=0;i<PhSharedContext.settings.frameSize;i++){
@@ -264,6 +251,10 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
     }
     
     ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.applyDirectivity = asHasFlag(settings, asource, DIRECTIONAL);
+    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.applyDistanceAttenuation = asHasFlag(settings, asource, POSITIONAL);
+    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.applyAirAbsorption = asHasFlag(settings, asource, AIRABSORPTION);
+
+    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.directOcclusionMode = asGetDirectOcclusionMode(settings, asource);
 
     IPLSource source;
     source.position = (*asGetSourcePosition(settings, asource));
