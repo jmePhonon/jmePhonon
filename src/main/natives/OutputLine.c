@@ -67,7 +67,7 @@ jboolean olIsInitialized(struct GlobalSettings *settings, struct OutputLine *lin
 }
 
 struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, struct OutputLine *lines,jint nLines,jfloat *data,jint sourceSamples){
-    printf("Connect source to best line\n");
+    // printf("Connect source to best line\n");
     jint sourceIndex = 0;
     struct OutputLine *bestLine = &lines[0];
     for(jint i=1;i<nLines;i++) {
@@ -97,15 +97,15 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
             ulistAdd(bestLine->uList, bestLine->sourcesSlots[i].uNode);
 
             bestLine->numConnectedSources++;
-            printf("Connect source to slot %d \n",i);
+            // printf("Connect source to slot %d \n",i);
            
             return &bestLine->sourcesSlots[i];
         }else{
-            printf("Source %d is connected\n", i);
+            // printf("Source %d is connected\n", i);
         }
     }   
     
-    printf("FIXME: Error. There is no space left for this source");
+    // printf("FIXME: Error. There is no space left for this source");
     
 
     return NULL;
