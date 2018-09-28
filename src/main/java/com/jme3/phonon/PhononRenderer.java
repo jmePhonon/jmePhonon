@@ -271,7 +271,8 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		
 
 		PhononSourceSlot psrc=getSourceSlot(src);
-		if(src.getStatus()==AudioSource.Status.Paused){
+
+		if(psrc!=null&&src.getStatus()==AudioSource.Status.Paused){
 			src.setStatus(Status.Playing);
 			psrc.setFlagsUpdateNeeded();
 			return;
@@ -560,7 +561,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	int playSourceData(F32leAudioData audioData) {
 		assert Thread.currentThread()==phononThread;
 
-		System.out.println("Connect source ["+audioData.getAddress()+"] of size "+audioData.getSizeInSamples());
+		// System.out.println("Connect source ["+audioData.getAddress()+"] of size "+audioData.getSizeInSamples());
 		int length=audioData.getSizeInSamples();
 		long addr=audioData.getAddress();
 		
