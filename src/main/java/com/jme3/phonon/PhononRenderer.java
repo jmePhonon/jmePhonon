@@ -38,7 +38,9 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+
 import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioParam;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
@@ -235,21 +237,22 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 
 		GAME_QUEUE.run();
 		PHONON_LISTENER.update(0);
-		int i=0;
 		for(PhononSourceSlot sourceData:SOURCES){
 			if(!sourceData.isConnected()) continue;
 			sourceData.update(0);
+			
+		
 			// Check if stopped & unpair
-			if(sourceData.isOver()||
-					(!sourceData.isInstance()&&sourceData.getSource()!=null&&sourceData.getSource().getStatus()==AudioSource.Status.Stopped)){
-				// if(!sourceData.isInstance()){
-				// 	sourceData.getSource().setStatus(AudioSource.Status.Stopped);
-				// 	// sourceData.getSource().setChannel(-1);
-				// }
-				recycleSourceSlot(i);
-				
+			if(sourceData.isOver()||(!sourceData.isInstance()&&sourceData.getSource()!=null&&sourceData.getSource().getStatus()==AudioSource.Status.Stopped)){
+				// System.out.println("Recycle because its over");
+				recycleSourceSlot(sourceData.getId());
+
 			}
-			i++;    
+			
+			// if((!sourceData.isInstance()&&sourceData.getSource()!=null&&sourceData.getSource().getStatus()==AudioSource.Status.Stopped)){
+			// 	System.out.println("Recycle because its stopped");
+			// 	recycleSourceSlot(sourceData.getId());
+			// }
         }
 		playing=true;
 	}
@@ -263,26 +266,31 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	 */
 	private void play(AudioSource src, boolean instance) {
 		assert Thread.currentThread()==gameThread;
+		if(src.getAudioData().getSampleRate()!=SETTINGS.sampleRate){
+			throw new IllegalStateException("Input audio "+((src instanceof AudioNode)?((AudioNode)src).getName():src)+" sample rate is "+src.getAudioData().getSampleRate()+" but the renderer is configured to use "+SETTINGS.sampleRate);
+		}
+
+		if(src.getStatus()==AudioSource.Status.Playing){
+			if(!instance){ return; }
+		}
 		
-
+		AudioSource.Status currentStatus=src.getStatus();
 		PhononSourceSlot psrc=getSourceSlot(src);
-
-		if(psrc!=null&&src.getStatus()==AudioSource.Status.Paused){
-			src.setStatus(Status.Playing);
+		if(psrc!=null&&currentStatus==AudioSource.Status.Paused){
 			psrc.setFlagsUpdateNeeded();
 			return;
 		}
-		if(psrc!=null&&!instance) return;
 
-		if(src.getStatus()==AudioSource.Status.Playing&&!instance) return;
 		src.setStatus(AudioSource.Status.Playing);
 
 		final F32leAudioData data=F32leCachedConverter.toF32le(src.getAudioData());
 		PHONON_QUEUE.enqueue(new Runnable(){
-
 			@Override
 			public void run() {
 				assert Thread.currentThread()==phononThread;
+
+			
+		
 				final int index=playSourceData(data);
 				GAME_QUEUE.enqueue(new Runnable(){
 					@Override
@@ -310,19 +318,16 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	private void stop(AudioSource src) {
 		assert Thread.currentThread()==gameThread;
 
-		if(src.getChannel()==-1)return;
-		final int id=src.getChannel();
 		src.setStatus(Status.Stopped);
-
-		// recycleSourceSlot(id);
 		
 		PHONON_QUEUE.enqueue(new Runnable(){
 			@Override
 			public void run() {
+				int id=src.getChannel();
+				if(id==-1)return;	 //nb channel is volatile in jme's audio node implementation
 				stopSourceData(id);
 			}
 		});
-		// src.setChannel(-1);
 	}
 
 
@@ -333,7 +338,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		assert Thread.currentThread()==gameThread;
 		src.setStatus(Status.Paused);
 		PhononSourceSlot psrc=getSourceSlot(src);
-		if(psrc==null)return;
+		if(psrc==null) return;
 		psrc.setFlagsUpdateNeeded();
 	}
 
