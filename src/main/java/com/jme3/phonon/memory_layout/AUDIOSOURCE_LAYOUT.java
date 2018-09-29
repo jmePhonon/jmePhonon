@@ -36,7 +36,7 @@ public class AUDIOSOURCE_LAYOUT {
 
     public final static int FLAG_POSITIONAL=(1<<0);
     public final static int FLAG_DIRECTIONAL=(1<<1);
-    public final static int FLAG_PAUSED=(1<<2);
+    public final static int FLAG_PLAYING=(1<<2);
     public final static int FLAG_LOOP=(1<<3);
     public final static int FLAG_REVERB=(1<<4);
     public final static int FLAG_AIRABSORPTION=(1<<5);

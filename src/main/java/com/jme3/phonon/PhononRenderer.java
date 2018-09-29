@@ -215,8 +215,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		PHONON_LISTENER.commit(0);
 
 		for(PhononSourceSlot l:SOURCES){
-			l.isConnected();
-			l.commit(0);
+			if(l.isConnected())l.commit(0);
 		}
 
 		updateNative();
@@ -300,10 +299,9 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 							if(!instance)src.setStatus(Status.Stopped);					
 						}else{
 							assert index<SOURCES.length:"Not enought source slots. Trying to bind index "+index+" but only "+SOURCES.length+" available";
-							AudioSource.Status cs=src.getStatus();
-							src.setStatus(AudioSource.Status.Stopped);
+					
 							SOURCES[index].setSource(src,instance);
-							src.setStatus(cs);
+						
 						}
 					}
 				});
@@ -319,12 +317,13 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		assert Thread.currentThread()==gameThread;
 
 		src.setStatus(Status.Stopped);
-		
+
+		final int id=src.getChannel();
+		if(id==-1)return;	 //nb channel is volatile in jme's audio node implementation
+
 		PHONON_QUEUE.enqueue(new Runnable(){
 			@Override
 			public void run() {
-				int id=src.getChannel();
-				if(id==-1)return;	 //nb channel is volatile in jme's audio node implementation
 				stopSourceData(id);
 			}
 		});

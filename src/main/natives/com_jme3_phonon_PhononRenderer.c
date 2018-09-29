@@ -141,8 +141,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
         while (!ulistIsTail(uList, uNode)) {
             struct AudioSource *audioSource = uNode->audioSource;
-            jboolean isPaused = asHasFlag(&SETTINGS, audioSource, PAUSED);
-            if (!isPaused) {
+            jboolean isPlaying = asHasFlag(&SETTINGS, audioSource, PLAYING);
+            if (isPlaying) {
 
                 jboolean loop = asHasFlag(&SETTINGS, audioSource, LOOP);
                 jint nchannels = asGetNumChannels(&SETTINGS, audioSource);

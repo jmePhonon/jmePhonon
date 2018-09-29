@@ -69,7 +69,6 @@ public class TestJNI extends TestCase {
         PhononRenderer renderer=PhononInitializer.init(settings,null,true,true);
         renderer.initializePhonon();
         renderer.playSourceDataRaw(bbf.limit()/4, bbf);
-
         // renderer.preInit();        
 
 
@@ -78,7 +77,7 @@ public class TestJNI extends TestCase {
         ByteBuffer tmpout_cnv = ByteBuffer.allocateDirect(frameSize*4).order(ByteOrder.LITTLE_ENDIAN);
         byte tmpout[] = new byte[frameSize*4];
 
-        for (int i = 0; i < bufferSize; i++) {
+        for(int i=0;i<bufferSize;i++){
             renderer.updateNative();
             chan.readNextFrameForPlayer(tmpout);
             tmpout_cnv.rewind();

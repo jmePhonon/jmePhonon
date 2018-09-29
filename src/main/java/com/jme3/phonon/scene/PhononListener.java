@@ -59,14 +59,14 @@ public class PhononListener extends CommitableMemoryObject {
     private volatile Listener listener;
 
     public PhononListener() {
-        MEMORY = BufferUtils.createByteBuffer(LISTENER_size);
+        MEMORY=BufferUtils.createByteBuffer(LISTENER_size);
+        
         // initialization
         POS.forceUpdate().update(Vector3f.ZERO);
         DIR.forceUpdate().update(Vector3f.UNIT_Z);
         UP.forceUpdate().update(Vector3f.UNIT_Y);
         VEL.forceUpdate().update(Vector3f.ZERO);
         VOL.forceUpdate().update(1f);
-
         POS.forceCommit();
         DIR.forceCommit();
         UP.forceCommit();
@@ -77,6 +77,12 @@ public class PhononListener extends CommitableMemoryObject {
 
     public void setListener(Listener l) {
         listener=l;
+        POS.setUpdateNeeded();
+        DIR.setUpdateNeeded();
+        UP.setUpdateNeeded();
+        VEL.setUpdateNeeded();
+        VOL.setUpdateNeeded();
+        update(0);
     }
     
     @Override

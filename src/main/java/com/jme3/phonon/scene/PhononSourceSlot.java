@@ -64,10 +64,10 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private final VFloat PIT = new VFloat();
     private final VByte DIROM = new VByte();
     private final VByte FLS=new VByte();
-    
+
     private volatile PhononOutputLine connectedLine;
     private volatile AudioSource source;
-    private volatile boolean isOver,recycled;
+    private volatile boolean isOver;
     private volatile boolean instance;
     private final int ID;
 
@@ -76,51 +76,21 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         ID=id;
         MEMORY=BufferUtils.createByteBuffer(SIZE);
       
-        MEMORY.putInt(STOPAT,-1);
 
-        source=null;
-        POS.forceUpdate();
-        CHANNELS.forceUpdate();
-        AHEAD.forceUpdate();
-        UP.forceUpdate();
-        RIGHT.forceUpdate();
-        DWEIGHT.forceUpdate();
-        DPOWER.forceUpdate();
-        VOL.forceUpdate();
-        PIT.forceUpdate();
-        DIROM.forceUpdate();
-        FLS.forceUpdate();
 
-        CHANNELS.update((byte) 1);
-        POS.update(Vector3f.ZERO);
-        AHEAD.update(Vector3f.UNIT_Z);
-        UP.update(Vector3f.UNIT_Y);
-        RIGHT.update(Vector3f.UNIT_X);
-        DWEIGHT.update(0f);
-        DPOWER.update(0f);
-        VOL.update(1f);
-        PIT.update(1f);
-        DIROM.update((byte) PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal());
-        FLS.update((byte) 0);
-
-        POS.forceCommit();
-        CHANNELS.forceCommit();
-        AHEAD.forceCommit();
-        UP.forceCommit();
-        RIGHT.forceCommit();
-        DWEIGHT.forceCommit();
-        DPOWER.forceCommit();
-        VOL.forceCommit();
-        PIT.forceCommit();
-        DIROM.forceCommit();
-        FLS.forceCommit();
-
-        forceUpdate().update(0);
-        forceCommit().commit(0);
     }
 
     public boolean isConnected() {
         return source!=null;
+    }
+
+    /**
+     * Check if source is playing
+     * @return true if source is playing or its status isn't finalized.
+     */
+    public boolean isPlaying() {
+        int status=FLS.x;
+        return (status&FLAG_PLAYING)==status;
     }
 
     public void setLine(PhononOutputLine line) {
@@ -162,41 +132,46 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
         this.instance=false;
 
-        if(src==null){
-            recycled=true; // Set as recycled, will disable some behaviours, until a new source is attached            return;
-            return;
-        }else{
-            recycled=false;
+        if(src!=null){
 
+            this.instance=instance;
+
+            if(src instanceof AudioNode){
+                AudioNode node=(AudioNode)src;
+            }
+
+            CHANNELS.setUpdateNeeded();
+            FLS.setUpdateNeeded();
+            POS.setUpdateNeeded();
+            AHEAD.setUpdateNeeded();
+            UP.setUpdateNeeded();
+            RIGHT.setUpdateNeeded();
+            DWEIGHT.setUpdateNeeded();
+            DPOWER.setUpdateNeeded();
+            VOL.setUpdateNeeded();
+            PIT.setUpdateNeeded();
+            DIROM.setUpdateNeeded();
+           
+            if(!instance){
+                AudioSource.Status cs=src.getStatus();
+                src.setStatus(AudioSource.Status.Stopped);
+                src.setChannel(ID);
+                src.setStatus(cs);
+            }
+            update(0);        
+        }else{
+            FLS.setUpdateNeeded();
+            FLS.update((byte)(((int)FLS.x)&~(int)FLAG_PLAYING));
         }
+
+    
         // System.out.println(ID+" attached");
 
-        this.instance=instance;
-
-        if(src instanceof AudioNode){
-            AudioNode node=(AudioNode)src;
-        }
-
-        CHANNELS.setUpdateNeeded();
-        CHANNELS.forceUpdate();
-        CHANNELS.update((byte)src.getAudioData().getChannels());
-
-        FLS.setUpdateNeeded();
-        POS.setUpdateNeeded();
-        AHEAD.setUpdateNeeded();
-        UP.setUpdateNeeded();
-        RIGHT.setUpdateNeeded();
-        DWEIGHT.setUpdateNeeded();
-        DPOWER.setUpdateNeeded();
-        VOL.setUpdateNeeded();
-        PIT.setUpdateNeeded();
-        DIROM.setUpdateNeeded();
-        if(!instance)src.setChannel(ID);
     }
     
     public boolean isOver() {
         // if(recycled)System.out.println("Recycled :"+recycled);
-        return isOver&&!recycled;
+        return isOver;
     }
 
     @Override
@@ -205,16 +180,17 @@ public class PhononSourceSlot extends CommitableMemoryObject{
             // if (isOver) {
             //   source.setStatus(Status.Stopped);
             // }
+            CHANNELS.update((byte)source.getAudioData().getChannels());
 
             POS.update(source.getPosition());
-            if (FLS.needUpdate) {
+            if(FLS.needUpdate){
                 int f = 0;
                 if (source.isPositional())
                     f |= FLAG_POSITIONAL;
                 if (source.isDirectional())
                     f |= FLAG_DIRECTIONAL;
-                if (source.getStatus()==Status.Paused)
-                    f |= FLAG_PAUSED;
+                if (source.getStatus()==Status.Playing||instance)
+                    f |= FLAG_PLAYING;
                 if (source.isLooping())
                     f |= FLAG_LOOP;
                 if (source.isReverbEnabled()) 
