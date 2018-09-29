@@ -31,26 +31,7 @@
 */
 package com.jme3.phonon.scene;
 
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.AHEADX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.DIPOLEPOWER;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.DIPOLEWEIGHT;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.DIROCCMODE;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAGS;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_AIRABSORPTION;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_DIRECTIONAL;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_LOOP;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_PAUSED;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_POSITIONAL;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.FLAG_REVERB;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.NUM_CHANNELS;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.PITCH;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.POSX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.RIGHTX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.SIZE;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.STOPAT;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.UPX;
-import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.VOLUME;
-import static org.junit.Assert.assertArrayEquals;
+import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.*;
 
 import java.nio.ByteBuffer;
 
