@@ -39,7 +39,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     protected Vector3f direction = new Vector3f(0, 0, 1);
     protected Vector3f previousWorldTranslation = Vector3f.ZERO;
     protected boolean positional = true;
-    protected float lastTpf;
 
     // Phonon source settings
     protected float dipoleWeight = 0f;
@@ -415,9 +414,7 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         return directOcclusionMode;
     }
 
-    protected void controlUpdate(float tpf) {
-        lastTpf = tpf;
-    }
+    protected void controlUpdate(float tpf) { }
 
     protected void controlRender(RenderManager rm, ViewPort vp) {
         if (channel < 0 || spatial.getParent() == null) return;
