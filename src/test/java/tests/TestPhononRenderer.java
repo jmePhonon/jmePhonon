@@ -142,7 +142,6 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         engineEmitter.setPositional(true);
         engineEmitter.setVolume(1f);
         engineEmitter.setLooping(false);
-        engineEmitter.setReverbEnabled(true);
         engineEmitter.setDipoleWeight(1f);
         engineEmitter.setApplyAirAbsorption(true);
         engineEmitter.setDirectOcclusionMode(PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY);

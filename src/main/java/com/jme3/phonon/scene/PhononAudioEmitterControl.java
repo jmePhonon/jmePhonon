@@ -1,8 +1,6 @@
 package com.jme3.phonon.scene;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import com.jme3.asset.AssetNotFoundException;
 import com.jme3.audio.AudioContext;
@@ -13,7 +11,6 @@ import com.jme3.audio.AudioParam;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.AudioStream;
-import com.jme3.audio.Filter;
 import com.jme3.export.InputCapsule;
 import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
@@ -25,25 +22,22 @@ import com.jme3.renderer.ViewPort;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.util.PlaceholderAssets;
 import com.jme3.util.clone.Cloner;
+import com.jme3.audio.Filter;
 
 public class PhononAudioEmitterControl extends AbstractControl implements AudioSource {
-
 
     public static final int SAVABLE_VERSION = 1;
     protected boolean loop = false;
     protected float volume = 1;
     protected float pitch = 1;
     protected float timeOffset = 0;
-    protected Filter dryFilter;
     protected AudioKey audioKey;
     protected transient AudioData data = null;
     protected transient volatile AudioSource.Status status = AudioSource.Status.Stopped;
     protected transient volatile int channel = -1;
-    protected Vector3f previousWorldTranslation = Vector3f.NAN.clone();
-    protected boolean reverbEnabled = false;
-    protected Filter reverbFilter;
     private boolean directional = false;
     protected Vector3f direction = new Vector3f(0, 0, 1);
+    protected Vector3f previousWorldTranslation = Vector3f.ZERO;
     protected boolean positional = true;
     protected float lastTpf;
 
@@ -120,6 +114,9 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     public float getInnerAngle() { return 0f; }
     public float getMaxDistance() { return 0f; }
     public Vector3f getVelocity () { return Vector3f.NAN; }
+    public Filter getDryFilter() { return null; }
+    public Filter getReverbFilter() { return null; }
+    public boolean isReverbEnabled() { return false; } // FIXME: Returns true when native reverb is enabled
 
     /**
      * Do not use.
@@ -139,31 +136,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         return channel;
     }
 
-    /**
-     * @return The {#link Filter dry filter} that is set.
-     * @see PhononAudioEmitterControl#setDryFilter(com.jme3.audio.Filter)
-     */
-    public Filter getDryFilter() {
-        return dryFilter;
-    }
-
-    /**
-     * Set the dry filter to use for this audio node.
-     *
-     * When {@link PhononAudioEmitterControl#setReverbEnabled(boolean) reverb} is used,
-     * the dry filter will only influence the "dry" portion of the audio,
-     * e.g. not the reverberated parts of the AudioEmitterControl playing.
-     *
-     * See the relevant documentation for the {@link Filter} to determine the
-     * effect.
-     *
-     * @param dryFilter The filter to set, or null to disable dry filter.
-     */
-    public void setDryFilter(Filter dryFilter) {
-        this.dryFilter = dryFilter;
-        if (channel >= 0)
-            getRenderer().updateSourceParam(this, AudioParam.DryFilter);
-    }
 
     /**
      * Set the audio data to use for the audio. Note that this method
@@ -333,57 +305,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     }
 
     /**
-     * @return True if reverb is enabled, otherwise false.
-     *
-     * @see PhononAudioEmitterControl#setReverbEnabled(boolean)
-     */
-    public boolean isReverbEnabled() {
-        return reverbEnabled;
-    }
-
-    /**
-     * Set to true to enable reverberation effects for this audio node.
-     * Does nothing if the audio node is not positional.
-     * <br/>
-     * When enabled, the audio environment set with
-     * {@link AudioRenderer#setEnvironment(com.jme3.audio.Environment) }
-     * will apply a reverb effect to the audio playing from this audio node.
-     *
-     * @param reverbEnabled True to enable reverb.
-     */
-    public void setReverbEnabled(boolean reverbEnabled) {
-        this.reverbEnabled = reverbEnabled;
-        if (channel >= 0) {
-            getRenderer().updateSourceParam(this, AudioParam.ReverbEnabled);
-        }
-    }
-
-    /**
-     * @return Filter for the reverberations of this audio node.
-     *
-     * @see PhononAudioEmitterControl#setReverbFilter(com.jme3.audio.Filter)
-     */
-    public Filter getReverbFilter() {
-        return reverbFilter;
-    }
-
-    /**
-     * Set the reverb filter for this audio node.
-     * <br/>
-     * The reverb filter will influence the reverberations
-     * of the audio node playing. This only has an effect if
-     * reverb is enabled.
-     *
-     * @param reverbFilter The reverb filter to set.
-     * @see PhononAudioEmitterControl#setDryFilter(com.jme3.audio.Filter)
-     */
-    public void setReverbFilter(Filter reverbFilter) {
-        this.reverbFilter = reverbFilter;
-        if (channel >= 0)
-            getRenderer().updateSourceParam(this, AudioParam.ReverbFilter);
-    }
-
-    /**
      * @return True if the audio node is directional
      *
      * @see PhononAudioEmitterControl#setDirectional(boolean)
@@ -528,19 +449,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
 
         this.direction=cloner.clone(direction);
         this.previousWorldTranslation=Vector3f.NAN.clone();
-
-        // Change in behavior: the filters were not cloned before meaning
-        // that two cloned audio nodes would share the same filter instance.
-        // While settings will only be applied when the filter is actually
-        // set, I think it's probably surprising to callers if the values of
-        // a filter change from one AudioEmitterControl when a different AudioEmitterControl's
-        // filter attributes are updated.
-        // Plus if they disable and re-enable the thing using the filter then
-        // the settings get reapplied and it might be surprising to have them
-        // suddenly be strange.
-        // ...so I'll clone them.  -pspeed
-        this.dryFilter = cloner.clone(dryFilter);
-        this.reverbFilter = cloner.clone(reverbFilter);
     }
 
     @Override
@@ -552,15 +460,17 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         oc.write(volume, "volume", 1);
         oc.write(pitch, "pitch", 1);
         oc.write(timeOffset, "time_offset", 0);
-        oc.write(dryFilter, "dry_filter", null);
-
-        oc.write(reverbEnabled, "reverb_enabled", false);
-        oc.write(reverbFilter, "reverb_filter", null);
 
         oc.write(directional, "directional", false);
         oc.write(direction, "direction", null);
 
         oc.write(positional, "positional", false);
+
+        //Phonon specific settings
+        oc.write(dipoleWeight, "dipole_weight", 1f);
+        oc.write(dipolePower, "dipole_power", 0f);
+        oc.write(applyAirAbsorption, "apply_air_absorption", false);
+        oc.write(directOcclusionMode.ordinal(), "direct_occlusion_mode", PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal());
     }
 
     @Override
@@ -580,16 +490,20 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         loop = ic.readBoolean("looping", false);
         volume = ic.readFloat("volume", 1);
         pitch = ic.readFloat("pitch", 1);
+
         timeOffset = ic.readFloat("time_offset", 0);
-        dryFilter = (Filter) ic.readSavable("dry_filter", null);
-
-        reverbEnabled = ic.readBoolean("reverb_enabled", false);
-        reverbFilter = (Filter) ic.readSavable("reverb_filter", null);
-
+        
         directional = ic.readBoolean("directional", false);
         direction = (Vector3f) ic.readSavable("direction", null);
 
         positional = ic.readBoolean("positional", false);
+
+        // Phonon specific settings
+        dipoleWeight = ic.readFloat("dipole_weight", 1f);
+        dipolePower = ic.readFloat("dipole_power", 0f);
+        applyAirAbsorption = ic.readBoolean("apply_air_absorption", false);
+        directOcclusionMode = PhononDirectOcclusionMode.values()
+            [ic.readInt("direct_occlusion_mode", PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal())];
 
         if (audioKey != null) {
             try {
