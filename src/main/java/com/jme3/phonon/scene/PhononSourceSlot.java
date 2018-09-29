@@ -85,7 +85,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     
     private volatile PhononOutputLine connectedLine;
     private volatile AudioSource source;
-    private volatile boolean isOver;
+    private volatile boolean isOver,recycled;
     private volatile boolean instance;
     private final int ID;
 
@@ -155,21 +155,40 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         return instance;
     }
 
+    public int getId() {
+            return ID;
+    }
+
     public void setSource(AudioSource src, boolean instance) {
-       
+        isOver=false; // reset isOver status until next native update
+        // System.out.println(ID+" recycled");
         if(source!=null){
             if(getSource().getChannel()==ID){
                 getSource().setStatus(Status.Stopped);
+
                 getSource().setChannel(-1);
-            }else{
-                assert this.instance;
+                if(src instanceof AudioNode){
+                    System.out.println("Set "+((AudioNode)src).getName()+" to stopped");
+                }
+
             }
+            // else{
+                // assert this.instance;
+            // }
         }
         source=src;
 
         this.instance=false;
 
-        if(src==null) return;
+        if(src==null){
+            recycled=true; // Set as recycled, will disable some behaviours, until a new source is attached            return;
+            return;
+        }else{
+            recycled=false;
+
+        }
+        // System.out.println(ID+" attached");
+
         this.instance=instance;
 
         CHANNELS.setUpdateNeeded();
@@ -190,7 +209,8 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     }
     
     public boolean isOver() {
-        return isOver;
+        // if(recycled)System.out.println("Recycled :"+recycled);
+        return isOver&&!recycled;
     }
 
     @Override
@@ -252,6 +272,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
     @Override
     public void onCommit(float tpf) {
+       
         POS.commit(MEMORY, POSX);
         AHEAD.commit(MEMORY, AHEADX);
         CHANNELS.commit(MEMORY,NUM_CHANNELS);
@@ -269,8 +290,9 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
         FLS.commit(MEMORY, FLAGS);
 
-        int stopAt = MEMORY.getInt(STOPAT);
+        int stopAt=MEMORY.getInt(STOPAT);
         isOver=stopAt!=-1&&connectedLine.getLastPlayedFrameId()>=stopAt;
+       
     }
 
     public void setPosUpdateNeeded() {

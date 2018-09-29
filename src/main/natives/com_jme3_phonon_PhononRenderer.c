@@ -68,7 +68,8 @@ struct {
 JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj, jint size, jlong sourceAddr) {
     struct AudioSource *source = olConnectSourceToBestLine(&SETTINGS, OUTPUT_LINES, SETTINGS.nOutputLines,
                                                            (jfloat *)(intptr_t)sourceAddr, size);
-
+    // Reset stop at
+    asSetStopAt(&SETTINGS, source, -1);
 
     if (source == NULL){
         return -1;
