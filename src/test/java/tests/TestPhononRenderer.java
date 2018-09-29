@@ -140,7 +140,6 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         PhononAudioEmitterControl engineEmitter = new PhononAudioEmitterControl(assetManager.loadAudio(engineAudioKey), engineAudioKey);
         engineEmitter.setDirectional(true);
         engineEmitter.setPositional(true);
-        engineEmitter.setRefDistance(1);
         engineEmitter.setVolume(1f);
         engineEmitter.setLooping(false);
         engineEmitter.setReverbEnabled(true);

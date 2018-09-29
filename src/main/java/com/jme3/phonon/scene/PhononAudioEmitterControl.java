@@ -28,6 +28,7 @@ import com.jme3.util.clone.Cloner;
 
 public class PhononAudioEmitterControl extends AbstractControl implements AudioSource {
 
+
     public static final int SAVABLE_VERSION = 1;
     protected boolean loop = false;
     protected float volume = 1;
@@ -39,17 +40,11 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     protected transient volatile AudioSource.Status status = AudioSource.Status.Stopped;
     protected transient volatile int channel = -1;
     protected Vector3f previousWorldTranslation = Vector3f.NAN.clone();
-    protected Vector3f velocity = new Vector3f();
     protected boolean reverbEnabled = false;
-    protected float maxDistance = 200; // 200 meters
-    protected float refDistance = 10; // 10 meters
     protected Filter reverbFilter;
     private boolean directional = false;
     protected Vector3f direction = new Vector3f(0, 0, 1);
-    protected float innerAngle = 360;
-    protected float outerAngle = 360;
     protected boolean positional = true;
-    protected boolean velocityFromTranslation = false;
     protected float lastTpf;
 
     // Phonon source settings
@@ -117,6 +112,14 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     public void pause(){
         getRenderer().pauseSource(this);
     }
+
+    /** DO NOT USE THESE METHODS **/
+    /** They are defined for compatibility with AudioSource **/
+    public float getRefDistance() { return 0f; }
+    public float getOuterAngle() { return 0f; }
+    public float getInnerAngle() { return 0f; }
+    public float getMaxDistance() { return 0f; }
+    public Vector3f getVelocity () { return Vector3f.NAN; }
 
     /**
      * Do not use.
@@ -330,28 +333,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     }
 
     /**
-     * @return The velocity of the audio node.
-     *
-     * @see PhononAudioEmitterControl#setVelocity(com.jme3.math.Vector3f)
-     */
-    public Vector3f getVelocity() {
-        return velocity;
-    }
-
-    /**
-     * Set the velocity of the audio node. The velocity is expected
-     * to be in meters. Does nothing if the audio node is not positional.
-     *
-     * @param velocity The velocity to set.
-     * @see PhononAudioEmitterControl#setPositional(boolean)
-     */
-    public void setVelocity(Vector3f velocity) {
-        this.velocity.set(velocity);
-        if (channel >= 0)
-            getRenderer().updateSourceParam(this, AudioParam.Velocity);
-    }
-
-    /**
      * @return True if reverb is enabled, otherwise false.
      *
      * @see PhononAudioEmitterControl#setReverbEnabled(boolean)
@@ -403,69 +384,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     }
 
     /**
-     * @return Max distance for this audio node.
-     *
-     * @see PhononAudioEmitterControl#setMaxDistance(float)
-     */
-    public float getMaxDistance() {
-        return maxDistance;
-    }
-
-    /**
-     * Set the maximum distance for the attenuation of the audio node.
-     * Does nothing if the audio node is not positional.
-     * <br/>
-     * The maximum distance is the distance beyond which the audio
-     * node will no longer be attenuated.  Normal attenuation is logarithmic
-     * from refDistance (it reduces by half when the distance doubles).
-     * Max distance sets where this fall-off stops and the sound will never
-     * get any quieter than at that distance.  If you want a sound to fall-off
-     * very quickly then set ref distance very short and leave this distance
-     * very long.
-     *
-     * @param maxDistance The maximum playing distance.
-     * @throws IllegalArgumentException If maxDistance is negative
-     */
-    public void setMaxDistance(float maxDistance) {
-        if (maxDistance < 0) {
-            throw new IllegalArgumentException("Max distance cannot be negative");
-        }
-
-        this.maxDistance = maxDistance;
-        if (channel >= 0)
-            getRenderer().updateSourceParam(this, AudioParam.MaxDistance);
-    }
-
-    /**
-     * @return The reference playing distance for the audio node.
-     *
-     * @see PhononAudioEmitterControl#setRefDistance(float)
-     */
-    public float getRefDistance() {
-        return refDistance;
-    }
-
-    /**
-     * Set the reference playing distance for the audio node.
-     * Does nothing if the audio node is not positional.
-     * <br/>
-     * The reference playing distance is the distance at which the
-     * audio node will be exactly half of its volume.
-     *
-     * @param refDistance The reference playing distance.
-     * @throws  IllegalArgumentException If refDistance is negative
-     */
-    public void setRefDistance(float refDistance) {
-        if (refDistance < 0) {
-            throw new IllegalArgumentException("Reference distance cannot be negative");
-        }
-
-        this.refDistance = refDistance;
-        if (channel >= 0)
-            getRenderer().updateSourceParam(this, AudioParam.RefDistance);
-    }
-
-    /**
      * @return True if the audio node is directional
      *
      * @see PhononAudioEmitterControl#setDirectional(boolean)
@@ -513,48 +431,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     }
 
     /**
-     * @return The directional audio node, cone inner angle.
-     *
-     * @see PhononAudioEmitterControl#setInnerAngle(float)
-     */
-    public float getInnerAngle() {
-        return innerAngle;
-    }
-
-    /**
-     * Set the directional audio node cone inner angle.
-     * Does nothing if the audio node is not directional.
-     *
-     * @param innerAngle The cone inner angle.
-     */
-    public void setInnerAngle(float innerAngle) {
-        this.innerAngle = innerAngle;
-        if (channel >= 0)
-            getRenderer().updateSourceParam(this, AudioParam.InnerAngle);
-    }
-
-    /**
-     * @return The directional audio node, cone outer angle.
-     *
-     * @see PhononAudioEmitterControl#setOuterAngle(float)
-     */
-    public float getOuterAngle() {
-        return outerAngle;
-    }
-
-    /**
-     * Set the directional audio node cone outer angle.
-     * Does nothing if the audio node is not directional.
-     *
-     * @param outerAngle The cone outer angle.
-     */
-    public void setOuterAngle(float outerAngle) {
-        this.outerAngle = outerAngle;
-        if (channel >= 0)
-            getRenderer().updateSourceParam(this, AudioParam.OuterAngle);
-    }
-
-    /**
      * @return True if the audio node is positional.
      *
      * @see PhononAudioEmitterControl#setPositional(boolean)
@@ -576,14 +452,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         if (channel >= 0) {
             getRenderer().updateSourceParam(this, AudioParam.IsPositional);
         }
-    }
-
-    public boolean isVelocityFromTranslation() {
-        return velocityFromTranslation;
-    }
-
-    public void setVelocityFromTranslation(boolean velocityFromTranslation) {
-        this.velocityFromTranslation = velocityFromTranslation;
     }
 
     public Vector3f getUp() {
@@ -637,10 +505,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         if (!previousWorldTranslation.equals(currentWorldTranslation)) {
             getRenderer().updateSourceParam(this, AudioParam.Position);
 
-            if (velocityFromTranslation && !Float.isNaN(previousWorldTranslation.x)) {
-                velocity.set(currentWorldTranslation).subtractLocal(previousWorldTranslation).multLocal(1f / lastTpf);
-                getRenderer().updateSourceParam(this, AudioParam.Velocity);
-            }
             previousWorldTranslation.set(currentWorldTranslation);
         }
     }
@@ -663,7 +527,6 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         super.cloneFields(cloner, original); 
 
         this.direction=cloner.clone(direction);
-        this.velocity=velocityFromTranslation?new Vector3f():cloner.clone(velocity);      
         this.previousWorldTranslation=Vector3f.NAN.clone();
 
         // Change in behavior: the filters were not cloned before meaning
@@ -691,19 +554,13 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         oc.write(timeOffset, "time_offset", 0);
         oc.write(dryFilter, "dry_filter", null);
 
-        oc.write(velocity, "velocity", null);
         oc.write(reverbEnabled, "reverb_enabled", false);
         oc.write(reverbFilter, "reverb_filter", null);
-        oc.write(maxDistance, "max_distance", 20);
-        oc.write(refDistance, "ref_distance", 10);
 
         oc.write(directional, "directional", false);
         oc.write(direction, "direction", null);
-        oc.write(innerAngle, "inner_angle", 360);
-        oc.write(outerAngle, "outer_angle", 360);
 
         oc.write(positional, "positional", false);
-        oc.write(velocityFromTranslation, "velocity_from_translation", false);
     }
 
     @Override
@@ -726,19 +583,13 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         timeOffset = ic.readFloat("time_offset", 0);
         dryFilter = (Filter) ic.readSavable("dry_filter", null);
 
-        velocity = (Vector3f) ic.readSavable("velocity", null);
         reverbEnabled = ic.readBoolean("reverb_enabled", false);
         reverbFilter = (Filter) ic.readSavable("reverb_filter", null);
-        maxDistance = ic.readFloat("max_distance", 20);
-        refDistance = ic.readFloat("ref_distance", 10);
 
         directional = ic.readBoolean("directional", false);
         direction = (Vector3f) ic.readSavable("direction", null);
-        innerAngle = ic.readFloat("inner_angle", 360);
-        outerAngle = ic.readFloat("outer_angle", 360);
 
         positional = ic.readBoolean("positional", false);
-        velocityFromTranslation = ic.readBoolean("velocity_from_translation", false);
 
         if (audioKey != null) {
             try {
