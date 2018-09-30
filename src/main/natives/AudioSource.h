@@ -53,7 +53,6 @@ struct AudioSource {
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
     struct UListNode* uNode; // U-List node
 
-
     jfloat* sceneData; // Physical data, passed by Java thread
     jint sourceIndex; // Audio source index
 };

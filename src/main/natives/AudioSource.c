@@ -117,7 +117,7 @@ jint asGetDirectOcclusionMode(struct GlobalSettings *settings, struct AudioSourc
 }
 
 jint asGetDirectOcclusionMethod(struct GlobalSettings *settings, struct AudioSource *source) {
-    jint *dataByte=(jbyte*)source->sceneData;
+    jbyte *dataByte=(jbyte*)source->sceneData;
     return (jint) (dataByte[asSourceFieldB(DIROCCMETHOD)]);
 }
 

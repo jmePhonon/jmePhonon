@@ -66,8 +66,6 @@
         IPLhandle binauralEffect;
         IPLhandle directSoundEffect;
         IPLDirectSoundEffectOptions directSoundEffectOptions;
-        IPLDirectOcclusionMethod directOcclusionMethod;
-        jfloat sourceRadius;
     };
 
 
@@ -252,13 +250,14 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
         return;
     }
     
+    jint directOcclusionMode = asGetDirectOcclusionMode(settings, asource);
+    jint directOcclusionMethod = asGetDirectOcclusionMethod(settings, asource);
+    jfloat sourceRadius = asGetSourceRadius(settings, asource);
+
     ctx->directSoundEffectOptions.applyDirectivity = asHasFlag(settings, asource, DIRECTIONAL);
     ctx->directSoundEffectOptions.applyDistanceAttenuation = asHasFlag(settings, asource, POSITIONAL);
     ctx->directSoundEffectOptions.applyAirAbsorption = asHasFlag(settings, asource, AIRABSORPTION);
-
-    ctx->directSoundEffectOptions.directOcclusionMode = asGetDirectOcclusionMode(settings, asource);
-    ctx->directOcclusionMethod = asGetDirectOcclusionMethod(settings, asource);
-    ctx->sourceRadius = asGetSourceRadius(settings, asource);
+    ctx->directSoundEffectOptions.directOcclusionMode = directOcclusionMode;
 
     IPLSource source;
     source.position = (*asGetSourcePosition(settings, asource));
@@ -285,9 +284,9 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                                                     (*listenerDirection),
                                                     (*listenerUp),
                                                     source,
-                                                    ctx->sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
-                                                    ctx->directSoundEffectOptions.directOcclusionMode,
-                                                    ctx->directOcclusionMethod);
+                                                    sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
+                                                    directOcclusionMode,
+                                                    directOcclusionMethod);
 
     //  path.distanceAttenuation *= 1.9;
 
