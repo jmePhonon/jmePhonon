@@ -509,7 +509,13 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 				psrc.setDipoleWeightUpdateNeeded();
 				break;
 			case DirectOcclusionMode:
-				psrc.setDirectOcclusionModeNeeded();
+				psrc.setDirectOcclusionModeUpdateNeeded();
+				break;
+			case DirectOcclusionMethod:
+				psrc.setDirectOcclusionMethodUpdateNeeded();
+				break;
+			case SourceRadius:
+				psrc.setSourceRadiusUpdateNeeded();
 				break;
 			default:
 				System.err.println("Unrecognized Phonon param while updating audio source.");

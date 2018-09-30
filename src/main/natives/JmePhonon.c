@@ -250,11 +250,14 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
         return;
     }
     
-    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.applyDirectivity = asHasFlag(settings, asource, DIRECTIONAL);
-    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.applyDistanceAttenuation = asHasFlag(settings, asource, POSITIONAL);
-    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.applyAirAbsorption = asHasFlag(settings, asource, AIRABSORPTION);
+    jint directOcclusionMode = asGetDirectOcclusionMode(settings, asource);
+    jint directOcclusionMethod = asGetDirectOcclusionMethod(settings, asource);
+    jfloat sourceRadius = asGetSourceRadius(settings, asource);
 
-    ((struct PhContext*) asource->phononContext)->directSoundEffectOptions.directOcclusionMode = asGetDirectOcclusionMode(settings, asource);
+    ctx->directSoundEffectOptions.applyDirectivity = asHasFlag(settings, asource, DIRECTIONAL);
+    ctx->directSoundEffectOptions.applyDistanceAttenuation = asHasFlag(settings, asource, POSITIONAL);
+    ctx->directSoundEffectOptions.applyAirAbsorption = asHasFlag(settings, asource, AIRABSORPTION);
+    ctx->directSoundEffectOptions.directOcclusionMode = directOcclusionMode;
 
     IPLSource source;
     source.position = (*asGetSourcePosition(settings, asource));
@@ -262,11 +265,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
     source.up = (*asGetSourceUp(settings, asource));
     source.right = (*asGetSourceRight(settings, asource));
     source.directivity = (*asGetSourceDirectivity(settings, asource));
-
     ///>>??????
     ///
-
-    jfloat sourceRadius = 1;
 
     IPLVector3 *listenerPos = lsGetPosition(settings, listener);
     IPLVector3 *listenerUp = lsGetUp(settings, listener);
@@ -285,8 +285,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                                                     (*listenerUp),
                                                     source,
                                                     sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
-                                                    IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY,
-                                                    IPL_DIRECTOCCLUSION_VOLUMETRIC);
+                                                    directOcclusionMode,
+                                                    directOcclusionMethod);
 
     //  path.distanceAttenuation *= 1.9;
 
@@ -300,9 +300,6 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
     iplApplyBinauralEffect(ctx->binauralEffect, PhSharedContext.monoBuffer2, direction, IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
 
 }
-
-
-
 
 /**
  * Mix multiple outputBuffers

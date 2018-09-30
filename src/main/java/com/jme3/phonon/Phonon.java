@@ -35,8 +35,8 @@ import com.jme3.app.Application;
 import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
+import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMethod;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
-import com.jme3.phonon.scene.PhononAudioEmitterControl;
 import com.jme3.phonon.scene.PhononMesh;
 import com.jme3.phonon.scene.PhononMeshBuilder;
 import com.jme3.phonon.scene.SpatialFilter;
@@ -55,7 +55,9 @@ public final class Phonon{
         DipolePower("phonon.dipole_power"),
         ApplyDistanceAttenuation("phonon.apply_distance_attenuation"),
         ApplyAirAbsorption("phonon.apply_air_absorption"),
-        DirectOcclusionMode("phonon.direct_occlusion_mode");
+        DirectOcclusionMode("phonon.direct_occlusion_mode"),
+        DirectOcclusionMethod("phonon.direct_occlusion_method"),
+        SourceRadius("phonon.source_radius");
 
         String key;
 
@@ -104,7 +106,7 @@ public final class Phonon{
      * Set audio node dipole power.
      * 
      * @param node Audio node
-     * @param dipoleWeight Dipole power value
+     * @param dipolePower Dipole power value
      */
     public static void setAudioNodeDipolePower(AudioNode node, float dipolePower) {
         node.setUserData(PhononAudioParam.DipolePower.key, dipolePower);
@@ -131,6 +133,28 @@ public final class Phonon{
     public static void setAudioNodeDirectOcclusionMode(AudioNode node, PhononDirectOcclusionMode mode) {
         node.setUserData(PhononAudioParam.DirectOcclusionMode.key, mode.ordinal());
         communicateUpdateToRenderer(node, PhononAudioParam.DirectOcclusionMode);
+    }
+
+    /**
+     * Set audio node direct occlusion method.
+     * 
+     * @param node Audio node
+     * @param method Direct occlusion method
+     */
+    public static void setAudioNodeDirectOcclusionMethod(AudioNode node, PhononDirectOcclusionMethod method) {
+        node.setUserData(PhononAudioParam.DirectOcclusionMethod.key, method.ordinal());
+        communicateUpdateToRenderer(node, PhononAudioParam.DirectOcclusionMethod);
+    }
+
+    /**
+     * Set audio node source radius.
+     * 
+     * @param node Audio node
+     * @param sourceRadius Source radius value
+     */
+    public static void setAudioNodeSourceRadius(AudioNode node, float sourceRadius) {
+        node.setUserData(PhononAudioParam.SourceRadius.key, sourceRadius);
+        communicateUpdateToRenderer(node, PhononAudioParam.SourceRadius); 
     }
 
     /**
@@ -176,6 +200,28 @@ public final class Phonon{
     public static byte getAudioNodeDirectOcclusionMode(AudioNode node) {
         Object data = node.getUserData(PhononAudioParam.DirectOcclusionMode.key);
         return data == null ? 0 : (byte)(int)data;
+    }
+
+    /**
+     * Return the given audio node's direct occlusion method
+     * 
+     * @param node Audio node
+     * @return node's direct occlusion method ordinal
+     */
+    public static byte getAudioNodeDirectOcclusionMethod(AudioNode node) {
+        Object data = node.getUserData(PhononAudioParam.DirectOcclusionMethod.key);
+        return data == null ? 0 : (byte)(int)data;
+    }
+
+    /**
+     * Return the given audio node's source radius.
+     * 
+     * @param node Audio node
+     * @return node's source radius (0 if still not set)
+     */
+    public static float getAudioNodeSourceRadius(AudioNode node) {
+        Object data = node.getUserData(PhononAudioParam.SourceRadius.key);
+        return data == null ? 0f : (float) data;
     }
 
     /**
