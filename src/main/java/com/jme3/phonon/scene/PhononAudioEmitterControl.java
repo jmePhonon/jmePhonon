@@ -16,6 +16,7 @@ import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
 import com.jme3.export.OutputCapsule;
 import com.jme3.math.Vector3f;
+import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMethod;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
@@ -45,6 +46,8 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
     protected float dipolePower = 1f;
     protected boolean applyAirAbsorption = false;
     protected PhononDirectOcclusionMode directOcclusionMode = PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE; 
+    protected PhononDirectOcclusionMethod directOcclusionMethod = PhononDirectOcclusionMethod.IPL_DIRECTOCCLUSION_RAYCAST;
+    protected float sourceRadius = 0f;
 
 
     /**
@@ -414,6 +417,22 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         return directOcclusionMode;
     }
 
+    public void setDirectOcclusionMethod(PhononDirectOcclusionMethod directOcclusionMethod) {
+        this.directOcclusionMethod = directOcclusionMethod;
+    }
+
+    public PhononDirectOcclusionMethod getDirectOcclusionMethod() {
+        return directOcclusionMethod;
+    }
+
+    public void setSourceRadius(float sourceRadius) {
+        this.sourceRadius = sourceRadius;
+    }
+
+    public float getSourceRadius() {
+        return sourceRadius;
+    }
+
     protected void controlUpdate(float tpf) { }
 
     protected void controlRender(RenderManager rm, ViewPort vp) {
@@ -468,6 +487,8 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         oc.write(dipolePower, "dipole_power", 0f);
         oc.write(applyAirAbsorption, "apply_air_absorption", false);
         oc.write(directOcclusionMode.ordinal(), "direct_occlusion_mode", PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal());
+        oc.write(directOcclusionMethod.ordinal(), "direct_occlusion_method", PhononDirectOcclusionMethod.IPL_DIRECTOCCLUSION_RAYCAST.ordinal());
+        oc.write(sourceRadius, "source_radius", 0f);
     }
 
     @Override
@@ -501,6 +522,9 @@ public class PhononAudioEmitterControl extends AbstractControl implements AudioS
         applyAirAbsorption = ic.readBoolean("apply_air_absorption", false);
         directOcclusionMode = PhononDirectOcclusionMode.values()
             [ic.readInt("direct_occlusion_mode", PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal())];
+        directOcclusionMethod = PhononDirectOcclusionMethod.values()
+            [ic.readInt("direct_occlusion_method", PhononDirectOcclusionMethod.IPL_DIRECTOCCLUSION_RAYCAST.ordinal())];
+        sourceRadius = ic.readFloat("source_radius", 0f);
 
         if (audioKey != null) {
             try {

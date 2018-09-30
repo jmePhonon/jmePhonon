@@ -56,6 +56,11 @@ public class PhononSettings {
         IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY
     };
 
+    public enum PhononDirectOcclusionMethod {
+        IPL_DIRECTOCCLUSION_RAYCAST,
+        IPL_DIRECTOCCLUSION_VOLUMETRIC
+    } ;
+
     //////////////////////////////////////////////////
 
     public int sampleRate=44100;

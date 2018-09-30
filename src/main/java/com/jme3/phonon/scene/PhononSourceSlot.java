@@ -61,7 +61,9 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private final VFloat DPOWER = new VFloat();
     private final VFloat VOL = new VFloat();
     private final VFloat PIT = new VFloat();
-    private final VByte DIROM = new VByte();
+    private final VByte DIROMODE = new VByte();
+    private final VByte DIROMETHOD = new VByte();
+    private final VFloat SRADIUS = new VFloat(); 
     private final VByte FLS=new VByte();
 
     private volatile PhononOutputLine connectedLine;
@@ -135,10 +137,6 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
             this.instance=instance;
 
-            if(src instanceof AudioNode){
-                AudioNode node=(AudioNode)src;
-            }
-
             CHANNELS.setUpdateNeeded();
             FLS.setUpdateNeeded();
             POS.setUpdateNeeded();
@@ -149,7 +147,9 @@ public class PhononSourceSlot extends CommitableMemoryObject{
             DPOWER.setUpdateNeeded();
             VOL.setUpdateNeeded();
             PIT.setUpdateNeeded();
-            DIROM.setUpdateNeeded();
+            DIROMODE.setUpdateNeeded();
+            DIROMETHOD.setUpdateNeeded();
+            SRADIUS.setUpdateNeeded();
            
             if(!instance){
                 AudioSource.Status cs=src.getStatus();
@@ -216,14 +216,18 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                 RIGHT.update(emitter.getRight());
                 DWEIGHT.update(emitter.getDipoleWeight());
                 DPOWER.update(emitter.getDipolePower());
-                DIROM.update((byte)(int) emitter.getDirectOcclusionMode().ordinal());
+                DIROMODE.update((byte)(int) emitter.getDirectOcclusionMode().ordinal());
+                DIROMETHOD.update((byte)(int) emitter.getDirectOcclusionMethod().ordinal());
+                SRADIUS.update(emitter.getSourceRadius());
             } else if(source instanceof AudioNode) {
                 AudioNode node = (AudioNode) source;
                 UP.update(node.getWorldRotation().getRotationColumn(1));
                 RIGHT.update(node.getWorldRotation().getRotationColumn(0).negate());
                 DWEIGHT.update(Phonon.getAudioNodeDipoleWeight(node));
                 DPOWER.update(Phonon.getAudioNodeDipolePower(node));
-                DIROM.update(Phonon.getAudioNodeDirectOcclusionMode(node));
+                DIROMODE.update(Phonon.getAudioNodeDirectOcclusionMode(node));
+                DIROMETHOD.update(Phonon.getAudioNodeDirectOcclusionMethod(node));
+                SRADIUS.update(Phonon.getAudioNodeSourceRadius(node));
             }
 
             VOL.update(source.getVolume());
@@ -247,7 +251,9 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         DPOWER.commit(MEMORY, DIPOLEPOWER);
         VOL.commit(MEMORY, VOLUME);
         PIT.commit(MEMORY, PITCH);
-        DIROM.commit(MEMORY, DIROCCMODE);
+        DIROMODE.commit(MEMORY, DIROCCMODE);
+        DIROMETHOD.commit(MEMORY, DIROCCMODE);
+        SRADIUS.commit(MEMORY, SOURCERADIUS);
 
         FLS.commit(MEMORY, FLAGS);
 
@@ -290,8 +296,16 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         PIT.setUpdateNeeded();
     }
 
-    public void setDirectOcclusionModeNeeded() {
-        DIROM.setUpdateNeeded();
+    public void setDirectOcclusionModeUpdateNeeded() {
+        DIROMODE.setUpdateNeeded();
+    }
+
+    public void setDirectOcclusionMethodUpdateNeeded() {
+        DIROMETHOD.setUpdateNeeded();
+    }
+
+    public void setSourceRadiusUpdateNeeded() {
+        SRADIUS.setUpdateNeeded();
     }
 
     public long getDataAddress() {
