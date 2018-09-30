@@ -40,8 +40,6 @@ struct AudioSource {
     jfloat *data; // float 32 little endian, multiple sources can share the same audio data
     jint numSamples;// length of audio data in samples
     jint lastReadFrameIndex; // Position where we were the last time we read the source
-    
-
 
     vec3 _position; 
     vec3 _direction;   
@@ -81,7 +79,9 @@ jboolean asIsConnected(struct AudioSource *source);
 jboolean asReadNextFrame(struct GlobalSettings *settings, struct AudioSource *source, jfloat *store);
 
 jfloat asGetVolume(struct GlobalSettings *settings, struct AudioSource *source);
-jbyte asGetDirectOcclusionMode(struct GlobalSettings *settings, struct AudioSource *source);
+jint asGetDirectOcclusionMode(struct GlobalSettings *settings, struct AudioSource *source);
+jint asGetDirectOcclusionMethod(struct GlobalSettings *settings, struct AudioSource *source);
+jfloat asGetSourceRadius(struct GlobalSettings *settings, struct AudioSource *source);
 jfloat asGetPitch(struct GlobalSettings *settings, struct AudioSource *source);
 vec3 *asGetSourcePosition(struct GlobalSettings *settings, struct AudioSource *source);
 vec3 *asGetSourceDirection(struct GlobalSettings *settings, struct AudioSource *source);

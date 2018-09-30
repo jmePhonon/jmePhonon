@@ -44,7 +44,9 @@ public class AUDIOSOURCE_LAYOUT {
     public static final byte FLAGS_fieldsize = 1;
     public static final byte NUM_CHANNELS_fieldsize = 1;
     public static final byte DIROCCMODE_fieldsize = 1;
-    public static final byte UNUSED1_fieldsize = 1;
+    public static final byte DIROCCMETHOD_fieldsize = 1;
+    
+    public static final byte SOURCERADIUS_fieldsize = 4;
 
     public static final byte POSX_fieldsize = 4;
     public static final byte POSY_fieldsize = 4;
@@ -73,9 +75,11 @@ public class AUDIOSOURCE_LAYOUT {
     public static final byte FLAGS = 0;
     public static final byte NUM_CHANNELS = FLAGS + FLAGS_fieldsize;
     public static final byte DIROCCMODE = NUM_CHANNELS + NUM_CHANNELS_fieldsize;
-    public static final byte UNUSED1 = DIROCCMODE + DIROCCMODE_fieldsize;
+    public static final byte DIROCCMETHOD = DIROCCMODE + DIROCCMODE_fieldsize;
 
-    public static final byte POSX = UNUSED1 + UNUSED1_fieldsize; 
+    public static final byte SOURCERADIUS = DIROCCMETHOD + DIROCCMETHOD_fieldsize; 
+    
+    public static final byte POSX = SOURCERADIUS + SOURCERADIUS_fieldsize; 
     public static final byte POSY = POSX+POSX_fieldsize;
     public static final byte POSZ = POSY+POSY_fieldsize;
     
