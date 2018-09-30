@@ -36,6 +36,7 @@ import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
+import com.jme3.phonon.scene.PhononAudioEmitterControl;
 import com.jme3.phonon.scene.PhononMesh;
 import com.jme3.phonon.scene.PhononMeshBuilder;
 import com.jme3.phonon.scene.SpatialFilter;
@@ -76,7 +77,6 @@ public final class Phonon{
         phononRenderer.initialize();
         return phononRenderer;
     }
-
   
     public static void loadScene(PhononSettings settings,Application app,Node root, SpatialFilter filter) {
         PhononMesh scene=PhononMeshBuilder.build(root,filter,settings.materialGenerator);

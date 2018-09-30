@@ -31,36 +31,28 @@
 */
 package tests;
 
+import static org.junit.Assert.assertSame;
+
 import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
 import com.jme3.app.SimpleApplication;
-import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioData.DataType;
-import com.jme3.audio.AudioNode.Status;
-import com.jme3.input.KeyInput;
-import com.jme3.input.controls.ActionListener;
-import com.jme3.input.controls.KeyTrigger;
+import com.jme3.audio.AudioKey;
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.Environment;
-import com.jme3.audio.Listener;
+import com.jme3.input.KeyInput;
+import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.FastMath;
-import com.jme3.math.Quaternion;
-import com.jme3.math.Vector3f;
-import com.jme3.phonon.PhononRenderer;
-import com.jme3.phonon.PhononSettings;
-import com.jme3.phonon.PhononSoundDevice;
-import com.jme3.phonon.PhononSoundSystem;
 import com.jme3.phonon.Phonon;
-import com.jme3.phonon.ThreadMode;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.desktop_javasound.JavaSoundPhononSettings;
-import com.jme3.phonon.desktop_javasound.JavaSoundSystem;
 import com.jme3.phonon.format.F32leAudioData;
+import com.jme3.phonon.scene.PhononAudioEmitterControl;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
@@ -99,7 +91,9 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
 
     Node audioSourceNode;
     ArrayList<F32leAudioData> loadedSound = new ArrayList<F32leAudioData>();
-    AudioNode engine, bg;
+    Node engine, bg;
+    final boolean USE_EMITTERS = true; // used to test compatibility with AudioNode
+
     @Override
     public void simpleInitApp() {
         this.setPauseOnLostFocus(false);
@@ -132,30 +126,73 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         audioSourceNode.attachChild(audioSourceGeom);
         flyCam.setMoveSpeed(10f);
 
-        engine = new AudioNode(assetManager, "mono/264864__augustsandberg__marine-diesel-engine.wav", DataType.Buffer);
-        audioSourceNode.attachChild(engine);
-        engine.setName("Engine Audio Node");
-        engine.setDirectional(true);
-        engine.setPositional(true);
-        engine.setRefDistance(1);
-        engine.setVolume(1f);
-        engine.setLooping(false);
-        engine.setReverbEnabled(true);
-        Phonon.setAudioNodeDipoleWeight(engine, 1f);
-        Phonon.setAudioNodeApplyAirAbsorption(engine, true);
-        Phonon.setAudioNodeDirectOcclusionMode(engine, PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY);
-        engine.play();       
-
-        bg = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
-        audioSourceNode.attachChild(bg);
-        bg.setName("Background Audio Node");
-        bg.setPositional(false);
-        bg.setVolume(.1f);
-        bg.setLooping(true);
-        bg.setPitch(1f);
-        bg.play();
-
+        if(USE_EMITTERS) {
+            initAudioWithEmitters();
+        } else {
+            initAudioWithNodes();
+        }
+        
         rootNode.attachChild(audioSourceNode);
+    }
+
+    private void initAudioWithEmitters() {
+        AudioKey engineAudioKey = new AudioKey("mono/264864__augustsandberg__marine-diesel-engine.wav");         
+        PhononAudioEmitterControl engineEmitter = new PhononAudioEmitterControl(assetManager.loadAudio(engineAudioKey), engineAudioKey);
+        engineEmitter.setDirectional(true);
+        engineEmitter.setPositional(true);
+        engineEmitter.setVolume(1f);
+        engineEmitter.setLooping(false);
+        engineEmitter.setDipoleWeight(1f);
+        engineEmitter.setApplyAirAbsorption(true);
+        engineEmitter.setDirectOcclusionMode(PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY);
+        engineEmitter.play();       
+
+        engine = new Node();
+        engine.setName("Engine Audio Node");
+        engine.addControl(engineEmitter);
+        audioSourceNode.attachChild(engine);
+
+        AudioKey bgAudioKey = new AudioKey("stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav");
+        PhononAudioEmitterControl bgEmitter = new PhononAudioEmitterControl(assetManager.loadAudio(bgAudioKey), bgAudioKey);
+        bgEmitter.setPositional(false);
+        bgEmitter.setVolume(.1f);
+        bgEmitter.setLooping(true);
+        bgEmitter.setPitch(1f);
+        bgEmitter.play();
+
+        bg = new Node();
+        bg.setName("Background Audio Node");
+        bg.addControl(bgEmitter);
+        audioSourceNode.attachChild(bg);
+    }
+
+    private void initAudioWithNodes() {
+        AudioNode engineNode = new AudioNode(assetManager, "mono/264864__augustsandberg__marine-diesel-engine.wav", DataType.Buffer);
+        audioSourceNode.attachChild(engineNode);
+        engineNode.setName("Engine Audio Node");
+        engineNode.setDirectional(true);
+        engineNode.setPositional(true);
+        engineNode.setRefDistance(1);
+        engineNode.setVolume(1f);
+        engineNode.setLooping(false);
+        engineNode.setReverbEnabled(true);
+        Phonon.setAudioNodeDipoleWeight(engineNode, 1f);
+        Phonon.setAudioNodeApplyAirAbsorption(engineNode, true);
+        Phonon.setAudioNodeDirectOcclusionMode(engineNode, PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_TRANSMISSIONBYFREQUENCY);
+        engineNode.play();
+        
+        engine = engineNode;
+
+        AudioNode bgNode = new AudioNode(assetManager, "stereo/Juhani Junkala - Epic Boss Battle [Seamlessly Looping].wav", DataType.Buffer);
+        audioSourceNode.attachChild(bgNode);
+        bgNode.setName("Background Audio Node");
+        bgNode.setPositional(false);
+        bgNode.setVolume(.1f);
+        bgNode.setLooping(true);
+        bgNode.setPitch(1f);
+        bgNode.play();
+
+        bg = bgNode;
     }
 
     private float currentPower = 0f;
@@ -166,10 +203,6 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
         super.simpleRender(rm);
         listener.setLocation(cam.getLocation());
         listener.setRotation(cam.getRotation());
-        
-        AudioNode engineAudioNode = ((AudioNode) audioSourceNode.getChild("Engine Audio Node"));
-        currentPower = (currentPower + .1f) % 1f; 
-        Phonon.setAudioNodeDipolePower(engineAudioNode, currentPower);
     }
 
     @Override
@@ -178,19 +211,49 @@ public class TestPhononRenderer extends SimpleApplication implements ActionListe
     @Override
     public void onAction(String name, boolean isPressed, float tpf) {
         if(isPressed) {
-            if (name.equals("PAUSE")) {
-                if (engine.getStatus() != AudioSource.Status.Paused)
-                    engine.pause();
-                else engine.play();
-                System.out.println("Pause");
-            } else if(name.equals("DIRECTIONAL")) {
-                engine.setDirectional(!engine.isDirectional());
-                System.out.println("Engine is directional: " + engine.isDirectional());
-            } else if(name.equals("PITCHUP")) {
-                bg.setPitch(1.5f);
-            } else if(name.equals("PITCHDOWN")) {
-                bg.setPitch(.5f);
-            }
+           if(USE_EMITTERS) {
+               emittersOnAction(name);
+           } else {
+               nodesOnAction(name);
+           }
+        }
+    }
+
+    private void nodesOnAction(String name) {
+        AudioNode engineNode = (AudioNode) engine;
+        AudioNode bgNode = (AudioNode) bg;
+
+        if (name.equals("PAUSE")) {
+            if (engineNode.getStatus() != AudioSource.Status.Paused)
+                engineNode.pause();
+            else engineNode.play();
+            System.out.println("Pause");
+        } else if(name.equals("DIRECTIONAL")) {
+            engineNode.setDirectional(!engineNode.isDirectional());
+            System.out.println("Engine is directional: " + engineNode.isDirectional());
+        } else if(name.equals("PITCHUP")) {
+            bgNode.setPitch(1.5f);
+        } else if(name.equals("PITCHDOWN")) {
+            bgNode.setPitch(.5f);
+        }
+    }
+
+    private void emittersOnAction(String name) {
+        PhononAudioEmitterControl engineEmitter = engine.getControl(PhononAudioEmitterControl.class);
+        PhononAudioEmitterControl bgEmitter = bg.getControl(PhononAudioEmitterControl.class);
+
+        if (name.equals("PAUSE")) {
+            if (engineEmitter.getStatus() != AudioSource.Status.Paused)
+                engineEmitter.pause();
+            else engineEmitter.play();
+            System.out.println("Pause");
+        } else if(name.equals("DIRECTIONAL")) {
+            engineEmitter.setDirectional(!engineEmitter.isDirectional());
+            System.out.println("Engine is directional: " + engineEmitter.isDirectional());
+        } else if(name.equals("PITCHUP")) {
+            bgEmitter.setPitch(1.5f);
+        } else if(name.equals("PITCHDOWN")) {
+            bgEmitter.setPitch(.5f);
         }
     }
 }
