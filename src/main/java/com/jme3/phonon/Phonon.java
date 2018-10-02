@@ -37,7 +37,7 @@ import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMethod;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
-import com.jme3.phonon.scene.PhononAudioEmitterControl;
+import com.jme3.phonon.manager.AudioManager;
 import com.jme3.phonon.scene.PhononMesh;
 import com.jme3.phonon.scene.PhononMeshBuilder;
 import com.jme3.phonon.scene.SpatialFilter;
@@ -51,14 +51,15 @@ public final class Phonon{
     static{
         PhononNativeLoader.loadAll();
     }
-    static enum PhononAudioParam {
+    public static enum PhononAudioParam {
         DipoleWeight("phonon.dipole_weight"),
         DipolePower("phonon.dipole_power"),
-        ApplyDistanceAttenuation("phonon.apply_distance_attenuation"),
+        // ApplyDistanceAttenuation("phonon.apply_distance_attenuation"),
         ApplyAirAbsorption("phonon.apply_air_absorption"),
         DirectOcclusionMode("phonon.direct_occlusion_mode"),
         DirectOcclusionMethod("phonon.direct_occlusion_method"),
-        SourceRadius("phonon.source_radius");
+        SourceRadius("phonon.source_radius"),
+        Status("phonon.status");
 
         String key;
 
@@ -81,6 +82,17 @@ public final class Phonon{
         return phononRenderer;
     }
   
+    public static void setManager(PhononSettings settings, Application app, AudioManager mng) {
+
+        PhononRenderer renderer=(PhononRenderer)app.getAudioRenderer();
+        renderer.setAudioManager(mng);
+
+        AudioManager oldmng=app.getStateManager().getState(mng.getClass());
+        if(oldmng!=null)app.getStateManager().detach(oldmng);
+        app.getStateManager().attach(mng);
+    }
+
+
     public static void loadScene(PhononSettings settings,Application app,Node root, SpatialFilter filter) {
         PhononMesh scene=PhononMeshBuilder.build(root,filter,settings.materialGenerator);
         PhononRenderer renderer=(PhononRenderer)app.getAudioRenderer();
