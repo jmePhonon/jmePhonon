@@ -1,6 +1,10 @@
 package com.jme3.phonon.manager;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -11,7 +15,10 @@ import java.util.Map.Entry;
 
 import com.jme3.app.Application;
 import com.jme3.app.state.BaseAppState;
+import com.jme3.asset.AssetInfo;
+import com.jme3.asset.AssetKey;
 import com.jme3.asset.AssetManager;
+import com.jme3.asset.DesktopAssetManager;
 import com.jme3.audio.AudioParam;
 import com.jme3.audio.AudioSource;
 import com.jme3.phonon.PhononSettings;
@@ -37,12 +44,12 @@ public class AudioManager extends BaseAppState{
     private final List<SoundEmitterControl> NEED_UPDATE=new LinkedList<SoundEmitterControl>();
     private final ThreadSafeQueue QUEUE=new ThreadSafeQueue();
     private final PhononSettings SETTINGS;
-
+    private final AssetManager AM;
     public AudioManager(PhononSettings sett,AssetManager am,JSON json){
         IMPORTER=new JmeSoundDefImporter(EXPORTER,am,SOUNDS_DEF);
         SETTINGS=sett;
         JSON_PARSER=json;
-
+        AM=am;
         reset();
 
         try{
@@ -53,6 +60,33 @@ public class AudioManager extends BaseAppState{
         }
     }
 
+    public void preload(InputStream is) throws IOException {
+        byte chunk[]=new byte[1024*1024];
+        int read;
+        ByteArrayOutputStream bos=new ByteArrayOutputStream();
+        while((read=is.read(chunk))!=-1){
+            bos.write(chunk,0,read);
+        }
+        String s=bos.toString("UTF-8");
+        System.out.println("Load "+s);
+        if(!s.isEmpty()) SOUNDS_DEF.putAll(JSON_PARSER.parse(s));
+
+    }
+
+    public void preload(String am) throws IOException {
+        AssetInfo info=AM.locateAsset(new AssetKey(am));
+        if(info==null) throw new FileNotFoundException(am);
+        InputStream is=info.openStream();
+        try{
+            preload(is);
+        }finally{
+            try{
+                is.close();
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+    }
 
     public void init(SoundEmitterControl as) {
         try{
