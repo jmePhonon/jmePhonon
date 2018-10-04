@@ -14,8 +14,10 @@ import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMethod;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.format.F32leAudioData;
+import com.jme3.phonon.utils.F32leCachedConverter;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
+import com.jme3.scene.Spatial;
 import com.jme3.util.clone.Cloner;
 
 /**
@@ -27,28 +29,29 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     private float sourceRadius = 1f;
     private boolean applyAirAbsorption = false;
     private Vector3f previousWorldTranslation=Vector3f.NAN.clone();
-    private boolean reverb=false;
+    private boolean reverb=true;
   
-
-    public PositionalSoundEmitterControl() { super(); }
+    public PositionalSoundEmitterControl() { }
 
     public PositionalSoundEmitterControl(String name){
-        super(name);
+        init(name,null,null);
      }
 
    
     public PositionalSoundEmitterControl(AssetManager am,String path){
-        super(am,path);
-
+        AudioKey audioKey=new AudioKey(path);
+        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
     }
 
     public PositionalSoundEmitterControl(AssetManager am,AudioKey audioKey){
-        super(am,audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
     }
 
     public PositionalSoundEmitterControl(String name,F32leAudioData audioData,AudioKey audioKey){
-        super(name,audioData,audioKey);
+        init(name, audioData, audioKey);   
     }
+    
+
 
     @Override
     protected String getDefaultName(AudioKey audioKey){
@@ -88,6 +91,12 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     }
 
 
+    @Override
+    public void setSpatial(Spatial spatial) {
+        super.setSpatial(spatial);
+        if(spatial==null) stop();
+    }
+
     public void setApplyAirAbsorption(boolean applyAirAbsorption) {
         this.applyAirAbsorption=applyAirAbsorption;
         if(getChannel()>=0)
@@ -114,7 +123,9 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     }
 
     public void setDirectOcclusionMethod(PhononDirectOcclusionMethod directOcclusionMethod) {
+
         this.directOcclusionMethod=directOcclusionMethod;
+
         if(getChannel()>=0)
         getRenderer().updateSourcePhononParam(this, PhononAudioParam.DirectOcclusionMethod);
 
@@ -159,20 +170,21 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
      */
     @Override
     public void cloneFields( Cloner cloner, Object original ) {
-        super.cloneFields(cloner, original); 
-
+        super.cloneFields(cloner,original);
         this.previousWorldTranslation=Vector3f.NAN.clone();
     }
 
     @Override
     public void write(JmeExporter ex) throws IOException {
+
         super.write(ex);
-        OutputCapsule oc = ex.getCapsule(this);
-   
+        OutputCapsule oc=ex.getCapsule(this);
+        int domo=getDirectOcclusionMode().ordinal();
+        int dome=getDirectOcclusionMethod().ordinal();
         //Phonon specific settings
         oc.write(isApplyAirAbsorption(), "applyAirAbsorption", false);
-        oc.write(getDirectOcclusionMode().ordinal(), "occlusionMode", PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal());
-        oc.write(getDirectOcclusionMethod().ordinal(), "occlusionMethod", PhononDirectOcclusionMethod.IPL_DIRECTOCCLUSION_RAYCAST.ordinal());
+        oc.write(domo, "occlusionMode", 1);
+        oc.write(dome, "occlusionMethod", 0);
         oc.write(getSourceRadius(),"sourceRadius",1f);
         oc.write("positional","type",null);
         oc.write(isReverbEnabled(),"convolutionEffect",false);
@@ -182,12 +194,13 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     @Override
     public void read(JmeImporter im) throws IOException {
         super.read(im);
+
         InputCapsule ic = im.getCapsule(this);     
         setApplyAirAbsorption(ic.readBoolean("applyAirAbsorption", false));
         setDirectOcclusionMode(PhononDirectOcclusionMode.values()
-            [ic.readInt("occlusionMode", PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NONE.ordinal())]);
+            [ic.readInt("occlusionMode", 1)]);
         setDirectOcclusionMethod(PhononDirectOcclusionMethod.values()
-            [ic.readInt("occlusionMethod", PhononDirectOcclusionMethod.IPL_DIRECTOCCLUSION_RAYCAST.ordinal())]);
+            [ic.readInt("occlusionMethod", 0)]);
         setSourceRadius(ic.readFloat("sourceRadius",1f));
         setReverbEnabled(ic.readBoolean("convolutionEffect",false));
 

@@ -22,6 +22,9 @@ import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMethod;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.format.F32leAudioData;
+import com.jme3.phonon.manager.AudioManager;
+import com.jme3.phonon.manager.JmeSoundDefExporter;
+import com.jme3.phonon.manager.JmeSoundDefImporter;
 import com.jme3.phonon.utils.F32leCachedConverter;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
@@ -47,23 +50,34 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
     public SoundEmitterControl() { }
 
     public SoundEmitterControl(String name){
-        this.name=name;
+        init(name,null,null);
      }
 
    
     public SoundEmitterControl(AssetManager am,String path){
-        this(am,new AudioKey(path));
-
+        audioKey=new AudioKey(path);
+        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
     }
 
     public SoundEmitterControl(AssetManager am,AudioKey audioKey){
-        this(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
     }
 
     public SoundEmitterControl(String name,F32leAudioData audioData,AudioKey audioKey){
-        if(name==null) this.name=getDefaultName(audioKey);
-        setF32leAudioData(audioData,audioKey);
+        init(name, audioData, audioKey);   
     }
+    
+    protected void init(String name, F32leAudioData audioData, AudioKey audioKey) {
+        if(name==null) this.name=getDefaultName(audioKey);
+        else this.name=name;
+        if(audioData!=null&&audioKey!=null){
+            setF32leAudioData(audioData,audioKey);
+        }
+        AudioManager mng=getRenderer().getMng();
+        if(mng!=null)mng.init(this);
+    }
+    
+  
 
     protected String getDefaultName(AudioKey audioKey) {
         return audioKey.getName()+" (env)";
@@ -308,8 +322,11 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
     @Override
     public void write(JmeExporter ex) throws IOException {
         super.write(ex);
-        OutputCapsule oc = ex.getCapsule(this);
-        oc.write(audioKey, "audioKey", null);
+        OutputCapsule oc=ex.getCapsule(this);
+        if(!(ex instanceof JmeSoundDefExporter)){
+
+            oc.write(audioKey,"audioKey",null);
+        }
         oc.write(loop, "loop", false);
         oc.write(volume, "volume", 1);
         oc.write(pitch, "pitch", 1);
@@ -335,28 +352,33 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
     public void read(JmeImporter im) throws IOException {
         super.read(im);
         InputCapsule ic = im.getCapsule(this);      
-        audioKey = (AudioKey) ic.readSavable("audioKey", null);       
         setLooping(ic.readBoolean("loop", false));
         setVolume(volume = ic.readFloat("volume", 1));
         setPitch(pitch = ic.readFloat("pitch", 1));
         // setTimeOffset(timeOffset=ic.readFloat("timeOffset",0)); TODO: Implement this.
         setName(name=ic.readString("name","unnamed"));
         
-        if (audioKey != null) {
-            try{
-                AudioData adata=im.getAssetManager().loadAsset(audioKey);
-                data = F32leCachedConverter.toF32le(adata);
-            } catch (AssetNotFoundException ex){
-                // TODO: Restore exception logging
-                // Logger.getLogger(AudioEmitterControl.class.getName()).log(Level.FINE, "Cannot locate {0} for audio node {1}", new Object[]{audioKey, key});
-                data =  F32leCachedConverter.toF32le(PlaceholderAssets.getPlaceholderAudio());
+        if(!(im instanceof JmeSoundDefImporter)){
+            audioKey=(AudioKey)ic.readSavable("audioKey",null);
+            if(audioKey!=null){
+                try{
+                    AudioData adata=im.getAssetManager().loadAsset(audioKey);
+                    data=F32leCachedConverter.toF32le(adata);
+                }catch(AssetNotFoundException ex){
+                    // TODO: Restore exception logging
+                    // Logger.getLogger(AudioEmitterControl.class.getName()).log(Level.FINE, "Cannot locate {0} for audio node {1}", new Object[]{audioKey, key});
+                    data=F32leCachedConverter.toF32le(PlaceholderAssets.getPlaceholderAudio());
+                }
             }
         }
     }
 
+    Vector3f p=Vector3f.ZERO.clone();
+    Vector3f d=Vector3f.UNIT_Z.clone();
+
     @Override
     public Vector3f getPosition() {
-        return null;
+        return p;
     }
 
     @Override
@@ -366,7 +388,7 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
 
     @Override
     public Vector3f getDirection() {
-        return null;
+        return d;
     }
 
     @Override
@@ -383,4 +405,8 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
 		this.name=name;
 	}
 
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

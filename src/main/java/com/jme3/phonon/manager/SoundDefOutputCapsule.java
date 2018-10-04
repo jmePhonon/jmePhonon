@@ -31,6 +31,8 @@ public class SoundDefOutputCapsule implements OutputCapsule{
     @Override
     public void write(Savable object, String name, Savable defVal) throws IOException {
         // OUTPUT.put(name,object);
+        // throw new UnsupportedOperationException();
+
     }
     @Override
     public void write(byte value, String name, byte defVal) throws IOException {
