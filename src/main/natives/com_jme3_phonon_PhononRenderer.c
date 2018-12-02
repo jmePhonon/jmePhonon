@@ -124,7 +124,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         jint lineBufferSize = SETTINGS.bufferSize;
 
         // Processing is too fast, skip.
-        if (frameIndex - lastPlayedFrameIndex > SETTINGS.bufferSize - 1) {
+        if (frameIndex - lastPlayedFrameIndex >= SETTINGS.bufferSize ) {
             continue;
         }
 
@@ -281,13 +281,13 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
         Temp.mixerQueue[i] = (jfloat *)malloc(4 * SETTINGS.frameSize * SETTINGS.nOutputChannels);
     }
-
+ 
 #ifdef INCLUDE_SIMPLE_REVERB
-    Temp.frame2 = (jfloat *)malloc(4 * SETTINGS.frameSize * nOutputChannels);
+    Temp.frame2 = (jfloat *)malloc(4 * SETTINGS.frameSize * SETTINGS.nOutputChannels);
 
-    Temp.reverbMixerQueue = (jfloat **)malloc(sizeof(jfloat *) * nSourcesPerLine);
+    Temp.reverbMixerQueue = (jfloat **)malloc(sizeof(jfloat *) * SETTINGS.nSourcesPerLine);
     for (jint i = 0; i < SETTINGS.nSourcesPerLine + 1; i++) {
-        Temp.reverbMixerQueue[i] = (jfloat *)malloc(4 * SETTINGS.frameSize * nOutputChannels);
+        Temp.reverbMixerQueue[i] = (jfloat *)malloc(4 * SETTINGS.frameSize * SETTINGS.nOutputChannels);
     }
 #endif
 
