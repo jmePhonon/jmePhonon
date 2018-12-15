@@ -68,9 +68,8 @@ public class PhononSettings {
     public int nSourcesPerLine=255;
     public int nOutputChannels=2;
     public int frameSize=1024;
-    public int bufferSize=3; 
-    public int maxPreBuffering=1024*2*4; 
-    public ThreadMode threadMode=ThreadMode.NATIVE;
+    public int bufferSize=2; 
+    public int maxPreBuffering=1024*2*2; 
 
     public int outputSampleSize=-1; // -1=best
 
@@ -80,7 +79,7 @@ public class PhononSettings {
     public MaterialGenerator materialGenerator=new SingleMaterialGenerator();
     public PhononExecutor executor = new PhononJavaExecutor();
 
-    public int sceneType = PhononSceneType.IPL_SCENETYPE_PHONON.ordinal(); // requires 64bit cpu
+    public int sceneType = PhononSceneType.IPL_SCENETYPE_PHONON.ordinal(); 
     public int numRays = 1024;// typical values are in the range of 1024 to 131072
     public int numDiffuseSamples = 32;//typical values are in the range of 32 to 4096. 
     public int numBounces = 1;//typical values are in the range of 1 to 32. 
@@ -105,7 +104,7 @@ public class PhononSettings {
     public String toString(){
         return "SampleRate "+sampleRate+" OutputLines "+nOutputLines+" SourcesPerLine "+nSourcesPerLine+
         " nOutputChannels "+nOutputChannels+" frameSize "+frameSize+" bufferSize "+bufferSize+" maxPreBuffering "
-                +maxPreBuffering+" threadMode "+threadMode+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
+                +maxPreBuffering+" executor "+executor.getClass()+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
 
     }
 }

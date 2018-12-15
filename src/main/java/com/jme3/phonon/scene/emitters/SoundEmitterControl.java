@@ -25,6 +25,7 @@ import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.phonon.manager.AudioManager;
 import com.jme3.phonon.manager.JmeSoundDefExporter;
 import com.jme3.phonon.manager.JmeSoundDefImporter;
+
 import com.jme3.phonon.utils.F32leCachedConverter;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
@@ -315,8 +316,12 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
      */
     @Override
     public void cloneFields( Cloner cloner, Object original ) {
-        super.cloneFields(cloner, original); 
-
+        super.cloneFields(cloner,original);
+        this.channel=-1;
+        // if(this.getStatus()==Status.Playing){
+        //     this.play();
+        
+        // }
     }
 
     @Override

@@ -45,6 +45,7 @@ public class AudioManager extends BaseAppState{
     private final ThreadSafeQueue QUEUE=new ThreadSafeQueue();
     private final PhononSettings SETTINGS;
     private final AssetManager AM;
+    private HttpServer SERVER;
     public AudioManager(PhononSettings sett,AssetManager am,JSON json){
         IMPORTER=new JmeSoundDefImporter(EXPORTER,am,SOUNDS_DEF);
         SETTINGS=sett;
@@ -52,12 +53,6 @@ public class AudioManager extends BaseAppState{
         AM=am;
         reset();
 
-        try{
-            new HttpServer(6601,this);
-        }catch(IOException e){
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
     public void preload(InputStream is) throws IOException {
@@ -96,6 +91,8 @@ public class AudioManager extends BaseAppState{
         }
         if(!enabledRemoteManager) return;
         CONNECTED_SOURCES.put(as,as.getName());
+
+
     }
 
     public String getDef() {
@@ -210,12 +207,16 @@ public class AudioManager extends BaseAppState{
 
     @Override
     protected void initialize(Application app) {
-
+        try{
+            SERVER=new HttpServer(6601,this);
+        }catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void cleanup(Application app) {
-
+        SERVER.stop();
     }
 
     @Override
