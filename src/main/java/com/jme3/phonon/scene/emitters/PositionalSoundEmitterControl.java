@@ -82,6 +82,7 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
 
     @Override
     public Vector3f getPosition() {
+        if(spatial==null) return p;
         return spatial.getWorldTranslation();
     }
 

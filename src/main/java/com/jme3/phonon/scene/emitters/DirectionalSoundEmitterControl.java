@@ -57,20 +57,27 @@ public class DirectionalSoundEmitterControl extends PositionalSoundEmitterContro
     }
 
     public void setDirection(Vector3f dir) {
+
         spatial.getWorldRotation().lookAt(dir,getUp());
     }
     
     @Override
     public Vector3f getDirection() {
+        if(spatial==null) return p;
+
         return spatial.getWorldRotation().getRotationColumn(2);
     }
 
     
     public Vector3f getUp() {
+        if(spatial==null) return p;
+
         return spatial.getWorldRotation().getRotationColumn(1);
     }
 
     public Vector3f getRight() {
+        if(spatial==null) return p;
+
         return spatial.getWorldRotation().getRotationColumn(0).negate();
     }
 
