@@ -81,13 +81,13 @@ public class PhononSettings {
 
     public int sceneType = PhononSceneType.IPL_SCENETYPE_PHONON.ordinal(); 
     public int numRays = 1024;// typical values are in the range of 1024 to 131072
-    public int numDiffuseSamples = 32;//typical values are in the range of 32 to 4096. 
-    public int numBounces = 1;//typical values are in the range of 1 to 32. 
+    public int numDiffuseSamples = 512;//typical values are in the range of 32 to 4096. 
+    public int numBounces = 2;//typical values are in the range of 1 to 32. 
     public int numThreads = 4;//The performance improves linearly with the number of threads upto the number of physical cores available on the CPU.
     public float irDuration = 0.5f; // 0.5 to 4.0.
     public int ambisonicsOrder = 1;//Supported values are between 0 and 3.
-    public int maxConvolutionSources = 100; // TODO
-    public int bakingBatchSize=1;//IPL_SCENETYPE_RADEONRAYS
+    public int maxConvolutionSources = 64; //
+    public int bakingBatchSize=1;// Only used by IPL_SCENETYPE_RADEONRAYS
 
     public PhononSettings(PhononSoundSystem ss){
         system=ss;

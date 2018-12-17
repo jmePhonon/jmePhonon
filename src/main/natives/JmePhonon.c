@@ -40,19 +40,14 @@
 
         IPLAudioFormat monoFormat;
 
-        IPLAudioBuffer monoBuffer1;
-        IPLAudioBuffer monoBuffer2;
-
+    
         jfloat *auxMonoFrame;
 
         IPLAudioFormat ambisonicsFormatD;
-        IPLAudioBuffer ambisonicsBuffer;
-        jfloat **auxAmbisonicsFrame1;
+        jfloat **auxAmbisonicsFrame;
 
-        IPLAudioFormat outputFormat;
-        IPLAudioBuffer outputBuffer;
+        IPLAudioFormat stereoFormat;
 
-   
         IPLhandle scene;
 
         IPLhandle environment;
@@ -84,21 +79,18 @@
  */
     void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource,jint id) {
         struct PhContext *context = malloc(sizeof(struct PhContext));
+        audioSource->phononContext = context;
+        context->useConvolution=id<PhSharedContext.simulationSettings.maxConvolutionSources;
 
         // Direct sound
         iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer,
                                    PhSharedContext.monoFormat, PhSharedContext.monoFormat, &context->directSoundEffect);
 
-        iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, PhSharedContext.outputFormat, &context->binauralEffect);
-        audioSource->phononContext = context;
+        iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, 
+            PhSharedContext.stereoFormat, &context->binauralEffect);
 
-        // iplCreatePanningEffect(
-        //     PhSharedContext.binauralRenderer,
-        //     PhSharedContext.monoFormat,
-        //     PhSharedContext.ambisonicsFormat,
-        //     &context->panningEffect);
-        context->useConvolution=id<PhSharedContext.simulationSettings.maxConvolutionSources;
-        if(context->useConvolution){
+
+        if (context->useConvolution) {
             printf("2Init source %d with conv\n", id);
 
             IPLBakedDataIdentifier idf;
@@ -109,7 +101,7 @@
                                     IPL_SIMTYPE_REALTIME /*TODO: add baking*/,
                                     PhSharedContext.monoFormat,
                                     PhSharedContext.ambisonicsFormatD,
-                                    &context->convolutionEffect);
+                                    &context->convolutionEffect);    
         }
     }
 
@@ -119,7 +111,9 @@
 void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSource){
     struct PhContext *context = audioSource->phononContext;
 
-    if(context->useConvolution)iplDestroyConvolutionEffect(&context->convolutionEffect);
+    if(context->useConvolution){
+        iplDestroyConvolutionEffect(&context->convolutionEffect);
+    }
     // iplDestroyPanningEffect(&context->panningEffect);
     iplDestroyBinauralEffect(&context->binauralEffect);
     iplDestroyDirectSoundEffect(&context->directSoundEffect);
@@ -130,8 +124,9 @@ void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSo
 
 void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
     struct PhContext *context = audioSource->phononContext;
-    if(context->useConvolution)iplFlushConvolutionEffect(context->convolutionEffect);
-    // iplFlushPanningEffect(context->panningEffect);
+    if(context->useConvolution){
+        iplFlushConvolutionEffect(context->convolutionEffect);
+    }
 
     iplFlushBinauralEffect(context->binauralEffect);
     iplFlushDirectSoundEffect(context->directSoundEffect);    
@@ -174,59 +169,53 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
     PhSharedContext.simulationSettings.ambisonicsOrder = GET_SETTINGS_INT(jSettings, settingsClass, "ambisonicsOrder");
     PhSharedContext.simulationSettings.maxConvolutionSources = GET_SETTINGS_INT(jSettings, settingsClass, "maxConvolutionSources");
     PhSharedContext.simulationSettings.bakingBatchSize = GET_SETTINGS_INT(jSettings, settingsClass, "bakingBatchSize");
-// #if defined(STEAMAUDIO_VERSION_MAJOR) && STEAMAUDIO_VERSION_MAJOR > 2 &&  STEAMAUDIO_VERSION_MINOR > 0 && STEAMAUDIO_VERSION_PATCH > 16
-        PhSharedContext.simulationSettings.numOcclusionSamples=4; // todo configurable
-    // #endif
-        //////////////////
 
-        iplCreateContext(NULL, NULL, NULL, &PhSharedContext.context);
-        PhSharedContext.settings.samplingRate = settings->sampleRate;
-        PhSharedContext.settings.frameSize = settings->frameSize;
-        PhSharedContext.settings.convolutionType = IPL_CONVOLUTIONTYPE_PHONON;
+	 PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON;
 
-        // FORMATS
-        PhSharedContext.monoFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
-        PhSharedContext.monoFormat.channelLayout = IPL_CHANNELLAYOUT_MONO;
-        PhSharedContext.monoFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
-        PhSharedContext.monoFormat.speakerDirections = NULL;
+    // PhSharedContext.simulationSettings.numOcclusionSamples = 4; // ???
+    //////////////////
 
-        PhSharedContext.ambisonicsFormatD.channelLayoutType = IPL_CHANNELLAYOUTTYPE_AMBISONICS;
-        // PhSharedContext.ambisonicsFormat.channelLayout = IPL_CHANNELLAYOUT_MONO;
-        PhSharedContext.ambisonicsFormatD.channelOrder = IPL_CHANNELORDER_DEINTERLEAVED;
-        PhSharedContext.ambisonicsFormatD.ambisonicsOrdering = IPL_AMBISONICSORDERING_ACN;
-        PhSharedContext.ambisonicsFormatD.ambisonicsNormalization = IPL_AMBISONICSNORMALIZATION_N3D;
-        PhSharedContext.ambisonicsFormatD.ambisonicsOrder = PhSharedContext.simulationSettings.ambisonicsOrder;
-        PhSharedContext.ambisonicsFormatD.speakerDirections = NULL;
+    iplCreateContext(NULL, NULL, NULL, &PhSharedContext.context);
+    PhSharedContext.settings.samplingRate = settings->sampleRate;
+    PhSharedContext.settings.frameSize = settings->frameSize;
+    PhSharedContext.settings.convolutionType = IPL_CONVOLUTIONTYPE_PHONON;
 
-        PhSharedContext.outputFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
-        PhSharedContext.outputFormat.channelLayout = IPL_CHANNELLAYOUT_STEREO;
-        PhSharedContext.outputFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
-        PhSharedContext.outputFormat.speakerDirections = NULL;
-        //////////////
+    // FORMATS
+    PhSharedContext.monoFormat.channelLayout = IPL_CHANNELLAYOUT_MONO;
+    PhSharedContext.monoFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
+    PhSharedContext.monoFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
+    PhSharedContext.monoFormat.numSpeakers = 1;
+    PhSharedContext.monoFormat.speakerDirections = NULL;
+    PhSharedContext.monoFormat.ambisonicsOrder = -1;
+    PhSharedContext.monoFormat.ambisonicsNormalization = IPL_AMBISONICSNORMALIZATION_N3D;
+    PhSharedContext.monoFormat.ambisonicsOrdering = IPL_AMBISONICSORDERING_ACN;
 
-        // BUFFERS
-        PhSharedContext.monoBuffer1.format = PhSharedContext.monoFormat;
-        PhSharedContext.monoBuffer1.numSamples = PhSharedContext.settings.frameSize;
+	PhSharedContext.ambisonicsFormatD.channelLayout = IPL_CHANNELLAYOUT_STEREO;
+    PhSharedContext.ambisonicsFormatD.channelLayoutType = IPL_CHANNELLAYOUTTYPE_AMBISONICS;
+    PhSharedContext.ambisonicsFormatD.channelOrder = IPL_CHANNELORDER_DEINTERLEAVED;
+    PhSharedContext.ambisonicsFormatD.numSpeakers = (PhSharedContext.simulationSettings.ambisonicsOrder + 1) * (PhSharedContext.simulationSettings.ambisonicsOrder + 1);
+    PhSharedContext.ambisonicsFormatD.speakerDirections = NULL;
+    PhSharedContext.ambisonicsFormatD.ambisonicsOrder = PhSharedContext.simulationSettings.ambisonicsOrder;
+    PhSharedContext.ambisonicsFormatD.ambisonicsNormalization = IPL_AMBISONICSNORMALIZATION_N3D;
+    PhSharedContext.ambisonicsFormatD.ambisonicsOrdering = IPL_AMBISONICSORDERING_ACN;
 
-        PhSharedContext.monoBuffer2.format = PhSharedContext.monoFormat;
-        PhSharedContext.monoBuffer2.numSamples = PhSharedContext.settings.frameSize;
+    PhSharedContext.stereoFormat.channelLayout = IPL_CHANNELLAYOUT_STEREO;
+    PhSharedContext.stereoFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
+    PhSharedContext.stereoFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
+    PhSharedContext.stereoFormat.numSpeakers = 2;
+    PhSharedContext.stereoFormat.speakerDirections = NULL;
+    PhSharedContext.stereoFormat.ambisonicsOrder = -1;
+    PhSharedContext.stereoFormat.ambisonicsNormalization = IPL_AMBISONICSNORMALIZATION_N3D;
+    PhSharedContext.stereoFormat.ambisonicsOrdering = IPL_AMBISONICSORDERING_ACN;
+    //////////////
 
-        PhSharedContext.ambisonicsBuffer.format = PhSharedContext.ambisonicsFormatD;
-        PhSharedContext.ambisonicsBuffer.numSamples = PhSharedContext.settings.frameSize;
+    // FRAMES
+    PhSharedContext.auxMonoFrame = malloc(4 * PhSharedContext.settings.frameSize);
 
-        PhSharedContext.outputBuffer.format = PhSharedContext.outputFormat;
-        PhSharedContext.outputBuffer.numSamples = PhSharedContext.settings.frameSize;
-        /////////////
-
-        // FRAMES
-        PhSharedContext.auxMonoFrame = malloc(4 * PhSharedContext.settings.frameSize);
-        jint achannels = (PhSharedContext.simulationSettings.ambisonicsOrder + 1) * (PhSharedContext.simulationSettings.ambisonicsOrder + 1);
-        PhSharedContext.auxAmbisonicsFrame1 = malloc(sizeof(jfloat *) * achannels);
-        for (jint i = 0; i < achannels; i++) {
-            PhSharedContext.auxAmbisonicsFrame1[i] = malloc(4 * PhSharedContext.settings.frameSize);
-    }
-
-    
+    PhSharedContext.auxAmbisonicsFrame = malloc(sizeof(jfloat *) * PhSharedContext.ambisonicsFormatD.numSpeakers);
+    for (jint i = 0; i < PhSharedContext.ambisonicsFormatD.numSpeakers; i++) {
+        PhSharedContext.auxAmbisonicsFrame[i] = malloc(4 * PhSharedContext.settings.frameSize);
+    }   
     /////////
 
     iplCreateProbeManager(PhSharedContext.context,&PhSharedContext.probeManager);
@@ -270,7 +259,7 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
 
     // Environmental renderer
     iplCreateEnvironmentalRenderer(PhSharedContext.context, PhSharedContext.environment,
-                                   PhSharedContext.settings, PhSharedContext.monoFormat,
+                                   PhSharedContext.settings, PhSharedContext.ambisonicsFormatD,
                                    NULL, NULL, &PhSharedContext.environmentalRenderer);      
     
     PhSharedContext.defaultHrtfParams.type = IPL_HRTFDATABASETYPE_DEFAULT;
@@ -280,13 +269,15 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
                             PhSharedContext.settings, PhSharedContext.defaultHrtfParams, 
                             &PhSharedContext.binauralRenderer);
 
+
     iplCreateAmbisonicsBinauralEffect(PhSharedContext.binauralRenderer,
-     PhSharedContext.ambisonicsFormatD, PhSharedContext.outputFormat, 
-     &PhSharedContext.ambisonicsBinauralEffect);
+                                    PhSharedContext.ambisonicsFormatD, PhSharedContext.stereoFormat, 
+                                    &PhSharedContext.ambisonicsBinauralEffect);
+    
     
     PhSharedContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
     for(jint i=0;i<mixerQueueSize;i++){
-        PhSharedContext.mixerQueue[i].format = PhSharedContext.outputFormat;
+        PhSharedContext.mixerQueue[i].format = PhSharedContext.stereoFormat;
         PhSharedContext.mixerQueue[i].numSamples = PhSharedContext.settings.frameSize ;        
     }
 }
@@ -301,10 +292,11 @@ void phDestroy(struct GlobalSettings *settings){
     iplDestroyProbeManager(&PhSharedContext.probeManager);
     iplDestroyContext(&PhSharedContext.context);
     iplCleanup();
+    
     free(PhSharedContext.mixerQueue);
     free(PhSharedContext.auxMonoFrame);
-    free(PhSharedContext.auxAmbisonicsFrame1);
-
+    for (jint i = 0; i < PhSharedContext.ambisonicsFormatD.numSpeakers; i++) free(PhSharedContext.auxAmbisonicsFrame[i]);
+    free(PhSharedContext.auxAmbisonicsFrame);
     // free(PhSharedContext.materials);
 }
 
@@ -348,40 +340,28 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                                                     sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
                                                     directOcclusionMode,
                                                     directOcclusionMethod);
-   
-    PhSharedContext.monoBuffer1.interleavedBuffer = inFrame;
-    PhSharedContext.monoBuffer2.interleavedBuffer = PhSharedContext.auxMonoFrame;
+
+    IPLAudioBuffer directSoundIn=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize,inFrame,NULL};
+    IPLAudioBuffer directSoundOut=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize, PhSharedContext.auxMonoFrame,NULL};
+    IPLAudioBuffer renderOut=(IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, outFrame,NULL};
 
     iplApplyDirectSoundEffect(ctx->directSoundEffect,
-                            PhSharedContext.monoBuffer1,
+                            directSoundIn,
                             path,
                             ctx->directSoundEffectOptions,
-                            PhSharedContext.monoBuffer2);
+                            directSoundOut);
 
 
     if(ctx->useConvolution){
-        IPLSource reverbSource;
-        reverbSource.position = (*listenerPos);
-        reverbSource.ahead = (*listenerDirection);
-        reverbSource.up =  (*listenerUp);
-        reverbSource.directivity = (IPLDirectivity){ 0.0f, 0.0f, NULL, NULL };
-
         iplSetDryAudioForConvolutionEffect(ctx->convolutionEffect,
-                                        reverbSource,
-                                        PhSharedContext.monoBuffer2);
+                                        source,
+                                        directSoundIn);
     }
 
-    PhSharedContext.outputBuffer.interleavedBuffer = outFrame;
-// #if defined(STEAMAUDIO_VERSION_MAJOR) && STEAMAUDIO_VERSION_MAJOR > 2 &&  STEAMAUDIO_VERSION_MINOR > 0 && STEAMAUDIO_VERSION_PATCH > 16
-        iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.binauralRenderer, 
-                        PhSharedContext.monoBuffer2, direction, 
-                        IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
-    // #else
-    //     iplApplyBinauralEffect(ctx->binauralEffect, 
-    //                     PhSharedContext.monoBuffer2, direction, 
-    //                     IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
+    iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.binauralRenderer, 
+                        directSoundOut, direction, 
+                        IPL_HRTFINTERPOLATION_NEAREST, renderOut);
 
-    // #endif
 }
 
  
@@ -390,17 +370,17 @@ void phGetEnvFrame(struct GlobalSettings *settings,struct Listener *listener,jfl
     IPLVector3 *listenerUp = lsGetUp(settings, listener);
     IPLVector3 *listenerDirection = lsGetDirection(settings, listener);
 
-    PhSharedContext.ambisonicsBuffer.deinterleavedBuffer= PhSharedContext.auxAmbisonicsFrame1;
-    PhSharedContext.outputBuffer.interleavedBuffer = outFrame;
-
+    IPLAudioBuffer mixedOut = (IPLAudioBuffer){PhSharedContext.ambisonicsFormatD, PhSharedContext.settings.frameSize, NULL, PhSharedContext.auxAmbisonicsFrame};
     iplGetMixedEnvironmentalAudio(PhSharedContext.environmentalRenderer,
         (*listenerPos),
-        (*listenerDirection),
+        (*listenerDirection), 
         (*listenerUp),
-        PhSharedContext.ambisonicsBuffer);
+        mixedOut);
 
+    IPLAudioBuffer renderOut=(IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, outFrame,NULL};
     iplApplyAmbisonicsBinauralEffect(PhSharedContext.ambisonicsBinauralEffect,PhSharedContext.binauralRenderer,
-                PhSharedContext.ambisonicsBuffer, PhSharedContext.outputBuffer);
+                mixedOut,renderOut);
+
 }
 
 /**
@@ -410,6 +390,6 @@ void phMixOutputBuffers(jfloat **input,jint numInputs,jfloat *output){
     for(jint i=0;i<numInputs;i++){
         PhSharedContext.mixerQueue[i].interleavedBuffer = input[i];
     }
-    PhSharedContext.outputBuffer.interleavedBuffer = output;
-    iplMixAudioBuffers(numInputs, PhSharedContext.mixerQueue, PhSharedContext.outputBuffer);
+    IPLAudioBuffer renderOut=(IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, output,NULL};
+    iplMixAudioBuffers(numInputs, PhSharedContext.mixerQueue, renderOut);
 }
