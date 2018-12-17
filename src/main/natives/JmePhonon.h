@@ -47,13 +47,14 @@ void phSaveSceneMeshAsObj(struct GlobalSettings *settings,  jbyte *path);
 
 void phInit(struct GlobalSettings *settings, jint mixerQueueSize, jint nMaterials, jfloat *materials, JNIEnv*, jobject);
 void phProcessFrame(struct GlobalSettings *settings, struct Listener *listener, struct AudioSource *source, jfloat *inFrame, jfloat *outFrame);
+void phGetEnvFrame(struct GlobalSettings *settings,struct Listener *listener,jfloat *outFrame);
 void phDestroy(struct GlobalSettings *settings);
  
  
 /** 
- * Allocates one PhContext for the audioSour ce
+ * Allocates one PhContext for the audioSource
  */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource,jint id);
 
 
 /**
