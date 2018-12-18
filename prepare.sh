@@ -8,7 +8,6 @@ source build.dep/findJava.sh
 source build.dep/findOs.sh
 
 
-
 # Get steam audio
 if [ "$STEAM_AUDIO_URL" = "" ];
 then
@@ -343,7 +342,7 @@ function deploy {
     do
         filename="`basename $f`"
         filename="${filename%.*}"
-        echo "$filename ( $f ) read for deploy"
+        echo "$filename ( $f ) ready for deploy"
         
         echo "Deploy on $BINTRAY_USER."
         if [ "$DEPLOY" == "1" -a "$BINTRAY_USER" != "" -a "$BINTRAY_KEY" != "" ];

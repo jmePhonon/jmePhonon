@@ -39,9 +39,8 @@ for i in $1;
 do
     export "$i"
     if [ "$DENVS" != "" ]; then DENVS="$DENVS " ; fi
-    DENVS="-e$i"
+    DENVS="${DENVS}-e$i"
 done
-echo "$DENVS"
 IFS="$OIFS"
 
 #Read tasks from args
@@ -131,7 +130,9 @@ IFS=','
 for triplet in $MULTI_BUILD;
 do
     echo Run for $triplet
-    docker run -v"$PWD:/workspace" -w /workspace $DENVS $triplet $RUN_AS --rm -it $USE_IMAGE $WRAPPER $TASKS
+    cmd=$(echo docker run -v"$PWD:/workspace" -w /workspace $DENVS $triplet $RUN_AS --rm -it $USE_IMAGE $WRAPPER $TASKS)
+    echo "Run: $cmd"
+    eval $cmd
 done
 IFS="$OIFS"
 
