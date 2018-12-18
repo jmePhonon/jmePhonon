@@ -54,8 +54,9 @@ void phDestroy(struct GlobalSettings *settings);
 /** 
  * Allocates one PhContext for the audioSource
  */
-void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource,jint id);
+void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
 
+void phConnectSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
 
 /**
  * Deallocates the PhContext of the audioSource
@@ -66,7 +67,7 @@ void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSo
  * Reset the internal state for the audioSource.
  * This is used when the audioData for the source is changed
  */
-void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource);
+void phDisconnectSource(struct GlobalSettings *settings,struct AudioSource *audioSource);
 
 
 void phMixOutputBuffers(jfloat **input, jint numInputs, jfloat *output);

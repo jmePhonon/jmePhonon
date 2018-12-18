@@ -29,8 +29,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-#ifndef __SOURCE_BIND__
-#define __SOURCE_BIND__ 1
+#ifndef __AUDIO_SLOT__
+#define __AUDIO_SLOT__ 1
 
 #include "Common.h"
 #include "UList.h"
@@ -48,19 +48,18 @@ struct AudioSource {
     drt _directivity;
 
     jboolean loop;
+    jboolean waitingForFinalization;
 
-    void *connectedLine; // Pointer to the line to which the source is connected
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
     struct UListNode* uNode; // U-List node
 
+    jint id;
+
     jfloat* sceneData; // Physical data, passed by Java thread
-    jint sourceIndex; // Audio source index
 };
 
-void asInit(struct GlobalSettings *settings, struct AudioSource *source);
-
 /**
- * Allocates one or more AudioSources
+ * Allocate and initialize one or more AudioSources
  */
 struct AudioSource *asNew(struct GlobalSettings *settings, jint n);
 
@@ -70,7 +69,10 @@ struct AudioSource *asNew(struct GlobalSettings *settings, jint n);
  */
 void asDestroy(struct GlobalSettings *settings, struct AudioSource *source, jint n);
 
-jboolean asIsConnected(struct AudioSource *source);
+/**
+ * Check if connected
+ */
+jboolean asIsReady(struct AudioSource *source);
 /**
  * Read the next frame from the audio source, restart from the beginning when the end is reached
  * @return true if the end of the source has been reached
@@ -96,4 +98,7 @@ jint asGetNumChannels(struct GlobalSettings *settings, struct AudioSource *sourc
 #define asHasFlag(settings, source, flag) (_asHasFlag(settings, source, asFlag(flag)))
 jboolean _asHasFlag(struct GlobalSettings *settings, struct AudioSource *source, jint flag);
 void asSetStopAt(struct GlobalSettings *settings, struct AudioSource *source, jint index);
+void asConnect(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jfloat *data, jint samples,jint jumpToFrame);
+void asScheduleDisconnection(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jint delayedToLineFrame);
+void asFinalizeDisconnection(struct GlobalSettings *settings, struct UList *updateList, struct AudioSource *slot);
 #endif

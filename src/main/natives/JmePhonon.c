@@ -32,6 +32,7 @@
 #define __JMEPHONON_INTERNAL__
 #include "JmePhonon.h"
 #include "settings/settings.h"
+#include "AudioSource.h"
 
   struct {
         IPLhandle context;
@@ -63,47 +64,73 @@
         IPLhandle probeManager;
 
         IPLhandle ambisonicsBinauralEffect;
+        struct ConvolutionEffect *convolutionEffectsQueue;
 
     } PhSharedContext; // This context is shared between every source
+
+    struct ConvolutionEffect {
+        void* effect;
+        jboolean inUse;
+        jint id;
+    };
 
     struct PhContext { //nb for each source we need to create a new PhContext    
         IPLhandle binauralEffect;
         IPLhandle directSoundEffect;
-        IPLhandle convolutionEffect;
         IPLDirectSoundEffectOptions directSoundEffectOptions;
-        jboolean useConvolution;
+        struct ConvolutionEffect *convolutionEffect;
     };
- 
+
     /**
- * Allocates one PhContext for the audioSource
- */
-    void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource,jint id) {
+     * Allocates one PhContext for the audioSource
+     */
+    void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource) {
         struct PhContext *context = malloc(sizeof(struct PhContext));
         audioSource->phononContext = context;
-        context->useConvolution=id<PhSharedContext.simulationSettings.maxConvolutionSources;
 
         // Direct sound
         iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer,
                                    PhSharedContext.monoFormat, PhSharedContext.monoFormat, &context->directSoundEffect);
 
+        // Rendering 
         iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, 
-            PhSharedContext.stereoFormat, &context->binauralEffect);
+            PhSharedContext.stereoFormat, &context->binauralEffect);  
+    }
 
-
-        if (context->useConvolution) {
-            printf("2Init source %d with conv\n", id);
-
-            IPLBakedDataIdentifier idf;
-            idf.identifier=0; // TODO: Implement baking
-            idf.type=IPL_BAKEDDATATYPE_REVERB;
-
-            iplCreateConvolutionEffect(PhSharedContext.environmentalRenderer, idf,
-                                    IPL_SIMTYPE_REALTIME /*TODO: add baking*/,
-                                    PhSharedContext.monoFormat,
-                                    PhSharedContext.ambisonicsFormatD,
-                                    &context->convolutionEffect);    
+    void phConnectSource(struct GlobalSettings *settings, struct AudioSource *audioSource){
+           struct PhContext *context = audioSource->phononContext ;
+        // Connect Convolution effect (if available);
+        context->convolutionEffect = NULL;
+        // printf("%d max convolution sources\n", PhSharedContext.simulationSettings.maxConvolutionSources);
+        if (PhSharedContext.simulationSettings.maxConvolutionSources > 0) {
+            if(asHasFlag(settings,audioSource,REVERB)){
+                for(jint i=0;i<PhSharedContext.simulationSettings.maxConvolutionSources;i++){
+                    if(!PhSharedContext.convolutionEffectsQueue[i].inUse){
+                        // printf("use convolution effect n %d\n", i);
+                        context->convolutionEffect = &PhSharedContext.convolutionEffectsQueue[i];
+                        context->convolutionEffect->inUse=true;
+                        break;
+                    }
+                }
+            }
         }
     }
+
+
+void phDisconnectSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
+    struct PhContext *context = audioSource->phononContext;
+    if (PhSharedContext.simulationSettings.maxConvolutionSources > 0) {
+        if(context->convolutionEffect!=NULL){
+            // printf("Flush convolution effect n%d\n\n",context->convolutionEffect->id);
+            iplFlushConvolutionEffect(context->convolutionEffect->effect);
+            context->convolutionEffect->inUse = false;
+            context->convolutionEffect = NULL;
+        }
+    }
+    iplFlushBinauralEffect(context->binauralEffect);
+    iplFlushDirectSoundEffect(context->directSoundEffect);    
+}
+
 
 /**
  * Deallocates the PhContext of the audioSource
@@ -111,9 +138,6 @@
 void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSource){
     struct PhContext *context = audioSource->phononContext;
 
-    if(context->useConvolution){
-        iplDestroyConvolutionEffect(&context->convolutionEffect);
-    }
     // iplDestroyPanningEffect(&context->panningEffect);
     iplDestroyBinauralEffect(&context->binauralEffect);
     iplDestroyDirectSoundEffect(&context->directSoundEffect);
@@ -122,15 +146,6 @@ void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSo
 }
 
 
-void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
-    struct PhContext *context = audioSource->phononContext;
-    if(context->useConvolution){
-        iplFlushConvolutionEffect(context->convolutionEffect);
-    }
-
-    iplFlushBinauralEffect(context->binauralEffect);
-    iplFlushDirectSoundEffect(context->directSoundEffect);    
-}
 
 
 
@@ -158,8 +173,8 @@ void phSaveSceneMeshAsObj(struct GlobalSettings *settings,jbyte* path){
 void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials, jfloat* materials, JNIEnv* env, jobject jSettings){
     PhSharedContext.scene = NULL;
 
+    // Load phonon settings
     jclass settingsClass = (*env)->GetObjectClass(env, jSettings);
-
     PhSharedContext.simulationSettings.sceneType = GET_SETTINGS_INT(jSettings, settingsClass, "sceneType");
     PhSharedContext.simulationSettings.numRays = GET_SETTINGS_INT(jSettings, settingsClass, "numRays");
     PhSharedContext.simulationSettings.numDiffuseSamples = GET_SETTINGS_INT(jSettings, settingsClass, "numDiffuseSamples");
@@ -169,18 +184,19 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
     PhSharedContext.simulationSettings.ambisonicsOrder = GET_SETTINGS_INT(jSettings, settingsClass, "ambisonicsOrder");
     PhSharedContext.simulationSettings.maxConvolutionSources = GET_SETTINGS_INT(jSettings, settingsClass, "maxConvolutionSources");
     PhSharedContext.simulationSettings.bakingBatchSize = GET_SETTINGS_INT(jSettings, settingsClass, "bakingBatchSize");
-
-	 PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON;
-
+	PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON;
     // PhSharedContext.simulationSettings.numOcclusionSamples = 4; // ???
     //////////////////
 
+  
+
+    // Initialize context
     iplCreateContext(NULL, NULL, NULL, &PhSharedContext.context);
     PhSharedContext.settings.samplingRate = settings->sampleRate;
     PhSharedContext.settings.frameSize = settings->frameSize;
     PhSharedContext.settings.convolutionType = IPL_CONVOLUTIONTYPE_PHONON;
 
-    // FORMATS
+    // All the formats used by the effects
     PhSharedContext.monoFormat.channelLayout = IPL_CHANNELLAYOUT_MONO;
     PhSharedContext.monoFormat.channelLayoutType = IPL_CHANNELLAYOUTTYPE_SPEAKERS;
     PhSharedContext.monoFormat.channelOrder = IPL_CHANNELORDER_INTERLEAVED;
@@ -207,27 +223,29 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
     PhSharedContext.stereoFormat.ambisonicsOrder = -1;
     PhSharedContext.stereoFormat.ambisonicsNormalization = IPL_AMBISONICSNORMALIZATION_N3D;
     PhSharedContext.stereoFormat.ambisonicsOrdering = IPL_AMBISONICSORDERING_ACN;
-    //////////////
 
-    // FRAMES
+
+    // Auxiliary frames used by the effects
     PhSharedContext.auxMonoFrame = malloc(4 * PhSharedContext.settings.frameSize);
-
+    // This one is deinterleaved
     PhSharedContext.auxAmbisonicsFrame = malloc(sizeof(jfloat *) * PhSharedContext.ambisonicsFormatD.numSpeakers);
     for (jint i = 0; i < PhSharedContext.ambisonicsFormatD.numSpeakers; i++) {
         PhSharedContext.auxAmbisonicsFrame[i] = malloc(4 * PhSharedContext.settings.frameSize);
     }   
-    /////////
 
+    // The probe manager, not used for now.
     iplCreateProbeManager(PhSharedContext.context,&PhSharedContext.probeManager);
 
 
-    // Scene
+    // The scene
+    // Materials will be loaded only once for the entire life of the application
     iplCreateScene(PhSharedContext.context, NULL /*compute device*/, 
                     PhSharedContext.simulationSettings, nMaterials,
                    (IPLMaterial*) materials,
                    NULL, NULL, NULL, NULL, NULL,
                    &PhSharedContext.scene);
 
+    // Debug: print all the materials
     printf("Create scene with materials: \n");
     for (jint i = 0; i < nMaterials; i++) {
         IPLMaterial mat = ((IPLMaterial*)materials)[i];
@@ -249,7 +267,7 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
         mat.highFreqTransmission);
     }
 
-    // Environment
+    // The environment
     iplCreateEnvironment(PhSharedContext.context,
                         /*compute device*/ NULL,
                         PhSharedContext.simulationSettings,
@@ -257,24 +275,43 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
                         PhSharedContext.probeManager,
                         &PhSharedContext.environment);
 
-    // Environmental renderer
+    // The Environmental renderer
     iplCreateEnvironmentalRenderer(PhSharedContext.context, PhSharedContext.environment,
                                    PhSharedContext.settings, PhSharedContext.ambisonicsFormatD,
                                    NULL, NULL, &PhSharedContext.environmentalRenderer);      
-    
+
+
+    // The binaural renderer, will be used to render the sounds to headphones
     PhSharedContext.defaultHrtfParams.type = IPL_HRTFDATABASETYPE_DEFAULT;
     PhSharedContext.defaultHrtfParams.hrtfData=NULL;
-
     iplCreateBinauralRenderer(PhSharedContext.context, 
                             PhSharedContext.settings, PhSharedContext.defaultHrtfParams, 
                             &PhSharedContext.binauralRenderer);
 
-
+    // Another binaural renderer, but this can be used to render the output of the convolution effects
     iplCreateAmbisonicsBinauralEffect(PhSharedContext.binauralRenderer,
                                     PhSharedContext.ambisonicsFormatD, PhSharedContext.stereoFormat, 
                                     &PhSharedContext.ambisonicsBinauralEffect);
     
-    
+    // Build convolution effects queue
+    // When a sound is complete, the effect will be released, flushed and recycled for the next sound.
+    if(PhSharedContext.simulationSettings.maxConvolutionSources>0){
+        PhSharedContext.convolutionEffectsQueue = malloc(sizeof(struct ConvolutionEffect)*PhSharedContext.simulationSettings.maxConvolutionSources);
+        for(jint i=0;i<PhSharedContext.simulationSettings.maxConvolutionSources;i++){
+            IPLBakedDataIdentifier idf;
+            idf.identifier=0; // TODO: Implement baking
+            idf.type=IPL_BAKEDDATATYPE_REVERB;
+            iplCreateConvolutionEffect(PhSharedContext.environmentalRenderer, idf,
+                                    IPL_SIMTYPE_REALTIME /*TODO: add baking*/,
+                                    PhSharedContext.monoFormat,
+                                    PhSharedContext.ambisonicsFormatD,
+                                    & PhSharedContext.convolutionEffectsQueue[i].effect);
+            PhSharedContext.convolutionEffectsQueue[i].inUse = false;
+            PhSharedContext.convolutionEffectsQueue[i].id = i;
+        }
+    }
+
+    // Queue used to mix the frames
     PhSharedContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
     for(jint i=0;i<mixerQueueSize;i++){
         PhSharedContext.mixerQueue[i].format = PhSharedContext.stereoFormat;
@@ -283,6 +320,15 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
 }
 
 void phDestroy(struct GlobalSettings *settings){
+    // Destroy everything
+
+    if(PhSharedContext.simulationSettings.maxConvolutionSources>0){
+        for(jint i=0;i<PhSharedContext.simulationSettings.maxConvolutionSources;i++){
+            iplDestroyConvolutionEffect(&PhSharedContext.convolutionEffectsQueue[i].effect);    
+        }
+    }
+    free(PhSharedContext.convolutionEffectsQueue);
+
     iplDestroyAmbisonicsBinauralEffect(&PhSharedContext.ambisonicsBinauralEffect);
     iplDestroyBinauralRenderer(&PhSharedContext.binauralRenderer);
     iplDestroyEnvironmentalRenderer(&PhSharedContext.environmentalRenderer);
@@ -295,7 +341,9 @@ void phDestroy(struct GlobalSettings *settings){
     
     free(PhSharedContext.mixerQueue);
     free(PhSharedContext.auxMonoFrame);
-    for (jint i = 0; i < PhSharedContext.ambisonicsFormatD.numSpeakers; i++) free(PhSharedContext.auxAmbisonicsFrame[i]);
+    for (jint i = 0; i < PhSharedContext.ambisonicsFormatD.numSpeakers; i++) {
+        free(PhSharedContext.auxAmbisonicsFrame[i]);
+    }
     free(PhSharedContext.auxAmbisonicsFrame);
     // free(PhSharedContext.materials);
 }
@@ -352,8 +400,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                             directSoundOut);
 
 
-    if(ctx->useConvolution){
-        iplSetDryAudioForConvolutionEffect(ctx->convolutionEffect,
+    if(ctx->convolutionEffect!=NULL){
+        iplSetDryAudioForConvolutionEffect(ctx->convolutionEffect->effect,
                                         source,
                                         directSoundIn);
     }

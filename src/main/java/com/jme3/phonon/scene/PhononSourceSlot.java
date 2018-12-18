@@ -74,18 +74,22 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private volatile boolean isOver;
     private volatile boolean instance;
     private final int ID;
+    private volatile boolean waitingForFinalization;
 
    
     public PhononSourceSlot(int id){
         ID=id;
         MEMORY=BufferUtils.createByteBuffer(SIZE);
-      
-
+        waitingForFinalization=false;
 
     }
 
-    public boolean isConnected() {
-        return source!=null;
+    public void waitingForFinalization(boolean v){
+        waitingForFinalization=v;
+    }
+
+    public boolean isReady() {
+        return source!=null&&!waitingForFinalization;
     }
 
     /**
@@ -118,20 +122,20 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     public void setSource(AudioSource src, boolean instance) {
         isOver=false; // reset isOver status until next native update
         // System.out.println(ID+" recycled");
-        if(source!=null){
-            if(getSource().getChannel()==ID){
+        // if(source!=null){
+            // if(getSource().getChannel()==ID){
                 
-                getSource().setStatus(Status.Stopped);
+            //     getSource().setStatus(Status.Stopped);
 
-                getSource().setChannel(-1);
-                    System.out.println("Set "+source+" to stopped");
+            //     getSource().setChannel(-1);
+            //         System.out.println("Set "+source+" to stopped");
                 
 
-            }
+            // }
             // else{
                 // assert this.instance;
             // }
-        }
+        // }
         source=src;
 
         this.instance=false;
@@ -155,12 +159,12 @@ public class PhononSourceSlot extends CommitableMemoryObject{
             DIROMETHOD.setUpdateNeeded();
             SRADIUS.setUpdateNeeded();
            
-            if(!instance){
-                AudioSource.Status cs=src.getStatus();
-                src.setStatus(AudioSource.Status.Stopped);
-                src.setChannel(ID);
-                src.setStatus(cs);
-            }
+            // if(!instance){
+            //     AudioSource.Status cs=src.getStatus();
+            //     src.setStatus(AudioSource.Status.Stopped);
+            //     src.setChannel(ID);
+            //     src.setStatus(cs);
+            // }
             update(0);        
         }else{
             FLS.setUpdateNeeded();
@@ -279,7 +283,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         FLS.commit(MEMORY, FLAGS);
 
         int stopAt=MEMORY.getInt(STOPAT);
-        isOver=stopAt!=-1&&connectedLine.getLastPlayedFrameId()>=stopAt;
+        isOver=stopAt!=-1&&connectedLine.getLastPlayedFrameId()>stopAt;
     }
 
     public void setPosUpdateNeeded() {

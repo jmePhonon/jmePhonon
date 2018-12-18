@@ -29,7 +29,7 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     private float sourceRadius = 1f;
     private boolean applyAirAbsorption = false;
     private Vector3f previousWorldTranslation=Vector3f.NAN.clone();
-    private boolean reverb=true;
+    private boolean reverb=false;
   
     public PositionalSoundEmitterControl() { }
 

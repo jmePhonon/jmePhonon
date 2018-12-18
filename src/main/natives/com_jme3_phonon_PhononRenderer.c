@@ -47,7 +47,7 @@
 
 
 struct GlobalSettings SETTINGS;
-struct OutputLine *OUTPUT_LINES;
+struct OutputLine *OUTPUT_LINE;
 struct Listener *GLOBAL_LISTENER;
 
 struct {
@@ -59,35 +59,109 @@ struct {
 
 } Temp;
 
-JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj, jint size, jlong sourceAddr) {
-    struct AudioSource *source = olConnectSourceToBestLine(&SETTINGS, OUTPUT_LINES, SETTINGS.nOutputLines,
-                                                           (jfloat *)(intptr_t)sourceAddr, size);
-    // Reset stop at
 
-    if (source == NULL){
-        return -1;
-    }else{
-        phFlushSource(&SETTINGS, source);
-        return source->sourceIndex;
+
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env,
+                                                                      jobject obj,
+
+                                                                      jlong listenerDataPointer,
+                                                                      jlongArray audioSourcesSceneDataArrayPointer,
+
+                                                                      jint nMaterials,
+                                                                      jlong materials,
+                                                                      jlong outputLineAddr,
+
+                                                                      jobject jSettings) {
+
+    // Collect settings from java                                                                          
+    jclass settingsClass = (*env)->GetObjectClass(env, jSettings);
+    SETTINGS.nSourcesPerLine = GET_SETTINGS_INT(jSettings, settingsClass, "nSourcesPerLine");
+    SETTINGS.nOutputChannels = GET_SETTINGS_INT(jSettings, settingsClass, "nOutputChannels");
+    SETTINGS.frameSize = GET_SETTINGS_INT(jSettings, settingsClass, "frameSize");
+    SETTINGS.sampleRate = GET_SETTINGS_INT(jSettings, settingsClass, "sampleRate");
+    SETTINGS.bufferSize = GET_SETTINGS_INT(jSettings, settingsClass, "bufferSize");
+    SETTINGS.isPassthrough = GET_SETTINGS_BOOL(jSettings, settingsClass, "passThrough");
+
+    // Create the listener (from where the sounds are heard)
+    GLOBAL_LISTENER = lsNew(&SETTINGS, (jfloat *)(intptr_t)listenerDataPointer);
+
+    // Create and initialize the output line
+    OUTPUT_LINE = olNew(&SETTINGS,(jfloat *)(intptr_t)outputLineAddr);
+      
+    // Allocate the effects frames
+    Temp.zeroFill = (jfloat *)calloc( SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
+    Temp.frame1 = (jfloat *)calloc( SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
+    Temp.envframe = (jfloat *)malloc( SETTINGS.frameSize * SETTINGS.nOutputChannels*4);
+    Temp.monoFrame1 = (jfloat *)calloc( SETTINGS.frameSize,4);
+
+    // Allocate the mixer frames
+    Temp.mixerQueue = (jfloat **)calloc( SETTINGS.nSourcesPerLine,sizeof(jfloat *));
+    for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
+        Temp.mixerQueue[i] = (jfloat *)calloc(SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
+    }
+ 
+    // Initialize phonon
+    phInit(&SETTINGS, SETTINGS.nSourcesPerLine, nMaterials, (jfloat *)(intptr_t)materials, env, jSettings);
+
+    // Allocate and initialize the scene data
+    jlong *audioSourcesSceneDataArray = (*env)->GetLongArrayElements(env, audioSourcesSceneDataArrayPointer, 0);
+    for (jint j = 0; j < SETTINGS.nSourcesPerLine; j++) {
+        jfloat *audioSourceSceneData = (jfloat *)(intptr_t)audioSourcesSceneDataArray[j];
+        asSetSceneData(&SETTINGS, &OUTPUT_LINE->sourcesSlots[j], audioSourceSceneData);           
+        phInitializeSource(&SETTINGS, &OUTPUT_LINE->sourcesSlots[j]);
     }
 }
 
+JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj) {
+    // Destroy the sources
+    for (jint j = 0; j < SETTINGS.nSourcesPerLine; j++) {
+        phDestroySource(&SETTINGS, &OUTPUT_LINE->sourcesSlots[j]);
+    }
+    
+    lsDestroy(&SETTINGS, GLOBAL_LISTENER);
+    olDestroy(&SETTINGS, OUTPUT_LINE);
+    phDestroy(&SETTINGS);
+
+    free(Temp.frame1);
+    free(Temp.envframe);    
+    free(Temp.zeroFill);
+
+
+    free(Temp.monoFrame1);
+    for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
+        free(Temp.mixerQueue[i]);
+    }
+    free(Temp.mixerQueue);
+}
+
+
+/**
+ * Called by the engine to connect a source
+ */
+JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj, jint sizeInSamples, jlong sourceAddr) {
+    struct AudioSource *source = olConnectSource(&SETTINGS, OUTPUT_LINE, (jfloat *)(intptr_t)sourceAddr,sizeInSamples);
+    phConnectSource(&SETTINGS, source); // We connect the source to phonon
+    if (source == NULL) {
+        return -1;
+    }else{
+        return source->id;
+    }
+}
+
+/**
+ * Called by the engine to disconnect a source
+ */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_disconnectSourceNative(JNIEnv *env, jobject obj, jint id) {
-    jint lineId = id / SETTINGS.nSourcesPerLine;
-    jint sourceId=id-(lineId*SETTINGS.nSourcesPerLine);
-    struct AudioSource *source = &OUTPUT_LINES[lineId].sourcesSlots[sourceId];
-    olDisconnectSource(&SETTINGS, source);
+    jint sourceId = id;
+    struct AudioSource *source = &OUTPUT_LINE->sourcesSlots[sourceId];
+    phDisconnectSource(&SETTINGS, source); // This will recycle the phonon slot for other sounds.
+    olFinalizeDisconnection(&SETTINGS,OUTPUT_LINE,  source); // This will recycle the audio slot for other sounds.
 }
 
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initLineNative(JNIEnv *env,
-                                                                          jobject obj, jint lineId, jlong outputBufferAddr) {
-    olInit(&SETTINGS, &OUTPUT_LINES[lineId], (jfloat *)(intptr_t)outputBufferAddr);
-}
 
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setEnvironmentNative(JNIEnv *env, jobject obj, jfloatArray envdata) {
-   
-}
-
+/**
+ * This function is used to load the scene mesh for phonon (raytracing)
+ */ 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setMeshNative(JNIEnv *env, jobject obj, jint nTris, jint nVerts, jlong tris, jlong verts, jlong mat) {
     jint *trisb = (jint *)(intptr_t)tris;
     jfloat *vertsb = (jfloat *)(intptr_t)verts;
@@ -95,20 +169,31 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_setMeshNative(JNIEnv 
     phCreateSceneMesh(&SETTINGS, nTris, nVerts, trisb, vertsb, matb);
 }
 
+/**
+ * This function will unload the mesh
+ */ 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_unsetMeshNative(JNIEnv *env, jobject obj) {
     phDestroySceneMesh(&SETTINGS);
 }
 
+/**
+ * Debug only function, will write the loaded mesh as OBJ in the specified output path
+ * Useful to see if the mesh is loaded correctly.
+ */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_saveMeshAsObjNative(JNIEnv *env, jobject obj, jbyteArray pathArray) {
     jbyte *path = (*env)->GetByteArrayElements(env, pathArray, 0);
     phSaveSceneMeshAsObj(&SETTINGS, path);
 }
 
+/**
+ * Update loop.
+ * It is called by the engine as fast as possible, this function takes care of
+ * feeding the data to phonon, get the processed output and write it on the output line. 
+ * This function will skip if phonon is processing more data than what the player is able to play.
+ */
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *env, jobject obj) {
-    for (jint i = 0; i < SETTINGS.nOutputLines; i++) {
-        struct OutputLine *line = &OUTPUT_LINES[i];
-        if (!olIsInitialized(&SETTINGS, line))
-            continue;
+        struct OutputLine *line = OUTPUT_LINE;
+        
 
         jint frameIndex = olGetLastProcessedFrameId(&SETTINGS, line);
         jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS, line);
@@ -116,7 +201,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
         // Processing is too fast, skip.
         if (frameIndex - lastPlayedFrameIndex >= SETTINGS.bufferSize ) {
-            continue;
+            return;
         }
 
         struct UList *uList = line->uList;
@@ -137,14 +222,11 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
                 if (asReadNextFrame(&SETTINGS, audioSource, inFrame)) {
                     // Reached end
-                    if (!loop) {
-                        asSetStopAt(&SETTINGS, audioSource, frameIndex);
-                        // olDisconnectSource(&SETTINGS, audioSource);
-                        ulistRemove(uNode);
+                    if (!loop) {                       
+                        olDisconnectSource(&SETTINGS, OUTPUT_LINE, audioSource, frameIndex);
                     }
                 }else{
                     jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
-                    jboolean hasReverb = asHasFlag(&SETTINGS, audioSource, REVERB);
                     if (SETTINGS.isPassthrough || !isPositional) {
                         passThrough(&SETTINGS, inFrame,
                         Temp.mixerQueue[mixerQueueSize++],nchannels);
@@ -187,7 +269,8 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
             Temp.mixerQueue[0] = mixerQueue0;
             Temp.mixerQueue[1] = mixerQueue1;
             
-            
+                        // outFrame=Temp.envframe;
+
             olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
             olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
         }else{
@@ -195,80 +278,5 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
             olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, Temp.envframe, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
             olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
         }
-    }
-}
-
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env,
-                                                                      jobject obj,
-
-                                                                      jlong listenerDataPointer,
-                                                                      jlongArray audioSourcesSceneDataArrayPointer,
-
-                                                                      jint nMaterials,
-                                                                      jlong materials,
-
-                                                                      jobject jSettings) {
-
-    jclass settingsClass = (*env)->GetObjectClass(env, jSettings);
-
-    SETTINGS.nOutputLines = GET_SETTINGS_INT(jSettings, settingsClass, "nOutputLines");
-    SETTINGS.nSourcesPerLine = GET_SETTINGS_INT(jSettings, settingsClass, "nSourcesPerLine");
-    SETTINGS.nOutputChannels = GET_SETTINGS_INT(jSettings, settingsClass, "nOutputChannels");
-    SETTINGS.frameSize = GET_SETTINGS_INT(jSettings, settingsClass, "frameSize");
-    SETTINGS.sampleRate = GET_SETTINGS_INT(jSettings, settingsClass, "sampleRate");
-    SETTINGS.bufferSize = GET_SETTINGS_INT(jSettings, settingsClass, "bufferSize");
-    SETTINGS.isPassthrough = GET_SETTINGS_BOOL(jSettings, settingsClass, "passThrough");
-
-    GLOBAL_LISTENER = lsNew(&SETTINGS, (jfloat *)(intptr_t)listenerDataPointer);
-
-    OUTPUT_LINES = olNew(&SETTINGS, SETTINGS.nOutputLines);
-
-    Temp.zeroFill = (jfloat *)calloc( SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
-    Temp.frame1 = (jfloat *)calloc( SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
-    Temp.envframe = (jfloat *)malloc( SETTINGS.frameSize * SETTINGS.nOutputChannels*4);
-
-    Temp.monoFrame1 = (jfloat *)calloc( SETTINGS.frameSize,4);
-    Temp.mixerQueue = (jfloat **)calloc( SETTINGS.nSourcesPerLine,sizeof(jfloat *));
-    for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
-        Temp.mixerQueue[i] = (jfloat *)calloc(SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
-    }
- 
-
-
-    phInit(&SETTINGS, SETTINGS.nSourcesPerLine, nMaterials, (jfloat *)(intptr_t)materials, env, jSettings);
-
-    jlong *audioSourcesSceneDataArray = (*env)->GetLongArrayElements(env, audioSourcesSceneDataArrayPointer, 0);
-    for (jint i = 0; i < SETTINGS.nOutputLines; i++) {
-        for (jint j = 0; j < SETTINGS.nSourcesPerLine; j++) {
-            jfloat *audioSourceSceneData = (jfloat *)(intptr_t)audioSourcesSceneDataArray[i * SETTINGS.nSourcesPerLine + j];
-            asSetSceneData(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j], audioSourceSceneData);
-            jint n = i*SETTINGS.nOutputLines + j;
-            
-            phInitializeSource(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j],n);
-        }
-    }
-
-
-}
-
-JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj) {
-    for (jint i = 0; i < SETTINGS.nOutputLines; i++) {
-        for (jint j = 0; j < SETTINGS.nSourcesPerLine; j++) {
-            phDestroySource(&SETTINGS, &OUTPUT_LINES[i].sourcesSlots[j]);
-        }
-    }
-    lsDestroy(&SETTINGS, GLOBAL_LISTENER);
-    olDestroy(&SETTINGS, OUTPUT_LINES, SETTINGS.nOutputLines);
-    phDestroy(&SETTINGS);
-
-    free(Temp.frame1);
-    free(Temp.envframe);    
-    free(Temp.zeroFill);
-
-
-    free(Temp.monoFrame1);
-    for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
-        free(Temp.mixerQueue[i]);
-    }
-    free(Temp.mixerQueue);
+    
 }

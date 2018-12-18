@@ -54,7 +54,6 @@
 
 
 struct GlobalSettings{
-    jint nOutputLines; // How many direct output lines
     jint nOutputChannels; // How many channels per line (1=mono, 2=stereo ..)
     jint bufferSize; // How many frames on the outputline buffer
     jint frameSize; // How many samples for each frame

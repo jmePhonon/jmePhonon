@@ -64,7 +64,6 @@ public class PhononSettings {
     //////////////////////////////////////////////////
 
     public int sampleRate=44100;
-    public int nOutputLines=1;
     public int nSourcesPerLine=255;
     public int nOutputChannels=2;
     public int frameSize=1024;
@@ -81,8 +80,8 @@ public class PhononSettings {
 
     public int sceneType = PhononSceneType.IPL_SCENETYPE_PHONON.ordinal(); 
     public int numRays = 1024;// typical values are in the range of 1024 to 131072
-    public int numDiffuseSamples = 512;//typical values are in the range of 32 to 4096. 
-    public int numBounces = 2;//typical values are in the range of 1 to 32. 
+    public int numDiffuseSamples = 1024;//typical values are in the range of 32 to 4096. 
+    public int numBounces = 4;//typical values are in the range of 1 to 32. 
     public int numThreads = 4;//The performance improves linearly with the number of threads upto the number of physical cores available on the CPU.
     public float irDuration = 0.5f; // 0.5 to 4.0.
     public int ambisonicsOrder = 1;//Supported values are between 0 and 3.
@@ -102,7 +101,7 @@ public class PhononSettings {
     
     @Override
     public String toString(){
-        return "SampleRate "+sampleRate+" OutputLines "+nOutputLines+" SourcesPerLine "+nSourcesPerLine+
+        return "SampleRate "+sampleRate+" SourcesPerLine "+nSourcesPerLine+
         " nOutputChannels "+nOutputChannels+" frameSize "+frameSize+" bufferSize "+bufferSize+" maxPreBuffering "
                 +maxPreBuffering+" executor "+executor.getClass()+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
 
