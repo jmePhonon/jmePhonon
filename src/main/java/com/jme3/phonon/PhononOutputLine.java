@@ -84,7 +84,8 @@ public class PhononOutputLine{
         BUFFER = BufferUtils.createByteBuffer(HEADER_size + frameSize * SAMPLE_SIZE * bufferSize).order(ByteOrder.LITTLE_ENDIAN);
         BUFFER.position(HEADER_size);
         reset();
-        BUFFER_ADDRESS = DirectBufferUtils.getAddr(BUFFER);
+        BUFFER_ADDRESS=DirectBufferUtils.getAddr(BUFFER);
+        rendererThread=null; // We don't care which thread initialize this.
     }
 
     /**

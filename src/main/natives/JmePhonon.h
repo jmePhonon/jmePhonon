@@ -47,14 +47,16 @@ void phSaveSceneMeshAsObj(struct GlobalSettings *settings,  jbyte *path);
 
 void phInit(struct GlobalSettings *settings, jint mixerQueueSize, jint nMaterials, jfloat *materials, JNIEnv*, jobject);
 void phProcessFrame(struct GlobalSettings *settings, struct Listener *listener, struct AudioSource *source, jfloat *inFrame, jfloat *outFrame);
+void phGetEnvFrame(struct GlobalSettings *settings,struct Listener *listener,jfloat *outFrame);
 void phDestroy(struct GlobalSettings *settings);
  
  
 /** 
- * Allocates one PhContext for the audioSour ce
+ * Allocates one PhContext for the audioSource
  */
 void phInitializeSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
 
+void phConnectSource(struct GlobalSettings *settings, struct AudioSource *audioSource);
 
 /**
  * Deallocates the PhContext of the audioSource
@@ -65,7 +67,7 @@ void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSo
  * Reset the internal state for the audioSource.
  * This is used when the audioData for the source is changed
  */
-void phFlushSource(struct GlobalSettings *settings,struct AudioSource *audioSource);
+void phDisconnectSource(struct GlobalSettings *settings,struct AudioSource *audioSource);
 
 
 void phMixOutputBuffers(jfloat **input, jint numInputs, jfloat *output);

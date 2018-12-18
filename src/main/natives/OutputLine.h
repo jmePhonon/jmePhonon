@@ -52,37 +52,36 @@ struct OutputLine {
 /**
  * Allocates one or more OutputLines
  */
-struct OutputLine *olNew(struct GlobalSettings *settings, jint n);
+struct OutputLine *olNew(struct GlobalSettings *settings, jfloat *outputBuffer);
 
 /**
  * Deallocates one or more OutputLines
  * This function undoes olNew
  */
-void olDestroy(struct GlobalSettings *settings, struct OutputLine *chan,jint n);
+void olDestroy(struct GlobalSettings *settings, struct OutputLine *line);
 
-/**
- * Initialize the output line
- */
-void olInit(struct GlobalSettings *settings, struct OutputLine *chan, jfloat *outputBuffer);
-
-jboolean olIsInitialized(struct GlobalSettings *settings, struct OutputLine *line);
 
 /**
  *
  */
 
 /**
- * Connect one audio source to the best audio line
+ * Connect one source to the output line.
  * @return a pointer to the connected AudioSource
  */
-struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, struct OutputLine *lines,jint nLines, jfloat *data, jint sourceSamples);
+struct AudioSource *olConnectSource(struct GlobalSettings *settings, struct OutputLine *line, jfloat *data, jint sourceSamples);
 
 /**
- * Disconnect the audio source from the line to which it is attached, if any, otherwise do nothing
- * NB. after this function is called, it is not safe to free the AudioSource, because it will be reused internally
+ * Disconnect the source. Assume the engine is fine with that.
  */
-void olDisconnectSource(struct GlobalSettings *settings, struct AudioSource* source);
+void olFinalizeDisconnection(struct GlobalSettings *settings, struct OutputLine *line,
+                             struct AudioSource *source);
 
+/**
+ * Politely ask the engine to disconnect the source.
+ */
+void olDisconnectSource(struct GlobalSettings *settings, struct OutputLine *line,
+                        struct AudioSource *source, jint delayedToLineFrame);
 /**
  * Store index of the lastest processed frame in the output buffer.
  */

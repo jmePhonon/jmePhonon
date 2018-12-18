@@ -35,7 +35,7 @@
 
 #define GET_SETTINGS_INT(obj, class, name) (jint) (*env)->GetIntField(env, obj, (*env)->GetFieldID(env, class, name, "I"))
 
-#define GET_SETTINGS_DOUBLE(obj, class, name) (jdouble) (*env)->GetIntField(env, obj, (*env)->GetFieldID(env, class, name, "D"))
+#define GET_SETTINGS_FLOAT(obj, class, name) (jfloat) (*env)->GetFloatField(env, obj, (*env)->GetFieldID(env, class, name, "F"))
 
 #define GET_SETTINGS_BOOL(obj, class, name) (jboolean) (*env)->GetBooleanField(env, obj, (*env)->GetFieldID(env, class, name, "Z"))
 

@@ -30,25 +30,21 @@
 *
 */
 #include "AudioSource.h"
-#include "memory_layout/AUDIOSOURCE_LAYOUT.h"
-
-void asInit(struct GlobalSettings *settings, struct AudioSource *source){
-    source->data = NULL;
-    source->lastReadFrameIndex = 0;
-
-    source->connectedLine = NULL;
-    source->phononContext = NULL;
-
-    source->uNode = (struct UListNode*) malloc(sizeof(struct UListNode));
-
-    ulistInitNode(source->uNode, source); 
-}
 
 struct AudioSource* asNew(struct GlobalSettings *settings, jint n){
     struct AudioSource *out = malloc(sizeof(struct AudioSource)*n);
     for (jint i = 0; i < n; i++) {
-        // printf("Initialize source %d\n", i);
-        asInit(settings, &out[i]);
+        struct AudioSource* slot = &out[i];
+        slot->data = NULL;
+        slot->lastReadFrameIndex = 0;
+        slot->numSamples = 0;
+        slot->loop = false;
+        slot->phononContext = NULL;
+        slot->uNode = (struct UListNode*) malloc(sizeof(struct UListNode));
+        slot->sceneData = NULL;
+        slot->waitingForFinalization = false;
+        slot->id = i;
+        ulistInitNode(slot->uNode, slot);
     }
     return out;
 }
@@ -62,9 +58,8 @@ void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source,
     source->sceneData = data;
 }
 
-jboolean asIsConnected(struct AudioSource *source){
-    // return source->connectedLine != NULL && source->data != NULL;
-    return source->uNode->connected;
+jboolean asIsReady(struct AudioSource *source){
+    return !source->uNode->connected&&!source->waitingForFinalization;
 }
 
 /**
@@ -178,4 +173,25 @@ jint asGetNumChannels(struct GlobalSettings *settings,struct AudioSource *source
 void asSetStopAt(struct GlobalSettings *settings, struct AudioSource *source, jint index){
     jint *data=(jint*)source->sceneData;
     data[asSourceField(STOPAT)] = index;
+}
+
+void asConnect(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jfloat *data, jint samples,jint jumpToFrame){
+    slot->data = data;
+    slot->numSamples = samples;
+    slot->lastReadFrameIndex = jumpToFrame;
+    asSetStopAt(settings, slot, -1); 
+    ulistAdd(updateList,slot->uNode);  
+}
+
+void asScheduleDisconnection(struct GlobalSettings *settings,struct UList* updateList,struct AudioSource *slot,jint delayedToLineFrame){
+    asSetStopAt(settings, slot, delayedToLineFrame);
+    slot->waitingForFinalization = true;
+    ulistRemove(slot->uNode);
+}
+
+void asFinalizeDisconnection(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot){
+    slot->data = NULL;
+    asSetStopAt(settings, slot, -1);
+    slot->waitingForFinalization = false;
+    ulistRemove(slot->uNode);
 }
