@@ -297,8 +297,7 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                             PhSharedContext.monoBuffer2);
 
     PhSharedContext.outputBuffer.interleavedBuffer = outFrame;
-    iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.binauralRenderer, 
-    PhSharedContext.monoBuffer2, direction, IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
+    iplApplyBinauralEffect(ctx->binauralEffect, PhSharedContext.monoBuffer2, direction, IPL_HRTFINTERPOLATION_NEAREST, PhSharedContext.outputBuffer);
 
 }
 
