@@ -62,6 +62,8 @@ void ulistAdd(struct UList* uList, struct UListNode* node) {
 }
 
 void ulistRemove(struct UListNode* node) {
+    if( !node->connected)
+        return;
     node->prev->next = node->next;
     node->next->prev = node->prev;
 

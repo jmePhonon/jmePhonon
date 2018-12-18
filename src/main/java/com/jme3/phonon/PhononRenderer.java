@@ -251,10 +251,11 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 			if(sourceData.isOver()||(!sourceData.isInstance()&&sourceData.getSource()!=null&&sourceData.getSource().getStatus()==AudioSource.Status.Stopped)){
 				// System.out.println("Recycle because its over");
 
-			
+				if(sourceData.getSource()!=null&&(sourceData.isInstance()||sourceData.getSource().getStatus()!=AudioSource.Status.Stopped)){
+					stop(sourceData.getSource());
+				}
 				
 				recycleSourceSlot(sourceData.getId());
-
 			
 			}
 			
@@ -288,7 +289,10 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 
 		
 		if(src.getStatus()==AudioSource.Status.Playing){
-			if(!instance){ return; }
+			if(!instance){
+				System.out.println(src+" is already playing");
+			return;
+			 }
 		}
 		
 
@@ -307,7 +311,6 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		if(src instanceof SoundEmitterControl){
 			SoundEmitterControl emitter=(SoundEmitterControl)src;
 			data=emitter.getF32leAudioData();
-			if(mng!=null)mng.init(emitter);
 		}else{
 			data=F32leCachedConverter.toF32le(src.getAudioData());
 		}
@@ -325,10 +328,13 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 					public void run() {
 						assert Thread.currentThread()==gameThread;
 						if(index==-1){ // not enought slots 
+							System.out.println("Not enought slots");
+
 							if(!instance)src.setStatus(Status.Stopped);					
 						}else{
 							assert index<SOURCES.length:"Not enought source slots. Trying to bind index "+index+" but only "+SOURCES.length+" available";
-					
+							System.out.println("Play "+src);
+
 							SOURCES[index].setSource(src,instance);
 						
 						}
@@ -653,6 +659,10 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	native void setMeshNative(int nTris,int nVerts,long tris,long vert,long mats);
 	native void unsetMeshNative();
 	native void saveMeshAsObjNative(byte[] fileBaseName);
+
+	public AudioManager getMng() {
+		return mng;
+	}
 
 
 }

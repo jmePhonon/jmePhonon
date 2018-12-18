@@ -90,6 +90,8 @@ struct AudioSource *olConnectSourceToBestLine(struct GlobalSettings *settings, s
             bestLine->sourcesSlots[i].data = data;
             bestLine->sourcesSlots[i].numSamples = sourceSamples;
             bestLine->sourcesSlots[i].connectedLine = bestLine;
+            bestLine->sourcesSlots[i].lastReadFrameIndex = 0;
+            asSetStopAt(settings,  &bestLine->sourcesSlots[i], -1);
 
             sourceIndex += i;
             bestLine->sourcesSlots[i].sourceIndex = sourceIndex;

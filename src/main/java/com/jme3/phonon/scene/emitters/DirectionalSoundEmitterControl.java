@@ -12,6 +12,7 @@ import com.jme3.export.OutputCapsule;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.format.F32leAudioData;
+import com.jme3.phonon.utils.F32leCachedConverter;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
@@ -24,27 +25,26 @@ public class DirectionalSoundEmitterControl extends PositionalSoundEmitterContro
     private Vector3f previousDirection=Vector3f.NAN.clone();
     private float dipoleWeight=0f;
     private float dipolePower=1f;
-
-    public DirectionalSoundEmitterControl(){
-        super();
-    }
+    public DirectionalSoundEmitterControl() { }
 
     public DirectionalSoundEmitterControl(String name){
-        super(name);
-    }
+        init(name,null,null);
+     }
 
+   
     public DirectionalSoundEmitterControl(AssetManager am,String path){
-        super(am,path);
-
+        AudioKey audioKey=new AudioKey(path);
+        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
     }
 
     public DirectionalSoundEmitterControl(AssetManager am,AudioKey audioKey){
-        super(am,audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
     }
 
     public DirectionalSoundEmitterControl(String name,F32leAudioData audioData,AudioKey audioKey){
-        super(name,audioData,audioKey);
+        init(name, audioData, audioKey);   
     }
+    
 
     @Override
     protected String getDefaultName(AudioKey audioKey) {
@@ -57,20 +57,27 @@ public class DirectionalSoundEmitterControl extends PositionalSoundEmitterContro
     }
 
     public void setDirection(Vector3f dir) {
+
         spatial.getWorldRotation().lookAt(dir,getUp());
     }
     
     @Override
     public Vector3f getDirection() {
+        if(spatial==null) return p;
+
         return spatial.getWorldRotation().getRotationColumn(2);
     }
 
     
     public Vector3f getUp() {
+        if(spatial==null) return p;
+
         return spatial.getWorldRotation().getRotationColumn(1);
     }
 
     public Vector3f getRight() {
+        if(spatial==null) return p;
+
         return spatial.getWorldRotation().getRotationColumn(0).negate();
     }
 

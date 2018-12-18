@@ -28,8 +28,8 @@ public class SoundDefInputCapsule implements InputCapsule{
 
     @Override
     public Savable readSavable(String name, Savable defVal) throws IOException {
-        if(name.endsWith("audioKey")) return EMITTER.getAssetKey();
-        else if(name.endsWith("spatial")) return EMITTER.getSpatial();
+        if(name.equals("audioKey")) return EMITTER.getAssetKey();
+        else if(name.equals("spatial")) return EMITTER.getSpatial();
         else throw new UnsupportedOperationException("Can't read "+name);
     }
 

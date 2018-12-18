@@ -120,12 +120,12 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         // System.out.println(ID+" recycled");
         if(source!=null){
             if(getSource().getChannel()==ID){
+                
                 getSource().setStatus(Status.Stopped);
 
                 getSource().setChannel(-1);
-                if(src instanceof AudioNode){
-                    System.out.println("Set "+((AudioNode)src).getName()+" to stopped");
-                }
+                    System.out.println("Set "+source+" to stopped");
+                
 
             }
             // else{
@@ -137,7 +137,6 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         this.instance=false;
 
         if(src!=null){
-
             this.instance=instance;
 
             CHANNELS.setUpdateNeeded();
@@ -180,6 +179,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
     @Override
     public void onUpdate(float tpf) {
+        
         if (source != null) {
             // if (isOver) {
             //   source.setStatus(Status.Stopped);
@@ -280,7 +280,6 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
         int stopAt=MEMORY.getInt(STOPAT);
         isOver=stopAt!=-1&&connectedLine.getLastPlayedFrameId()>=stopAt;
-       
     }
 
     public void setPosUpdateNeeded() {
