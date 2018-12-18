@@ -63,7 +63,6 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
     boolean isRunning;
     byte tmp[];
 
-
     @Override
     public void init(
         JavaSoundSystem system,
@@ -84,13 +83,19 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
         output.open(audioFormat, preloadBytes);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
      
 
-        tmp= new byte[preloadBytes];
+        tmp=new byte[preloadBytes];
+
+   
+        
+
     }
 
 
     public void close() {
+        output.flush();
         output.close();
     }
+
 
     @Override
     public void loop() {
@@ -101,19 +106,18 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
             if (!isRunning) {
                 isRunning = true;
                 output.start();
-                
+               
                 // System.out.println("Start");
             }
         } else {
             // System.out.println("Preloading " + preloadBytes + " bytes");
         }
 
-        byte out = 0;
         int writableBytes = 0;
         int read = 0;
         try {
-            
-            writableBytes= output.available();
+            int available=output.available();
+            writableBytes=available;
             if (writableBytes > tmp.length)
             writableBytes = tmp.length;
             
@@ -122,17 +126,17 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
             
             if (read > 0) {
                 // System.out.println("Write "+read);
-
-                int written=output.write(tmp, 0, read);
+                int written=output.write(tmp,0,read);
+                assert written==read:"Error, only "+written+" bytes written, "+read+" expected";
                 if (preloadBytes > 0) {
                     // System.out.println("Loaded "+written+" bytes");
                     preloadBytes -= written;
                 }
-            } else {
+            }else{
                 // System.out.println("FIXME: Phonon is lagging behind");
-                out=1;
                 // no data available
             }
+        
         } catch (EOFException e) {
             // Channel over;
             System.err.println("TO BE IMPLEMENTED: End of channel");
@@ -145,7 +149,6 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevi
       
       
 
-       
 
     }
 
