@@ -51,13 +51,11 @@ import com.jme3.audio.Listener;
 import com.jme3.audio.ListenerParam;
 import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.format.F32leAudioData;
-import com.jme3.phonon.manager.AudioManager;
 import com.jme3.phonon.scene.PhononListener;
 import com.jme3.phonon.scene.PhononMesh;
 import com.jme3.phonon.thread.PhononExecutor;
 import com.jme3.phonon.thread.ThreadSafeQueue;
 import com.jme3.phonon.scene.PhononSourceSlot;
-import com.jme3.phonon.scene.emitters.SoundEmitterControl;
 import com.jme3.phonon.scene.material.PhononMaterial;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.phonon.utils.F32leCachedConverter;
@@ -90,21 +88,15 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	private final ThreadSafeQueue GAME_QUEUE=new ThreadSafeQueue();
 	private final ThreadSafeQueue PHONON_QUEUE=new ThreadSafeQueue();
 
-	private AudioManager mng;
-
 	public PhononRenderer(PhononSettings settings) throws Exception{
 		SETTINGS=settings;
 		settings.executor.setUpdater(this);
 		OUTPUT_LINES=new PhononOutputLine[SETTINGS.nOutputLines];
 		PHONON_LISTENER=new PhononListener();
-		int nTotalSource=SETTINGS.nOutputLines*SETTINGS.nSourcesPerLine;
+		int nTotalSource = SETTINGS.nOutputLines * SETTINGS.nSourcesPerLine;
 		SOURCES=new PhononSourceSlot[nTotalSource];
 		PLAYERS=new PhononSoundPlayer[SETTINGS.nOutputLines];
 		assert (gameThread!=null||(gameThread=Thread.currentThread())!=null);
-	}
-
-	public void setAudioManager(AudioManager mng) {
-		this.mng=mng;
 	}
 	
 
@@ -250,13 +242,8 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 			// Check if stopped & unpair
 			if(sourceData.isOver()||(!sourceData.isInstance()&&sourceData.getSource()!=null&&sourceData.getSource().getStatus()==AudioSource.Status.Stopped)){
 				// System.out.println("Recycle because its over");
-
-				if(sourceData.getSource()!=null&&(sourceData.isInstance()||sourceData.getSource().getStatus()!=AudioSource.Status.Stopped)){
-					stop(sourceData.getSource());
-				}
-				
 				recycleSourceSlot(sourceData.getId());
-			
+
 			}
 			
 			// if((!sourceData.isInstance()&&sourceData.getSource()!=null&&sourceData.getSource().getStatus()==AudioSource.Status.Stopped)){
@@ -276,45 +263,24 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	 */
 	private void play(AudioSource src, boolean instance) {
 		assert Thread.currentThread()==gameThread;
-		
-		int sampleRate;
-		if(src instanceof SoundEmitterControl){
-			sampleRate=((SoundEmitterControl)src).getF32leAudioData().getSampleRate();
-		}else{
-			sampleRate=src.getAudioData().getSampleRate();
+		if(src.getAudioData().getSampleRate()!=SETTINGS.sampleRate){
+			throw new IllegalStateException("Input audio "+((src instanceof AudioNode)?((AudioNode)src).getName():src)+" sample rate is "+src.getAudioData().getSampleRate()+" but the renderer is configured to use "+SETTINGS.sampleRate);
 		}
 
-		if(sampleRate!=SETTINGS.sampleRate){ throw new IllegalStateException("Input audio "+((src instanceof AudioNode)?((AudioNode)src).getName():src)+" sample rate is "+src.getAudioData().getSampleRate()+" but the renderer is configured to use "+SETTINGS.sampleRate); }
-		
-
-		
 		if(src.getStatus()==AudioSource.Status.Playing){
-			if(!instance){
-				System.out.println(src+" is already playing");
-			return;
-			 }
+			if(!instance){ return; }
 		}
 		
-
 		AudioSource.Status currentStatus=src.getStatus();
 		PhononSourceSlot psrc=getSourceSlot(src);
 		if(psrc!=null&&currentStatus==AudioSource.Status.Paused){
 			psrc.setFlagsUpdateNeeded();
 			return;
 		}
-		
+
 		src.setStatus(AudioSource.Status.Playing);
 
-
-		final F32leAudioData data;
-
-		if(src instanceof SoundEmitterControl){
-			SoundEmitterControl emitter=(SoundEmitterControl)src;
-			data=emitter.getF32leAudioData();
-		}else{
-			data=F32leCachedConverter.toF32le(src.getAudioData());
-		}
-
+		final F32leAudioData data=F32leCachedConverter.toF32le(src.getAudioData());
 		PHONON_QUEUE.enqueue(new Runnable(){
 			@Override
 			public void run() {
@@ -328,13 +294,10 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 					public void run() {
 						assert Thread.currentThread()==gameThread;
 						if(index==-1){ // not enought slots 
-							System.out.println("Not enought slots");
-
 							if(!instance)src.setStatus(Status.Stopped);					
 						}else{
 							assert index<SOURCES.length:"Not enought source slots. Trying to bind index "+index+" but only "+SOURCES.length+" available";
-							System.out.println("Play "+src);
-
+					
 							SOURCES[index].setSource(src,instance);
 						
 						}
@@ -352,7 +315,6 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		assert Thread.currentThread()==gameThread;
 
 		src.setStatus(Status.Stopped);
-
 
 		final int id=src.getChannel();
 		if(id==-1)return;	 //nb channel is volatile in jme's audio node implementation
@@ -372,7 +334,6 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	private void pause(AudioSource src) {
 		assert Thread.currentThread()==gameThread;
 		src.setStatus(Status.Paused);
-	
 		PhononSourceSlot psrc=getSourceSlot(src);
 		if(psrc==null) return;
 		psrc.setFlagsUpdateNeeded();
@@ -491,8 +452,6 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		}
 	}
 
-
-
 	@Override
 	public void updateSourceParam(AudioSource src, AudioParam param) {
 		assert Thread.currentThread()==gameThread;
@@ -502,21 +461,21 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		PhononSourceSlot psrc=getSourceSlot(src);
 		if(psrc==null) return;
 
-		switch(param){
-			case IsPositional:
-			case IsDirectional:
-			case ReverbEnabled:
+		switch (param) {
+			case IsPositional :
+			case IsDirectional :
+			case ReverbEnabled :
 			case ReverbFilter:
 			case Looping:
 				psrc.setFlagsUpdateNeeded();
 				break;
 			case Position:
-				if(src.isPositional()){
+				if(src.isPositional()) {
 					psrc.setPosUpdateNeeded();
 				}
 				break;
 			case Direction:
-				if(src.isDirectional()){
+				if(src.isDirectional()) {
 					psrc.setDirUpdateNeeded();
 				}
 				break;
@@ -526,14 +485,9 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 			case Pitch:
 				psrc.setPitchUpdateNeeded();;
 				break;
-			// default:
-			// 	return;
+			default:
+				return;	
 		}
-		if(src instanceof SoundEmitterControl&&mng!=null){
-			SoundEmitterControl emitter=(SoundEmitterControl)src;
-			mng.updateSource(emitter);
-		}
-
 	}
 
 	public void updateSourcePhononParam(AudioSource src, PhononAudioParam param) {
@@ -543,8 +497,9 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		}
 		PhononSourceSlot psrc=getSourceSlot(src);
 		if(psrc==null) return;
-		switch(param){
+		switch(param) {
 			case ApplyAirAbsorption:
+			case ApplyDistanceAttenuation:
 				psrc.setFlagsUpdateNeeded();
 				break;
 			case DipolePower:
@@ -563,12 +518,8 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 				psrc.setSourceRadiusUpdateNeeded();
 				break;
 			default:
-				// System.err.println("Unrecognized Phonon param while updating audio source.");
-				// return;
-		}
-		if(src instanceof SoundEmitterControl&&mng!=null){
-			SoundEmitterControl emitter=(SoundEmitterControl)src;
-			mng.updateSource(emitter);
+				System.err.println("Unrecognized Phonon param while updating audio source.");
+				return;	
 		}
 	}
 
@@ -659,10 +610,6 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	native void setMeshNative(int nTris,int nVerts,long tris,long vert,long mats);
 	native void unsetMeshNative();
 	native void saveMeshAsObjNative(byte[] fileBaseName);
-
-	public AudioManager getMng() {
-		return mng;
-	}
 
 
 }
