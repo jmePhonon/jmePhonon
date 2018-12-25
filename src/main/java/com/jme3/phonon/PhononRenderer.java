@@ -277,7 +277,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		AudioSource.Status currentStatus=src.getStatus();
 
 		// We update the state to Playing.
-		src.setStatus(AudioSource.Status.Playing);
+		if(!instance)src.setStatus(AudioSource.Status.Playing);
 		
 		// If paused we just update the state flag 
 		if(psrc!=null&&currentStatus==AudioSource.Status.Paused){
@@ -305,28 +305,28 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 
 
 				if(index==-1){
-
-					// Failed, something went wrong. Probably no suitable/free slot.
-					GAME_QUEUE.enqueue(() -> {
-						// For now, just stop it 
-						// TODO
-						src.setStatus(AudioSource.Status.Stopped);
-					});
+					if(!instance){
+						// Failed, something went wrong. Probably no suitable/free slot.
+						GAME_QUEUE.enqueue(() -> {
+							// For now, just stop it 
+							// TODO
+							src.setStatus(AudioSource.Status.Stopped);
+						});
+					}
 				}else{
 					// The source is connected, at slot n `index`
-					SOURCES[index].waitingForFinalization(true);
- 
+					SOURCES[index].waitingForFinalization(true); 
 						GAME_QUEUE.enqueue(() -> {
 							SOURCES[index].setSource(src,instance);
 							if(!instance){
-
 								Status st=src.getStatus();
 								src.setStatus(AudioSource.Status.Stopped);
 								src.setChannel(index);
 								src.setStatus(st);
-								SOURCES[index].waitingForFinalization(false);
 							}
-						});
+							SOURCES[index].waitingForFinalization(false);
+
+					});
 				}
 			}
 		});
