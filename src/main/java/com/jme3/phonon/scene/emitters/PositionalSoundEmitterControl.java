@@ -30,7 +30,8 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     private boolean applyAirAbsorption = false;
     private Vector3f previousWorldTranslation=Vector3f.NAN.clone();
     private boolean reverb=false;
-  
+    private Vector3f offset=new Vector3f(),pos=new Vector3f();
+
     public PositionalSoundEmitterControl() { }
 
     public PositionalSoundEmitterControl(String name){
@@ -73,17 +74,19 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     }
     
     @Override
-    public void playInstance(){
-        if (getF32leAudioData().getChannels() > 1) {
-            throw new IllegalStateException("Only mono audio is supported for positional audio nodes");
-        }
+    public void playInstance() {
+        if(getF32leAudioData().getChannels()>1){ throw new IllegalStateException("Only mono audio is supported for positional audio nodes"); }
         super.playInstance();
+    }
+    
+    public void setOffset(Vector3f o) {
+        offset.set(o);
     }
 
     @Override
     public Vector3f getPosition() {
         if(spatial==null) return p;
-        return spatial.getWorldTranslation();
+        return pos.set(spatial.getWorldTranslation()).addLocal(offset);
     }
 
     @Override
