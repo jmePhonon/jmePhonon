@@ -48,11 +48,7 @@ dependencies {
     compile jmerepo + ':jme3-lwjgl:' + jmeversion
     compile jmerepo + ':jme3-jogg:' + jmeversion
     testCompile 'junit:junit:4.11'
-    compile(
-		[group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'],
-	)
- 
-}
+ }
 
 sourceSets{
     main {   
