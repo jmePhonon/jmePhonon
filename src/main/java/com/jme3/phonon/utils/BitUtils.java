@@ -60,37 +60,53 @@ public class BitUtils {
     /**
     * Convert little endian float32 to little endian int24
     */
-    public static void cnvF32leToI24le(byte in_le[], byte out_le[]) {
+    public static void cnvF32leToI24le(byte in_le[], byte out_le[],int offset) {
         int fbe_int = leBytesToBEfloat_int(in_le);
         float fbe = Float.intBitsToFloat(fbe_int); //bigendian float
-        int ibe = (int) (fbe * 8388607f); // bigendian int24 stored inside bigendian int32
-
-        out_le[0] = (byte) (ibe & 0xFF);
-        out_le[1] = (byte) ((ibe >> 8) & 0xFF);
-        out_le[2] = (byte) ((ibe >> 16) & 0xFF);
+        int ibe ;
+        if(fbe<0){
+            ibe= (int) (fbe * 8388608f); // bigendian int24 stored inside bigendian int32
+        }else{
+            ibe= (int) (fbe * 8388607f); // bigendian int24 stored inside bigendian int32
+        }
+        assert ibe>=-8388608f&&ibe<=8388607f: "sample exceeding [-8388608;8388607] range: "+ibe +" converted from "+fbe  ;
+        out_le[offset+0] = (byte) (ibe & 0xFF);
+        out_le[offset+1] = (byte) ((ibe >> 8) & 0xFF);
+        out_le[offset+2] = (byte) ((ibe >> 16) & 0xFF);
     }
     
     /**
     * Convert little endian float32 to little endian int16
     */
-    public static void cnvF32leToI16le(byte in_le[], byte out_le[]) {
+    public static void cnvF32leToI16le(byte in_le[], byte out_le[],int offset) {
         int fbe_int = leBytesToBEfloat_int(in_le);
-        float fbe = Float.intBitsToFloat(fbe_int); //bigendian float
-        short sbe = (short) (fbe * Short.MAX_VALUE);
-        out_le[0] = (byte) ((sbe) & 0xFF);
-        out_le[1] = (byte) ((sbe  >> 8) & 0xFF);
+        float fbe=Float.intBitsToFloat(fbe_int); //bigendian float
+        int sbe;
+        if(fbe<0){
+            sbe=(short)(fbe*32768f);
+        }else{
+            sbe=(short)(fbe*32767f);
+        }
+        assert sbe>=-32768f&&sbe<=32767f: "sample exceeding [-32768;32767] range: "+sbe +" converted from "+fbe   ;
+        out_le[offset+0] = (byte) ((sbe) & 0xFF);
+        out_le[offset+1] = (byte) ((sbe  >> 8) & 0xFF);
         
     }
 
     /**
     * Convert little endian float32 to  int8
     */
-    public static void cnvF32leToI8le(byte in_le[], byte out_le[]) {
+    public static void cnvF32leToI8le(byte in_le[], byte out_le[],int offset) {
         int fbe_int = leBytesToBEfloat_int(in_le);
-        float fbe = Float.intBitsToFloat(fbe_int); //bigendian float
-
-        byte sbe = (byte) (fbe * Byte.MAX_VALUE);
-        out_le[0] = sbe;
+        float fbe=Float.intBitsToFloat(fbe_int); //bigendian float
+        int sbe;
+        if(fbe<0){
+            sbe=(byte) (fbe * 128);
+        }else{
+            sbe=(byte)(fbe*127);
+        }
+        assert sbe>=-128&&sbe<=127: "sample exceeding [-128;127] range: "+sbe  +" converted from "+fbe ;
+        out_le[offset+0] =(byte)sbe;
     }
 
     
@@ -104,10 +120,14 @@ public class BitUtils {
         // Extend sign to int32
         if ((ibe & 0x00800000) > 0) ibe |= 0xFF000000;
         
-        float fbe = (float) ibe / 8388607f;
+        float fbe;
+        if(ibe<0){
+            fbe= (float) ibe / 8388608f;
+        }else{
+            fbe=(float)ibe/8388607f;
+        }
+        assert fbe>=-1&&fbe<=1 : "sample exceeding [-1;1] range: "+fbe+" converted from "+ibe;
         int fbe_int = Float.floatToRawIntBits(fbe);//bigendian int32 representing float32
- 
-        
         bEfloat_intToleBytes(fbe_int, out_le);
 
     }
@@ -117,8 +137,15 @@ public class BitUtils {
      * Convert little endian int16 to little endian float32
      */
     public static void cnvI16leToF32le(byte in_le[],byte out_le[]) {
-        short sbe =(short)((in_le[1]&0xFF) << 8 | (in_le[0]&0xFF)); // bigendian short
-        float fbe = (float) sbe / Short.MAX_VALUE; // bigendian float
+        short sbe=(short)((in_le[1]&0xFF)<<8|(in_le[0]&0xFF)); // bigendian short
+        
+        float fbe;
+        if(sbe<0){
+            fbe = (float) sbe / 32768f; // bigendian float
+        }else{
+            fbe=(float)sbe/32767f; // bigendian float
+        }
+        assert fbe>=-1&&fbe<=1 : "sample exceeding [-1;1] range: "+fbe+" converted from "+sbe;
         int fbe_int=Float.floatToRawIntBits(fbe);//bigendian int32 representing float32
         bEfloat_intToleBytes(fbe_int, out_le);
     }
@@ -129,8 +156,14 @@ public class BitUtils {
      * Convert  int8 to  little endian float32
      */
     public static void cnvI8leToF32le(byte in_le[],byte out_le[]) {
-        byte n =   in_le[0];
-        float fbe = (float) n / Byte.MAX_VALUE; // bigendian float
+        int n=in_le[0];
+        float fbe;
+        if(n<0){
+            fbe = (float) n / 128f; // bigendian float
+        }else{
+            fbe=(float)n/127f; // bigendian float
+        }
+        assert fbe>=-1&&fbe<=1 : "sample exceeding [-1;1] range: "+fbe+" converted from "+n;
         int fbe_int = Float.floatToRawIntBits(fbe); //bigendian int32 representing float32        
         bEfloat_intToleBytes(fbe_int, out_le);
     }
