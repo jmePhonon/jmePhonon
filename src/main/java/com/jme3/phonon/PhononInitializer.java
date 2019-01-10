@@ -39,6 +39,8 @@ import com.jme3.app.LegacyApplication;
 import com.jme3.audio.AudioContext;
 import com.jme3.audio.AudioRenderer;
 import com.jme3.audio.Listener;
+import com.jme3.phonon.format.F32leAudioLoader;
+import com.jme3.phonon.format.F32leStereoAudioLoader;
 import com.jme3.phonon.thread.PhononDummyExecutor;
 import com.jme3.phonon.thread.PhononExecutor;
 import com.jme3.phonon.thread.PhononJavaExecutor;
@@ -111,6 +113,8 @@ class PhononInitializer {
             forceFieldsReplace((LegacyApplication)app, phononRenderer, listener);          
         }
 
+        app.getAssetManager().registerLoader(F32leAudioLoader.class, "f32le");
+        app.getAssetManager().registerLoader(F32leStereoAudioLoader.class, "f32leS");
 
         return phononRenderer;
 }

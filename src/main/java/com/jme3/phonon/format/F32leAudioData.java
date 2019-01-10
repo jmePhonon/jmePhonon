@@ -48,14 +48,13 @@ import com.jme3.util.BufferUtils;
  */
 
 public class F32leAudioData {
-    protected int sampleRate;
-    protected int channels;
-    protected ByteBuffer data;
-    private long dataAddress;
+    private final int sampleRate;
+    private final int channels;
+    private final ByteBuffer data;
+    private final long dataAddress;
+    private final int samples;
 
-    public F32leAudioData() { }
-
-
+  
     /**
      * Get native address
      */
@@ -67,33 +66,42 @@ public class F32leAudioData {
      * Get size in samples
      */
     public int getSizeInSamples() {
-        return data.limit() / 4;
+        return samples;
     }
  
-    public F32leAudioData(AudioData ad) {
-        if (ad instanceof AudioBuffer) {
-            AudioBuffer ab = (AudioBuffer) ad;
-            channels = ab.getChannels();
-            sampleRate = ab.getSampleRate();
-            int bufferBitsPerSample = ab.getBitsPerSample();
+    public F32leAudioData(AudioData ad){
+        if(ad instanceof AudioBuffer){
+            AudioBuffer ab=(AudioBuffer)ad;
+            channels=ab.getChannels();
+            sampleRate=ab.getSampleRate();
+            int bufferBitsPerSample=ab.getBitsPerSample();
 
             // Little endian input buffer
-            ByteBuffer inputData = ab.getData();
-        
-            data = BufferUtils.createByteBuffer((inputData.limit() / (bufferBitsPerSample / 8)) * 4);
-            inputData.rewind();
-            dataAddress = DirectBufferUtils.getAddr(data);
+            ByteBuffer inputData=ab.getData();
 
-            AudioDataEncoder converter = AudioDataEncoderFactory.getEncoder(bufferBitsPerSample);
-            converter.encodeData(inputData, data);
+            samples=(inputData.limit()/(bufferBitsPerSample/8));
+            data=BufferUtils.createByteBuffer(samples*4);
+            inputData.rewind();
+            dataAddress=DirectBufferUtils.getAddr(data);
+
+            AudioDataEncoder converter=AudioDataEncoderFactory.getEncoder(bufferBitsPerSample);
+            converter.encodeData(inputData,data);
 
             inputData.rewind();
             data.rewind();
-        } else if (ad instanceof AudioStream) { // Handle audio stream
+        }else if(ad instanceof AudioStream){ // Handle audio stream
             throw new UnsupportedOperationException("Can't handle audio stream right now");
-        } else {
-            throw new UnsupportedOperationException("Unknown audio data " + ad.getClass());
+        }else{
+            throw new UnsupportedOperationException("Unknown audio data "+ad.getClass());
         }
+    }
+    
+    public F32leAudioData(int channels,int sampleRate,ByteBuffer data) {
+        this.channels = channels;
+        this.sampleRate=sampleRate;           
+        this.samples=data.limit()/4;
+        this.data=data;
+        this.dataAddress = DirectBufferUtils.getAddr(data);
     }
     
     public F32leAudioData rewind() {

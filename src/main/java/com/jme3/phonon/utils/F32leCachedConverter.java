@@ -41,14 +41,21 @@ import com.jme3.phonon.format.F32leAudioData;
  * F32leCachedConverter
  */
 public class F32leCachedConverter {
-	private static final Map<AudioData, F32leAudioData> CONVERSION_CACHE =
-			new WeakHashMap<AudioData, F32leAudioData>();
+	private static final Map<Object, F32leAudioData> CONVERSION_CACHE =
+			new WeakHashMap<Object, F32leAudioData>();
     
-    public static F32leAudioData toF32le(AudioData d) {
-		F32leAudioData o = CONVERSION_CACHE.get(d);
-		if (o == null) {
-			o = new F32leAudioData(d);
-			CONVERSION_CACHE.put(d, o);
+	public static F32leAudioData toF32le(Object d) {
+		F32leAudioData o;
+		if(d instanceof F32leAudioData){
+			o=(F32leAudioData)d;
+		}else if(d instanceof AudioData){
+			o=CONVERSION_CACHE.get(d);
+			if(o==null){
+				o=new F32leAudioData((AudioData)d);
+				CONVERSION_CACHE.put(d,o);
+			}
+		}else{
+			o=CONVERSION_CACHE.get(d);
 		}
 		return o;
 	}
