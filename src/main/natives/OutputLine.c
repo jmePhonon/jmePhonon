@@ -30,7 +30,6 @@
 *
 */
 #include "OutputLine.h"
-#include "memory_layout/OUTPUT_LINE_LAYOUT.h"
 
 struct OutputLine *olNew(struct GlobalSettings *settings,jfloat *outputBuffer){
     struct OutputLine *line= malloc(sizeof(struct OutputLine) );
@@ -55,7 +54,7 @@ struct AudioSource *olConnectSource(struct GlobalSettings *settings, struct Outp
     jint i=0;
     for (i = 0; i < settings->nSourcesPerLine; i++) {
         // find an empty source slot    
-        if (asIsReady(&line->sourcesSlots[i])) {
+        if (asIsFree(settings,&line->sourcesSlots[i])) {
             asConnect(settings,line->uList,&line->sourcesSlots[i], data, sourceSamples,0);
             line->numConnectedSources++;           
             return &line->sourcesSlots[i];
@@ -70,29 +69,20 @@ struct AudioSource *source){
     line->numConnectedSources--;
 }
 
-void olDisconnectSource(struct GlobalSettings *settings,struct OutputLine *line,struct AudioSource *source,jint delayedToLineFrame){
-    asScheduleDisconnection(settings, line->uList, source, delayedToLineFrame);
+void olDisconnectSource(struct GlobalSettings *settings,struct OutputLine *line,struct AudioSource *source){
+    asScheduleDisconnection(settings, line->uList, source);
 }
 
-void olSetLastProcessedFrameId(struct GlobalSettings *settings,struct OutputLine *line, jint v) {
-    ((jint *)line->outputBuffer)[olHeader(LAST_PROCESSED_FRAME)] = v;
-}
-
-jint olGetLastProcessedFrameId(struct GlobalSettings *settings,struct OutputLine *line) {
-    jint n = ((jint *)line->outputBuffer)[olHeader(LAST_PROCESSED_FRAME)];
-    if (n < 0)
-        n = -n;
-    return n;
-}
- 
-
-jint olGetLastPlayedFrameId(struct GlobalSettings *settings,struct OutputLine *line) {
-    return ((jint *)line->outputBuffer)[olHeader(LAST_PLAYED_FRAME)];
-}
-
-void olWriteFrame(struct GlobalSettings *settings,struct OutputLine *line, jint frameIndex, jfloat *frame,jint frameSize,jfloat volume) {
+void olWriteFrame(struct GlobalSettings *settings,struct OutputLine *line,  jfloat *frame,jint frameSize,jfloat volume) {
     for (jint i = 0; i < frameSize; i++) {
-        line->outputBuffer[olHeader(BODY) + frameSize * frameIndex + i] = frame[i]*volume;
+        jfloat v = frame[i] * volume;
+        // clamping
+        if (v > 1.f) {
+            v = 1.f;
+        }else if(v<-1.f){
+            v = -1.f;
+        }
+        line->outputBuffer[i] = v;
     }
 }
 

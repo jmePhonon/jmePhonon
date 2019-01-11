@@ -60,7 +60,7 @@ public class BitUtilsUnitTest extends TestCase {
         }
     }
 
-    private void runTestFor(String name,Object inputs[][], long maxValue, int dataSize, BiConsumer<ByteBuffer, byte[]> reader,
+    private void runTestFor(String name,Object inputs[][], long maxValuePos,long maxValueNeg, int dataSize, BiConsumer<ByteBuffer, byte[]> reader,
             BiConsumer<byte[], byte[]> converter1, BiConsumer<byte[], byte[]> converter2
 
     ) {
@@ -78,7 +78,7 @@ public class BitUtilsUnitTest extends TestCase {
             reader.accept(inputBuffer, data);
             converter1.accept(data, float_data);
 
-            float expectedFloat = (float) inputValue / maxValue;
+            float expectedFloat =inputValue >0? (float) inputValue / maxValuePos:(float) inputValue /maxValueNeg;
             float convertedFloat = bytesLEToFloatBE(float_data);
             // System.out.println("Expected float: " + expectedFloat + " Converted float: " + convertedFloat);
             assertEquals("Error in test "+name+" n"+r+", Expected float: " + expectedFloat + " but converted float is: " + convertedFloat,expectedFloat, convertedFloat);
@@ -88,13 +88,13 @@ public class BitUtilsUnitTest extends TestCase {
         }
     }
 
-    private void runRandomTestFor(String name,int ntests, int maxValue, int dataSize, BiConsumer<ByteBuffer, byte[]> reader,
+    private void runRandomTestFor(String name,int ntests, int maxValuePos,int maxValueNeg, int dataSize, BiConsumer<ByteBuffer, byte[]> reader,
             BiConsumer<byte[], byte[]> converter1, BiConsumer<byte[], byte[]> converter2
 
     ) {
         Object inputs[][] = new Object[ntests][2];
         for (int i = 0; i < ntests; i++) {
-            long value = (long) (Math.random() * (maxValue * 2 + 1) - maxValue);
+            long value = (long) (Math.random() * (maxValuePos +maxValueNeg + 1) - maxValueNeg);
 
             ByteBuffer byte_valuebbf = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).putLong(value);
             byte_valuebbf.rewind().position(8 - dataSize);
@@ -111,26 +111,23 @@ public class BitUtilsUnitTest extends TestCase {
             inputs[i] = new Object[] { value, bval };
         }
 
-        runTestFor(name,inputs, maxValue, dataSize, reader, converter1, converter2);
+        runTestFor(name,inputs, maxValuePos,maxValueNeg, dataSize, reader, converter1, converter2);
 
     }
 
     @Test
     public void testI8Conversion() {
-        int maxValue = Byte.MAX_VALUE;
-        runRandomTestFor("i8 Conversion Test",1000, maxValue, 1, BitUtils::nextI8le, BitUtils::cnvI8leToF32le, BitUtils::cnvF32leToI8le);
+        runRandomTestFor("i8 Conversion Test",1000, Byte.MAX_VALUE,-Byte.MIN_VALUE, 1, BitUtils::nextI8le, BitUtils::cnvI8leToF32le, BitUtils::cnvF32leToI8le);
     }
 
     @Test
     public void testI16Conversion() {
-        int maxValue = Short.MAX_VALUE;
-        runRandomTestFor("i16 Conversion Test",1000, maxValue, 2, BitUtils::nextI16le, BitUtils::cnvI16leToF32le, BitUtils::cnvF32leToI16le);
+        runRandomTestFor("i16 Conversion Test",1000,  Short.MAX_VALUE,- Short.MIN_VALUE, 2, BitUtils::nextI16le, BitUtils::cnvI16leToF32le, BitUtils::cnvF32leToI16le);
     }
 
     @Test
     public void testI24Conversion() {
-        int maxValue = 8388607;
-        runRandomTestFor("i24 Conversion Test",1000, maxValue, 3, BitUtils::nextI24le, BitUtils::cnvI24leToF32le, BitUtils::cnvF32leToI24le);
+        runRandomTestFor("i24 Conversion Test",1000, 8388607,8388608, 3, BitUtils::nextI24le, BitUtils::cnvI24leToF32le, BitUtils::cnvF32leToI24le);
     }
 
 }

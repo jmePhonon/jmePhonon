@@ -82,7 +82,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	private final PhononSoundPlayer PLAYER;
 	private final PhononListener PHONON_LISTENER;
 	private PhononMesh sceneMesh;
-	private volatile boolean playing=false,renderedInitialized=false;
+	private volatile boolean renderedInitialized=false;
 	
 	private volatile Thread phononThread;
 	private volatile Thread gameThread;
@@ -95,7 +95,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	public PhononRenderer(PhononSettings settings) throws Exception{
 		SETTINGS=settings;
 		settings.executor.setUpdater(this);
-		OUTPUT_LINE=new PhononOutputLine(settings.frameSize,settings.nOutputChannels,settings.bufferSize);
+		OUTPUT_LINE=new PhononOutputLine(settings.frameSize,settings.nOutputChannels);
 		PHONON_LISTENER=new PhononListener();
 		SOURCES=new PhononSourceSlot[SETTINGS.nSourcesPerLine];
 		PLAYER=settings.system.newPlayer();
@@ -165,17 +165,14 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 					SETTINGS.materialGenerator.getAllMaterials().size(),
 					DirectBufferUtils.getAddr(materials),
 					OUTPUT_LINE.getAddress(),
-
 					SETTINGS
 			);
 
 			if(SETTINGS.initPlayers){ // player
-				PLAYER.init(SETTINGS.system,SETTINGS.device,OUTPUT_LINE,SETTINGS.sampleRate,SETTINGS.nOutputChannels,SETTINGS.outputSampleSize,SETTINGS.maxPreBuffering);
+				PLAYER.init(SETTINGS,SETTINGS.system,SETTINGS.device,OUTPUT_LINE,SETTINGS.sampleRate,SETTINGS.nOutputChannels,SETTINGS.frameSize,SETTINGS.outputSampleSize);
 			}
 			
-			for(int i=0;i<SOURCES.length;i++){
-				SOURCES[i].setLine(OUTPUT_LINE);
-			}
+			
 
 		}catch(Exception e){
 			e.printStackTrace();
@@ -209,14 +206,17 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		PHONON_LISTENER.commit(0);
 
 		for(PhononSourceSlot l:SOURCES){
-			if(l.isReady())l.commit(0);
+			if(l.isReady()&&!l.isMarkedForDisconnection())l.commit(0);
 		}
 
 		updateNative();
 
-		if(playing) {
-			PLAYER.loop();			
+		for(PhononSourceSlot l:SOURCES){
+			if(l.isReady()&&!l.isMarkedForDisconnection()) l.checkIfMarkedForDisconnection(); // check if over
 		}
+		
+		PLAYER.play(OUTPUT_LINE.getFrame(),OUTPUT_LINE.getFrameSize(),OUTPUT_LINE.getChannels());
+		
 	}
 
 	/* Game loop */
@@ -230,18 +230,18 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		PHONON_LISTENER.update(0);
 		for(PhononSourceSlot sourceData:SOURCES){
 			if(!sourceData.isReady()) continue;
-			sourceData.update(0);		
 			// Check if stopped & unpair
-			if(sourceData.isOver()){
+			if(sourceData.isMarkedForDisconnection()){
 				// System.out.println("Recycle because its over");
 				if(sourceData.isInstance()){
 					stopInstance(sourceData.getId());
 				}else if(sourceData.getSource()!=null&&sourceData.getSource().getStatus()!=AudioSource.Status.Stopped){
 					stop(sourceData.getSource());
 				}			
+			}else{
+				sourceData.update(0);		
 			}
         }
-		playing=true;
 	}
 
 
@@ -323,7 +323,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 								src.setStatus(AudioSource.Status.Stopped);
 								src.setChannel(index);
 								src.setStatus(st);
-							}
+							}							
 							SOURCES[index].waitingForFinalization(false);
 
 					});
@@ -343,6 +343,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 			@Override
 			public void run() {
 				// Disconnect the source from phonon
+				SOURCES[index].commit(0);
 				disconnectSourceNative(index);
 				SOURCES[index].waitingForFinalization(false); 
 		
@@ -358,17 +359,19 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 
 		final int id=src.getChannel();
 		if(id==-1) return; //nb channel is `volatile` in jme's audio node implementation
-		
+		SOURCES[id].waitingForFinalization(true);
+
 		src.setStatus(Status.Stopped);
 
 		SOURCES[id].setSource(null,false);
-		SOURCES[id].waitingForFinalization(true);
 		
 		src.setChannel(-1);
 
 		PHONON_QUEUE.enqueue(new Runnable(){
 			@Override
 			public void run() {
+				SOURCES[id].commit(0);
+
 				// Disconnect the source from phonon
 				disconnectSourceNative(id);
 				SOURCES[id].waitingForFinalization(false); 	

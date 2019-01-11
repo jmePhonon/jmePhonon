@@ -51,8 +51,9 @@ struct OutputLine *OUTPUT_LINE;
 struct Listener *GLOBAL_LISTENER;
 
 struct {
-    jfloat *zeroFill;
-    jfloat *frame1;
+    // jfloat *zeroFill;
+    jfloat *tmpFrame;
+    jfloat *tmpSkipEnvFrame;
     jfloat *monoFrame1;
     jfloat **mixerQueue;
     jfloat *envframe;
@@ -79,7 +80,6 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     SETTINGS.nOutputChannels = GET_SETTINGS_INT(jSettings, settingsClass, "nOutputChannels");
     SETTINGS.frameSize = GET_SETTINGS_INT(jSettings, settingsClass, "frameSize");
     SETTINGS.sampleRate = GET_SETTINGS_INT(jSettings, settingsClass, "sampleRate");
-    SETTINGS.bufferSize = GET_SETTINGS_INT(jSettings, settingsClass, "bufferSize");
     SETTINGS.isPassthrough = GET_SETTINGS_BOOL(jSettings, settingsClass, "passThrough");
 
     // Create the listener (from where the sounds are heard)
@@ -89,15 +89,21 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
     OUTPUT_LINE = olNew(&SETTINGS,(jfloat *)(intptr_t)outputLineAddr);
       
     // Allocate the effects frames
-    Temp.zeroFill = (jfloat *)calloc( SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
-    Temp.frame1 = (jfloat *)calloc( SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
+    // Temp.zeroFill = (jfloat *)malloc( SETTINGS.frameSize * SETTINGS.nOutputChannels*4);
+    // for(jint i=0;i< SETTINGS.frameSize * SETTINGS.nOutputChannels;i++){
+    //     Temp.zeroFill[i]=0.f;
+    // }
+    Temp.tmpFrame = (jfloat *)malloc( SETTINGS.frameSize * SETTINGS.nOutputChannels*4);
+    Temp.tmpSkipEnvFrame = (jfloat *)malloc( SETTINGS.frameSize * SETTINGS.nOutputChannels*4);
     Temp.envframe = (jfloat *)malloc( SETTINGS.frameSize * SETTINGS.nOutputChannels*4);
-    Temp.monoFrame1 = (jfloat *)calloc( SETTINGS.frameSize,4);
+    for(jint i=0;i< SETTINGS.frameSize * SETTINGS.nOutputChannels;i++) Temp.envframe[i]=0.f;
+    
+    Temp.monoFrame1 = (jfloat *)malloc( SETTINGS.frameSize*4);
 
     // Allocate the mixer frames
-    Temp.mixerQueue = (jfloat **)calloc( SETTINGS.nSourcesPerLine,sizeof(jfloat *));
+    Temp.mixerQueue = (jfloat **)malloc( SETTINGS.nSourcesPerLine*sizeof(jfloat *));
     for (jint i = 0; i < SETTINGS.nSourcesPerLine; i++) {
-        Temp.mixerQueue[i] = (jfloat *)calloc(SETTINGS.frameSize * SETTINGS.nOutputChannels,4);
+        Temp.mixerQueue[i] = (jfloat *)malloc(SETTINGS.frameSize * SETTINGS.nOutputChannels*4);
     }
  
     // Initialize phonon
@@ -122,9 +128,11 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv 
     olDestroy(&SETTINGS, OUTPUT_LINE);
     phDestroy(&SETTINGS);
 
-    free(Temp.frame1);
+    free(Temp.tmpFrame);
+    free(Temp.tmpSkipEnvFrame);
+
     free(Temp.envframe);    
-    free(Temp.zeroFill);
+    // free(Temp.zeroFill);
 
 
     free(Temp.monoFrame1);
@@ -140,10 +148,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv 
  */
 JNIEXPORT jint JNICALL Java_com_jme3_phonon_PhononRenderer_connectSourceNative(JNIEnv *env, jobject obj, jint sizeInSamples, jlong sourceAddr) {
     struct AudioSource *source = olConnectSource(&SETTINGS, OUTPUT_LINE, (jfloat *)(intptr_t)sourceAddr,sizeInSamples);
-    phConnectSource(&SETTINGS, source); // We connect the source to phonon
     if (source == NULL) {
         return -1;
     }else{
+        phConnectSource(&SETTINGS, source); // We connect the source to phonon
         return source->id;
     }
 }
@@ -195,88 +203,100 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         struct OutputLine *line = OUTPUT_LINE;
         
 
-        jint frameIndex = olGetLastProcessedFrameId(&SETTINGS, line);
-        jint lastPlayedFrameIndex = olGetLastPlayedFrameId(&SETTINGS, line);
-        jint lineBufferSize = SETTINGS.bufferSize;
+        jfloat *inFrame;
 
-        // Processing is too fast, skip.
-        if (frameIndex - lastPlayedFrameIndex >= SETTINGS.bufferSize ) {
-            return;
-        }
+        jint mixerQueueIndex = 0;    
+        jint skipEnvMixerQueueIndex = 0;    
 
         struct UList *uList = line->uList;
         struct UListNode *uNode = uList->head->next;
-        jfloat *inFrame;
-        jfloat *outFrame;
-
-        jint mixerQueueSize = 0;    
+        // for(jint si=0;si<SETTINGS.nSourcesPerLine;si++){            
         while (!ulistIsTail(uList, uNode)) {
+            // struct AudioSource *audioSource = &line->sourcesSlots[si];
             struct AudioSource *audioSource = uNode->audioSource;
-            jboolean isPlaying = asHasFlag(&SETTINGS, audioSource, PLAYING);
-            if (isPlaying) {
+            if(asIsReady(&SETTINGS,audioSource)){
+                jboolean isPlaying = asHasFlag(&SETTINGS, audioSource, PLAYING);
+                if (isPlaying ) {
+                    jboolean loop = asHasFlag(&SETTINGS, audioSource, LOOP);
+                    jint nchannels = asGetNumChannels(&SETTINGS, audioSource);
+                    inFrame = nchannels == 1 ? Temp.monoFrame1 : Temp.tmpFrame;
+                    if (asReadNextFrame(&SETTINGS, audioSource, inFrame)) {
+                        if (!loop) {                       
+                            olDisconnectSource(&SETTINGS, OUTPUT_LINE, audioSource);
+                        }else{
+                            asResetForLoop(&SETTINGS,audioSource);
+                        }
+                    }    
 
-                jboolean loop = asHasFlag(&SETTINGS, audioSource, LOOP);
-                jint nchannels = asGetNumChannels(&SETTINGS, audioSource);
-
-                inFrame = nchannels == 1 ? Temp.monoFrame1 : Temp.frame1;
-
-                if (asReadNextFrame(&SETTINGS, audioSource, inFrame)) {
-                    // Reached end
-                    if (!loop) {                       
-                        olDisconnectSource(&SETTINGS, OUTPUT_LINE, audioSource, frameIndex);
-                    }
-                }else{
                     jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
-                    if (SETTINGS.isPassthrough || !isPositional) {
-                        passThrough(&SETTINGS, inFrame,
-                        Temp.mixerQueue[mixerQueueSize++],nchannels);
-                    } else {
-                        //Positional source is always mono
-                        phProcessFrame(&SETTINGS, GLOBAL_LISTENER, audioSource, inFrame,Temp.mixerQueue[mixerQueueSize++]);
+                    if(!isPositional){
+                        jint nchannels = asGetNumChannels(&SETTINGS, audioSource);
+                        passThrough(&SETTINGS, inFrame, Temp.mixerQueue[(SETTINGS.nSourcesPerLine ) - (++skipEnvMixerQueueIndex)  ], nchannels);
+                    } else { // Positionals are always mono                 
+                        phProcessFrame(&SETTINGS, GLOBAL_LISTENER, audioSource, inFrame,Temp.mixerQueue[mixerQueueIndex++]);
                     }
                 }
-            }
+            }            
             uNode = uNode->next;
         }
 
+  
         jfloat *masterVolume = lsGetVolume(&SETTINGS, GLOBAL_LISTENER);
+    
+    
+        jfloat *outFrame;
+        jfloat *outSkipEnvFrame;
 
-        if(mixerQueueSize!=0){
-            if(mixerQueueSize==0){
-                outFrame = Temp.zeroFill;
-            }else if (mixerQueueSize == 1) {
+        jboolean hasFrame1=false;
+        jboolean hasFrame2=false;
+
+        if (mixerQueueIndex != 0) {
+            hasFrame1 = true;
+            if (mixerQueueIndex == 1) {
                 outFrame = Temp.mixerQueue[0];
             } else {
-                outFrame = Temp.frame1;
-                if (SETTINGS.isPassthrough) {
-                    passThroughMixer(&SETTINGS, Temp.mixerQueue, mixerQueueSize, outFrame);
-                } else {
-                    phMixOutputBuffers(Temp.mixerQueue, mixerQueueSize, outFrame);
-                }
+                outFrame = Temp.tmpFrame;
+                phMixOutputBuffers(Temp.mixerQueue, 0,mixerQueueIndex, outFrame);
             }
-
-
-            phGetEnvFrame(&SETTINGS,GLOBAL_LISTENER,Temp.envframe);      
-
+            phCalculateListenerCentricReverb(&SETTINGS, GLOBAL_LISTENER, outFrame);
+        }
+        if(skipEnvMixerQueueIndex!=0){
+            hasFrame2=true;
+            if (skipEnvMixerQueueIndex ==1) {
+                outSkipEnvFrame = Temp.mixerQueue[SETTINGS.nSourcesPerLine - skipEnvMixerQueueIndex ];
+            } else {
+                outSkipEnvFrame = Temp.tmpSkipEnvFrame;
+                phMixOutputBuffers(Temp.mixerQueue,SETTINGS.nSourcesPerLine  - skipEnvMixerQueueIndex , skipEnvMixerQueueIndex, outSkipEnvFrame);
+            }
+        }
+        if(hasFrame1||hasFrame2){
+            phGetEnvFrame(&SETTINGS,GLOBAL_LISTENER,Temp.envframe);
+            
             jfloat *mixerQueue0 = Temp.mixerQueue[0];
             jfloat *mixerQueue1 = Temp.mixerQueue[1];
-            Temp.mixerQueue[0] = outFrame;
-            Temp.mixerQueue[1] = Temp.envframe;
-            
-            phMixOutputBuffers(Temp.mixerQueue, 2, Temp.mixerQueue[2]);
-            outFrame=Temp.mixerQueue[2];
-            
+            jfloat *mixerQueue2 = Temp.mixerQueue[2];
+
+            jint qi = 0;
+            if(hasFrame1)Temp.mixerQueue[qi++] = outFrame;            
+            if(hasFrame2)Temp.mixerQueue[qi++] = outSkipEnvFrame;
+            Temp.mixerQueue[qi++] = Temp.envframe;
+
+            phMixOutputBuffers(Temp.mixerQueue,0, qi, Temp.mixerQueue[qi]);
+            outFrame=Temp.mixerQueue[qi];
+
             Temp.mixerQueue[0] = mixerQueue0;
             Temp.mixerQueue[1] = mixerQueue1;
+            Temp.mixerQueue[2] = mixerQueue2;
             
-                        // outFrame=Temp.envframe;
-
-            olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
-            olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+            olWriteFrame(&SETTINGS, line, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
         }else{
-            phGetEnvFrame(&SETTINGS,GLOBAL_LISTENER,Temp.envframe);
-            olWriteFrame(&SETTINGS, line, frameIndex % lineBufferSize, Temp.envframe, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
-            olSetLastProcessedFrameId(&SETTINGS, line, ++frameIndex);
+            phGetEnvFrame(&SETTINGS, GLOBAL_LISTENER, Temp.envframe);
+            outFrame = Temp.envframe;
+            olWriteFrame(&SETTINGS, line, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
         }
+        // else{
+        //     outFrame = Temp.zeroFill;
+        //     olWriteFrame(&SETTINGS, line, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
+        // }
     
 }

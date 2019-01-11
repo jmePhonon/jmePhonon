@@ -82,7 +82,6 @@ void* pntLoop(void) {
         }
 
         while (ThreadContext.loop) {
-            plSleep();
             pntCallJMethod("run");
         }
     #endif 

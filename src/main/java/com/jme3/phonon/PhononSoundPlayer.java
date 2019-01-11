@@ -31,13 +31,17 @@
 */
 package com.jme3.phonon;
 
+import java.nio.ByteBuffer;
+
 import com.jme3.phonon.PhononOutputLine;
 
-public interface PhononSoundPlayer<SYSTEM extends PhononSoundSystem,DEVICE extends PhononSoundDevice> {
+public interface PhononSoundPlayer<SETTINGS extends PhononSettings,SYSTEM extends PhononSoundSystem,DEVICE extends PhononSoundDevice> {
     public void init(
+        SETTINGS settings,
         SYSTEM system,
         DEVICE device,
-    PhononOutputLine chan, int sampleRate,int outputChannels,int outputSampleSize,int maxPreBufferingSamples) throws Exception;
+    PhononOutputLine chan, int sampleRate,int channels,int frameSize,int sampleSize) throws Exception;
     public void close();
-    public void loop();
+
+    public void play(ByteBuffer frame,int frameSize,int channels);
 }

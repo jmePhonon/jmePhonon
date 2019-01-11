@@ -48,7 +48,6 @@ struct AudioSource {
     drt _directivity;
 
     jboolean loop;
-    jboolean waitingForFinalization;
 
     void *phononContext; // Pointer to the phonon context (nb. must be manually freed)
     struct UListNode* uNode; // U-List node
@@ -72,7 +71,10 @@ void asDestroy(struct GlobalSettings *settings, struct AudioSource *source, jint
 /**
  * Check if connected
  */
-jboolean asIsReady(struct AudioSource *source);
+jboolean asIsReady(struct GlobalSettings *settings,struct AudioSource *source);
+
+jboolean asIsFree(struct GlobalSettings *settings,struct AudioSource *source);
+
 /**
  * Read the next frame from the audio source, restart from the beginning when the end is reached
  * @return true if the end of the source has been reached
@@ -97,8 +99,8 @@ void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source,
 jint asGetNumChannels(struct GlobalSettings *settings, struct AudioSource *source);
 #define asHasFlag(settings, source, flag) (_asHasFlag(settings, source, asFlag(flag)))
 jboolean _asHasFlag(struct GlobalSettings *settings, struct AudioSource *source, jint flag);
-void asSetStopAt(struct GlobalSettings *settings, struct AudioSource *source, jint index);
 void asConnect(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jfloat *data, jint samples,jint jumpToFrame);
-void asScheduleDisconnection(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jint delayedToLineFrame);
+void asScheduleDisconnection(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot);
 void asFinalizeDisconnection(struct GlobalSettings *settings, struct UList *updateList, struct AudioSource *slot);
+void asResetForLoop(struct GlobalSettings *settings,struct AudioSource *source);
 #endif

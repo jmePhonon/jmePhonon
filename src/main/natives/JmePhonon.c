@@ -64,7 +64,12 @@
         IPLhandle probeManager;
 
         IPLhandle ambisonicsBinauralEffect;
+
+        IPLhandle listenerCentricReverb;
+
+        jint nSourceDependentConvolutionEffects;
         struct ConvolutionEffect *convolutionEffectsQueue;
+        jboolean useBinauralRendererForSources;
 
     } PhSharedContext; // This context is shared between every source
 
@@ -76,8 +81,10 @@
 
     struct PhContext { //nb for each source we need to create a new PhContext    
         IPLhandle binauralEffect;
+        IPLhandle panningEffect;
         IPLhandle directSoundEffect;
         IPLDirectSoundEffectOptions directSoundEffectOptions;
+        jboolean needInitialization;
         struct ConvolutionEffect *convolutionEffect;
     };
 
@@ -88,46 +95,41 @@
         struct PhContext *context = malloc(sizeof(struct PhContext));
         audioSource->phononContext = context;
 
+        context->convolutionEffect = NULL;
+
         // Direct sound
         iplCreateDirectSoundEffect(PhSharedContext.environmentalRenderer,
                                    PhSharedContext.monoFormat, PhSharedContext.monoFormat, &context->directSoundEffect);
 
         // Rendering 
-        iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, 
-            PhSharedContext.stereoFormat, &context->binauralEffect);  
+        if(PhSharedContext.useBinauralRendererForSources){
+            iplCreateBinauralEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, 
+                PhSharedContext.stereoFormat, &context->binauralEffect);  
+        }
+
+        iplCreatePanningEffect(PhSharedContext.binauralRenderer, PhSharedContext.monoFormat, 
+            PhSharedContext.stereoFormat, &context->panningEffect);  
     }
 
     void phConnectSource(struct GlobalSettings *settings, struct AudioSource *audioSource){
-           struct PhContext *context = audioSource->phononContext ;
-        // Connect Convolution effect (if available);
-        context->convolutionEffect = NULL;
-        // printf("%d max convolution sources\n", PhSharedContext.simulationSettings.maxConvolutionSources);
-        if (PhSharedContext.simulationSettings.maxConvolutionSources > 0) {
-            if(asHasFlag(settings,audioSource,REVERB)){
-                for(jint i=0;i<PhSharedContext.simulationSettings.maxConvolutionSources;i++){
-                    if(!PhSharedContext.convolutionEffectsQueue[i].inUse){
-                        // printf("use convolution effect n %d\n", i);
-                        context->convolutionEffect = &PhSharedContext.convolutionEffectsQueue[i];
-                        context->convolutionEffect->inUse=true;
-                        break;
-                    }
-                }
-            }
-        }
+        struct PhContext *context = audioSource->phononContext ;
+        // Note / FIXME: due to the way non blocking updates are performed across game and audio threads,
+        // the scene data is not refreshed when this method is called, so we need to delay the initialization
+        // to the beginning of phProcessFrame
+        context->needInitialization = true;
+      
     }
 
 
 void phDisconnectSource(struct GlobalSettings *settings,struct AudioSource *audioSource){
     struct PhContext *context = audioSource->phononContext;
-    if (PhSharedContext.simulationSettings.maxConvolutionSources > 0) {
-        if(context->convolutionEffect!=NULL){
-            // printf("Flush convolution effect n%d\n\n",context->convolutionEffect->id);
-            iplFlushConvolutionEffect(context->convolutionEffect->effect);
-            context->convolutionEffect->inUse = false;
-            context->convolutionEffect = NULL;
-        }
+    if(context->convolutionEffect!=NULL){
+        iplFlushConvolutionEffect(context->convolutionEffect->effect);
+        context->convolutionEffect->inUse = false;
+        context->convolutionEffect = NULL;
     }
-    iplFlushBinauralEffect(context->binauralEffect);
+    if(PhSharedContext.useBinauralRendererForSources)iplFlushBinauralEffect(context->binauralEffect);
+    iplFlushPanningEffect(context->panningEffect);
     iplFlushDirectSoundEffect(context->directSoundEffect);    
 }
 
@@ -137,11 +139,9 @@ void phDisconnectSource(struct GlobalSettings *settings,struct AudioSource *audi
  */
 void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSource){
     struct PhContext *context = audioSource->phononContext;
-
-    // iplDestroyPanningEffect(&context->panningEffect);
-    iplDestroyBinauralEffect(&context->binauralEffect);
+    iplDestroyPanningEffect(&context->panningEffect);
+    if(PhSharedContext.useBinauralRendererForSources)iplDestroyBinauralEffect(&context->binauralEffect);
     iplDestroyDirectSoundEffect(&context->directSoundEffect);
-
     free(audioSource->phononContext);
 }
 
@@ -182,10 +182,22 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
     PhSharedContext.simulationSettings.numThreads = GET_SETTINGS_INT(jSettings, settingsClass, "numThreads");
     PhSharedContext.simulationSettings.irDuration = GET_SETTINGS_FLOAT(jSettings, settingsClass, "irDuration");
     PhSharedContext.simulationSettings.ambisonicsOrder = GET_SETTINGS_INT(jSettings, settingsClass, "ambisonicsOrder");
-    PhSharedContext.simulationSettings.maxConvolutionSources = GET_SETTINGS_INT(jSettings, settingsClass, "maxConvolutionSources");
+    
+    PhSharedContext.nSourceDependentConvolutionEffects=GET_SETTINGS_INT(jSettings, settingsClass, "maxConvolutionSources");
+    PhSharedContext.simulationSettings.maxConvolutionSources = PhSharedContext.nSourceDependentConvolutionEffects;
+
+    jboolean listenerCentricReverb=GET_SETTINGS_BOOL(jSettings, settingsClass, "listenerCentricReverb");
+    if(listenerCentricReverb){
+        PhSharedContext.simulationSettings.maxConvolutionSources++;
+    }
+
     PhSharedContext.simulationSettings.bakingBatchSize = GET_SETTINGS_INT(jSettings, settingsClass, "bakingBatchSize");
-	PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON;
+    PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON;
     // PhSharedContext.simulationSettings.numOcclusionSamples = 4; // ???
+
+
+    PhSharedContext.useBinauralRendererForSources=GET_SETTINGS_BOOL(jSettings, settingsClass, "useBinauralRendererForSources");
+
     //////////////////
 
   
@@ -295,9 +307,9 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
     
     // Build convolution effects queue
     // When a sound is complete, the effect will be released, flushed and recycled for the next sound.
-    if(PhSharedContext.simulationSettings.maxConvolutionSources>0){
-        PhSharedContext.convolutionEffectsQueue = malloc(sizeof(struct ConvolutionEffect)*PhSharedContext.simulationSettings.maxConvolutionSources);
-        for(jint i=0;i<PhSharedContext.simulationSettings.maxConvolutionSources;i++){
+    if(PhSharedContext.nSourceDependentConvolutionEffects>0){
+        PhSharedContext.convolutionEffectsQueue = malloc(sizeof(struct ConvolutionEffect)*PhSharedContext.nSourceDependentConvolutionEffects);
+        for(jint i=0;i<PhSharedContext.nSourceDependentConvolutionEffects;i++){
             IPLBakedDataIdentifier idf;
             idf.identifier=0; // TODO: Implement baking
             idf.type=IPL_BAKEDDATATYPE_REVERB;
@@ -311,6 +323,19 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
         }
     }
 
+    if(listenerCentricReverb){
+        IPLBakedDataIdentifier idf1;
+        idf1.identifier=0; // TODO: Implement baking
+        idf1.type=IPL_BAKEDDATATYPE_REVERB;
+        iplCreateConvolutionEffect(PhSharedContext.environmentalRenderer, idf1,
+                                    IPL_SIMTYPE_REALTIME /*TODO: add baking*/,
+                                        PhSharedContext.stereoFormat,
+                                        PhSharedContext.ambisonicsFormatD,
+                                        & PhSharedContext.listenerCentricReverb);    
+    }else{
+        PhSharedContext.listenerCentricReverb = NULL;
+    }
+
     // Queue used to mix the frames
     PhSharedContext.mixerQueue = malloc(sizeof(IPLAudioBuffer)*mixerQueueSize);
     for(jint i=0;i<mixerQueueSize;i++){
@@ -322,8 +347,12 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
 void phDestroy(struct GlobalSettings *settings){
     // Destroy everything
 
-    if(PhSharedContext.simulationSettings.maxConvolutionSources>0){
-        for(jint i=0;i<PhSharedContext.simulationSettings.maxConvolutionSources;i++){
+    if(PhSharedContext.listenerCentricReverb!=NULL){
+        iplDestroyConvolutionEffect(&PhSharedContext.listenerCentricReverb);
+    }
+
+    if (PhSharedContext.nSourceDependentConvolutionEffects > 0) {
+        for(jint i=0;i<PhSharedContext.nSourceDependentConvolutionEffects;i++){
             iplDestroyConvolutionEffect(&PhSharedContext.convolutionEffectsQueue[i].effect);    
         }
     }
@@ -350,68 +379,114 @@ void phDestroy(struct GlobalSettings *settings){
 
 void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame){
     struct PhContext *ctx=asource->phononContext;
-    if(ctx==NULL){
-        printf("FIXME: PhContext is null for this source?\n");
-        return;
+
+    // Postponed initialization
+    if(ctx->needInitialization){
+        ctx->convolutionEffect = NULL;
+        if (PhSharedContext.nSourceDependentConvolutionEffects> 0) {
+            if(asHasFlag(settings,asource,REVERB)){
+                for(jint i=0;i<PhSharedContext.nSourceDependentConvolutionEffects;i++){
+                    if(!PhSharedContext.convolutionEffectsQueue[i].inUse){
+                        ctx->convolutionEffect = &PhSharedContext.convolutionEffectsQueue[i];
+                        ctx->convolutionEffect->inUse=true;
+                        break;
+                    }
+                }
+            }
+        }
+        ctx->needInitialization = false;
     }
+    /////
+
+    IPLAudioBuffer soundOut=(IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, outFrame,NULL};
+ // Positionals are always mono 
+
+        IPLAudioBuffer soundIn=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize,inFrame,NULL};
     
-    jint directOcclusionMode = asGetDirectOcclusionMode(settings, asource);
-    jint directOcclusionMethod = asGetDirectOcclusionMethod(settings, asource);
-    jfloat sourceRadius = asGetSourceRadius(settings, asource);
+        jint directOcclusionMode = asGetDirectOcclusionMode(settings, asource);
+        jint directOcclusionMethod = asGetDirectOcclusionMethod(settings, asource);
+        jfloat sourceRadius = asGetSourceRadius(settings, asource);
 
-    ctx->directSoundEffectOptions.applyDirectivity = asHasFlag(settings, asource, DIRECTIONAL);
-    ctx->directSoundEffectOptions.applyDistanceAttenuation = asHasFlag(settings, asource, POSITIONAL);
-    ctx->directSoundEffectOptions.applyAirAbsorption = asHasFlag(settings, asource, AIRABSORPTION);
-    ctx->directSoundEffectOptions.directOcclusionMode = directOcclusionMode;
+        ctx->directSoundEffectOptions.applyDirectivity = asHasFlag(settings, asource, DIRECTIONAL);
+        ctx->directSoundEffectOptions.applyDistanceAttenuation = asHasFlag(settings, asource, POSITIONAL);
+        ctx->directSoundEffectOptions.applyAirAbsorption = asHasFlag(settings, asource, AIRABSORPTION);
+        ctx->directSoundEffectOptions.directOcclusionMode = directOcclusionMode;
 
-    IPLSource source;
-    source.position = (*asGetSourcePosition(settings, asource));
-    source.ahead = (*asGetSourceDirection(settings, asource));
-    source.up = (*asGetSourceUp(settings, asource));
-    source.right = (*asGetSourceRight(settings, asource));
-    source.directivity = (*asGetSourceDirectivity(settings, asource));
+        IPLSource source;
+        source.position = (*asGetSourcePosition(settings, asource));
+        source.ahead = (*asGetSourceDirection(settings, asource));
+        source.up = (*asGetSourceUp(settings, asource));
+        source.right = (*asGetSourceRight(settings, asource));
+        source.directivity = (*asGetSourceDirectivity(settings, asource));
+        
     
-   
-    IPLVector3 *listenerPos = lsGetPosition(settings, listener);
-    IPLVector3 *listenerUp = lsGetUp(settings, listener);
-    IPLVector3 *listenerDirection = lsGetDirection(settings, listener);
-
-    IPLVector3 direction = iplCalculateRelativeDirection(source.position, (*listenerPos),
-                                                        (*listenerDirection), (*listenerUp));
-
-    // Find direct path
-    IPLDirectSoundPath path = iplGetDirectSoundPath(PhSharedContext.environment,
-                                                    (*listenerPos),
-                                                    (*listenerDirection),
-                                                    (*listenerUp),
-                                                    source,
-                                                    sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
-                                                    directOcclusionMode,
-                                                    directOcclusionMethod);
-
-    IPLAudioBuffer directSoundIn=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize,inFrame,NULL};
-    IPLAudioBuffer directSoundOut=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize, PhSharedContext.auxMonoFrame,NULL};
-    IPLAudioBuffer renderOut=(IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, outFrame,NULL};
-
-    iplApplyDirectSoundEffect(ctx->directSoundEffect,
-                            directSoundIn,
-                            path,
-                            ctx->directSoundEffectOptions,
-                            directSoundOut);
+        IPLVector3 *listenerPos = lsGetPosition(settings, listener);
+        IPLVector3 *listenerUp = lsGetUp(settings, listener);
+        IPLVector3 *listenerDirection = lsGetDirection(settings, listener);
 
 
-    if(ctx->convolutionEffect!=NULL){
-        iplSetDryAudioForConvolutionEffect(ctx->convolutionEffect->effect,
-                                        source,
-                                        directSoundIn);
-    }
+        if(ctx->convolutionEffect!=NULL){
+            IPLAudioBuffer wetInBuffer=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize,inFrame,NULL};
+            iplSetDryAudioForConvolutionEffect(ctx->convolutionEffect->effect,
+                                            source,
+                                            wetInBuffer);
+        }
 
-    iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.binauralRenderer, 
-                        directSoundOut, direction, 
-                        IPL_HRTFINTERPOLATION_NEAREST, renderOut);
 
+        IPLVector3 direction = iplCalculateRelativeDirection(source.position, (*listenerPos),
+                                                            (*listenerDirection), (*listenerUp));
+
+        // Find direct path
+        IPLDirectSoundPath path = iplGetDirectSoundPath(PhSharedContext.environment,
+                                                        (*listenerPos),
+                                                        (*listenerDirection),
+                                                        (*listenerUp),
+                                                        source,
+                                                        sourceRadius, //only for IPL_DIRECTOCCLUSION_VOLUMETRIC
+                                                        directOcclusionMode,
+                                                        directOcclusionMethod);
+
+        IPLAudioBuffer directSoundOut=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize, PhSharedContext.auxMonoFrame,NULL};
+
+        iplApplyDirectSoundEffect(ctx->directSoundEffect,
+                                soundIn,
+                                path,
+                                ctx->directSoundEffectOptions,
+                                directSoundOut);
+
+    
+
+        if(asHasFlag(settings, asource, HRTF)&&PhSharedContext.useBinauralRendererForSources){
+            iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.binauralRenderer, 
+                            directSoundOut, direction, 
+                            IPL_HRTFINTERPOLATION_NEAREST, soundOut);
+        }else{
+            iplApplyPanningEffect(ctx->panningEffect, PhSharedContext.binauralRenderer, directSoundOut, direction,soundOut);
+        }
 }
 
+
+
+void phCalculateListenerCentricReverb(struct GlobalSettings *settings,struct Listener *listener,jfloat* frame){
+     if(PhSharedContext.listenerCentricReverb !=NULL){
+         IPLAudioBuffer rev_in = (IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, frame, NULL};
+
+         IPLVector3 *listenerPos = lsGetPosition(settings, listener);
+         IPLVector3 *listenerUp = lsGetUp(settings, listener);
+         IPLVector3 *listenerDirection = lsGetDirection(settings, listener);
+
+         IPLSource listener_source;
+         listener_source.position = (*listenerPos);
+         listener_source.ahead = (*listenerDirection);
+         listener_source.up = (*listenerUp);
+         listener_source.right = cross(listener_source.ahead, listener_source.up); // not needed?
+         listener_source.directivity = (IPLDirectivity){0.0f, 0.0f, NULL, NULL};
+
+         iplSetDryAudioForConvolutionEffect(PhSharedContext.listenerCentricReverb,
+                                            listener_source,
+                                            rev_in);
+    }
+}
  
 void phGetEnvFrame(struct GlobalSettings *settings,struct Listener *listener,jfloat *outFrame){
     IPLVector3 *listenerPos = lsGetPosition(settings, listener);
@@ -434,9 +509,10 @@ void phGetEnvFrame(struct GlobalSettings *settings,struct Listener *listener,jfl
 /**
  * Mix multiple outputBuffers
  */
-void phMixOutputBuffers(jfloat **input,jint numInputs,jfloat *output){
-    for(jint i=0;i<numInputs;i++){
-        PhSharedContext.mixerQueue[i].interleavedBuffer = input[i];
+void phMixOutputBuffers(jfloat **input,jint offset,jint numInputs,jfloat *output){
+    jint j = 0;
+    for (jint i = offset; i < offset + numInputs; i++) {
+        PhSharedContext.mixerQueue[j++].interleavedBuffer = input[i];
     }
     IPLAudioBuffer renderOut=(IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, output,NULL};
     iplMixAudioBuffers(numInputs, PhSharedContext.mixerQueue, renderOut);

@@ -63,10 +63,4 @@ inline void plStopThread(void) {
     }
 }
 
-inline void plSleep(void){
-  if (nanosleep((const struct timespec[]){{0, 1000000ll}}, NULL) < 0) {
-        printf("Error can't sleep \n");
-  }
-}
-
 #endif

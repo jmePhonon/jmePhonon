@@ -32,7 +32,10 @@
 package com.jme3.phonon.desktop_javasound;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.BooleanControl;
@@ -46,110 +49,69 @@ import com.jme3.phonon.PhononOutputLine;
 import com.jme3.phonon.PhononSoundDevice;
 import com.jme3.phonon.PhononSoundPlayer;
 import com.jme3.phonon.PhononSoundSystem;
-import com.jme3.phonon.PhononOutputLine.LineStatus;
+import com.jme3.phonon.format.decoder.AudioDataDecoder;
+import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
 import com.jme3.phonon.utils.BitUtils;
-import com.jme3.phonon.utils.PhononOutputLineIntInputStream;
 
-class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundSystem,JavaSoundDevice>{
-
+class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundPhononSettings,JavaSoundSystem,JavaSoundDevice>{
 
 
+ 
     PhononOutputLine channel;
     InputStream input;
     SourceDataLine output;
     AudioFormat audioFormat;
-    int preloadBytes = 0;
 
     boolean isRunning;
-    byte tmp[];
+    byte decodedFrame[];
+    byte encodedFrame[];
 
+    AudioDataDecoder decoder;
+    JavaSoundPhononSettings settings;
     @Override
     public void init(
+        JavaSoundPhononSettings settings,
         JavaSoundSystem system,
         JavaSoundDevice device,
     
     PhononOutputLine chan, int sampleRate,
-            int outputChannels,int outputSampleSize,int maxPreBufferingSamples) throws Exception {
+            int channels, int frameSize, int sampleSize) throws Exception {
+        this.settings=settings;
         channel = chan;
 
-        int bytesPerSample = (outputSampleSize / 8);
 
-        input = new PhononOutputLineIntInputStream(channel, outputSampleSize);
-        preloadBytes = maxPreBufferingSamples * bytesPerSample;
+        decoder = AudioDataDecoderFactory.getAudioDataDecoder(sampleSize);
 
-        audioFormat=new AudioFormat(sampleRate,outputSampleSize,outputChannels,true,false);
+        int bytesPerSample=(sampleSize/8);
+        int frameSizeInBytes=frameSize*bytesPerSample*channels;
+        
+        encodedFrame=new byte[frameSize*channels*4];
+        decodedFrame=new byte[frameSizeInBytes];
+        audioFormat=new AudioFormat(sampleRate,sampleSize,channels,true,false);
+      
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
         output=(SourceDataLine)device.getMixer().getLine(info);
-        output.open(audioFormat, preloadBytes);//, chan.getBufferSize()*chan.getFrameSize()  * bytesPerSample);
-     
-
-        tmp=new byte[preloadBytes];
-
-   
-        
-
+        output.open(audioFormat,frameSizeInBytes*settings.playerBuffer);
     }
 
-
+    boolean started=false;
     public void close() {
         output.flush();
         output.close();
     }
 
-
     @Override
-    public void loop() {
-
+    public void play(ByteBuffer frame, int framesize, int channels) {
+        frame.rewind();
+        frame.get(encodedFrame);
+        frame.rewind();
+        decoder.decode(encodedFrame,decodedFrame);
+        output.write(decodedFrame,0,decodedFrame.length);
+        if(!started&&(!settings.playerStartWhenBufferIsFull||output.available()<decodedFrame.length)){
+            output.start();
+            started=true;
+        }
      
-       
-        if (preloadBytes <= 0) {
-            if (!isRunning) {
-                isRunning = true;
-                output.start();
-               
-                // System.out.println("Start");
-            }
-        } else {
-            // System.out.println("Preloading " + preloadBytes + " bytes");
-        }
-
-        int writableBytes = 0;
-        int read = 0;
-        try {
-            int available=output.available();
-            writableBytes=available;
-            if (writableBytes > tmp.length)
-            writableBytes = tmp.length;
-            
-
-            read = input.read(tmp, 0, writableBytes);
-            
-            if (read > 0) {
-                // System.out.println("Write "+read);
-                int written=output.write(tmp,0,read);
-                assert written==read:"Error, only "+written+" bytes written, "+read+" expected";
-                if (preloadBytes > 0) {
-                    // System.out.println("Loaded "+written+" bytes");
-                    preloadBytes -= written;
-                }
-            }else{
-                // System.out.println("FIXME: Phonon is lagging behind");
-                // no data available
-            }
-        
-        } catch (EOFException e) {
-            // Channel over;
-            System.err.println("TO BE IMPLEMENTED: End of channel");
-        } catch (Exception e) {
-            System.out.println("Writable " + writableBytes+" read "+read);
-
-            e.printStackTrace();
-        }
-
-      
-      
-
-
     }
 
 }

@@ -34,11 +34,11 @@ public class DirectionalSoundEmitterControl extends PositionalSoundEmitterContro
    
     public DirectionalSoundEmitterControl(AssetManager am,String path){
         AudioKey audioKey=new AudioKey(path);
-        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAsset(audioKey)),audioKey);
     }
 
     public DirectionalSoundEmitterControl(AssetManager am,AudioKey audioKey){
-        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAsset(audioKey)),audioKey);
     }
 
     public DirectionalSoundEmitterControl(String name,F32leAudioData audioData,AudioKey audioKey){
@@ -63,21 +63,21 @@ public class DirectionalSoundEmitterControl extends PositionalSoundEmitterContro
     
     @Override
     public Vector3f getDirection() {
-        if(spatial==null) return p;
+        if(spatial==null) return super.getDirection();
 
         return spatial.getWorldRotation().getRotationColumn(2);
     }
 
     
     public Vector3f getUp() {
-        if(spatial==null) return p;
+        if(spatial==null) return super.getUp();
 
         return spatial.getWorldRotation().getRotationColumn(1);
     }
 
     public Vector3f getRight() {
-        if(spatial==null) return p;
-
+        if(spatial==null) return super.getRight();
+        // return getDirection().cross(getUp());
         return spatial.getWorldRotation().getRotationColumn(0).negate();
     }
 

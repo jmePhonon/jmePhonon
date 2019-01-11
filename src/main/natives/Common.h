@@ -55,7 +55,6 @@
 
 struct GlobalSettings{
     jint nOutputChannels; // How many channels per line (1=mono, 2=stereo ..)
-    jint bufferSize; // How many frames on the outputline buffer
     jint frameSize; // How many samples for each frame
     // jint outputFrameSize; // How many samples for each frame
     jint sampleRate; // Sound sampling rate ( eg 44100 )
@@ -146,5 +145,20 @@ static inline void vec3Normalize(vec3 *v1, vec3 *store) {
     store->x = x;
     store->y = y;
     store->z = z;
+}
+
+static inline vec3 cross(vec3 v1,vec3 v2){
+    jfloat x = v1.x;
+    jfloat y = v1.y;
+    jfloat z = v1.z;
+
+    jfloat otherX = v2.x;
+    jfloat otherY = v2.y;
+    jfloat otherZ = v2.z;
+
+    jfloat resX = ((y * otherZ) - (z * otherY));
+    jfloat resY = ((z * otherX) - (x * otherZ));
+    jfloat resZ = ((x * otherY) - (y * otherX));
+    return (IPLVector3){resX, resY, resZ};    
 }
 #endif 

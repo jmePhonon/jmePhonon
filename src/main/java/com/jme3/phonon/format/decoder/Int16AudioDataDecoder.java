@@ -58,7 +58,7 @@ class Int16AudioDataDecoder implements AudioDataDecoder {
                 partInputBuffer[j] = inputBuffer[i + j];
             }
 
-            BitUtils.cnvF32leToI16le(partInputBuffer, partOutputBuffer);
+            BitUtils.cnvF32leToI16le(partInputBuffer, partOutputBuffer,0);
 
             for (int j = 0; j < partOutputBuffer.length; ++j)
                 outputBuffer[(i / 4) * partOutputBuffer.length + j] = partOutputBuffer[j];

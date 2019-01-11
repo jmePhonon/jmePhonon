@@ -35,6 +35,7 @@ import com.jme3.phonon.scene.material.MaterialGenerator;
 import com.jme3.phonon.scene.material.SingleMaterialGenerator;
 import com.jme3.phonon.thread.PhononExecutor;
 import com.jme3.phonon.thread.PhononJavaExecutor;
+import com.jme3.phonon.thread.PhononNativeExecutor;
 /**
  * PhononEffects
  */
@@ -64,11 +65,9 @@ public class PhononSettings {
     //////////////////////////////////////////////////
 
     public int sampleRate=44100;
-    public int nSourcesPerLine=255;
+    public int nSourcesPerLine=128;
     public int nOutputChannels=2;
     public int frameSize=1024;
-    public int bufferSize=2; 
-    public int maxPreBuffering=1024*2*2; 
 
     public int outputSampleSize=-1; // -1=best
 
@@ -80,13 +79,15 @@ public class PhononSettings {
 
     public int sceneType = PhononSceneType.IPL_SCENETYPE_PHONON.ordinal(); 
     public int numRays = 1024;// typical values are in the range of 1024 to 131072
-    public int numDiffuseSamples = 1024;//typical values are in the range of 32 to 4096. 
+    public int numDiffuseSamples = 64;//typical values are in the range of 32 to 4096. 
     public int numBounces = 4;//typical values are in the range of 1 to 32. 
     public int numThreads = 4;//The performance improves linearly with the number of threads upto the number of physical cores available on the CPU.
-    public float irDuration = 0.5f; // 0.5 to 4.0.
-    public int ambisonicsOrder = 1;//Supported values are between 0 and 3.
-    public int maxConvolutionSources = 64; //
+    public float irDuration = 0.6f; // 0.5 to 4.0.
+    public int ambisonicsOrder = 2;//Supported values are between 0 and 3.
+    public int maxConvolutionSources = 0; //
     public int bakingBatchSize=1;// Only used by IPL_SCENETYPE_RADEONRAYS
+    public boolean listenerCentricReverb=true;
+    public boolean useBinauralRendererForSources=true;
 
     public PhononSettings(PhononSoundSystem ss){
         system=ss;
@@ -102,8 +103,7 @@ public class PhononSettings {
     @Override
     public String toString(){
         return "SampleRate "+sampleRate+" SourcesPerLine "+nSourcesPerLine+
-        " nOutputChannels "+nOutputChannels+" frameSize "+frameSize+" bufferSize "+bufferSize+" maxPreBuffering "
-                +maxPreBuffering+" executor "+executor.getClass()+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
+        " nOutputChannels "+nOutputChannels+" frameSize "+frameSize+" executor "+executor.getClass()+ " outputSampleSize "+outputSampleSize+" system "+system+" device "+device;
 
     }
 }

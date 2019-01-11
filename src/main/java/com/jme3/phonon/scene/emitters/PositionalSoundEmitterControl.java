@@ -31,6 +31,7 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     private Vector3f previousWorldTranslation=Vector3f.NAN.clone();
     private boolean reverb=false;
     private Vector3f offset=new Vector3f(),pos=new Vector3f();
+    private boolean BINAURAL=true;
 
     public PositionalSoundEmitterControl() { }
 
@@ -41,17 +42,26 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
    
     public PositionalSoundEmitterControl(AssetManager am,String path){
         AudioKey audioKey=new AudioKey(path);
-        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAsset(audioKey)),audioKey);
     }
 
     public PositionalSoundEmitterControl(AssetManager am,AudioKey audioKey){
-        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAsset(audioKey)),audioKey);
     }
 
     public PositionalSoundEmitterControl(String name,F32leAudioData audioData,AudioKey audioKey){
         init(name, audioData, audioKey);   
     }
     
+
+    public void setBinaura(boolean v){
+        BINAURAL=v;
+    }
+
+    public boolean isBinaural(){
+        return BINAURAL;
+    }
+
 
 
     @Override
@@ -85,7 +95,7 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
 
     @Override
     public Vector3f getPosition() {
-        if(spatial==null) return p;
+        if(spatial==null) return super.getPosition();
         return pos.set(spatial.getWorldTranslation()).addLocal(offset);
     }
 

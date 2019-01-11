@@ -40,6 +40,8 @@ public class AUDIOSOURCE_LAYOUT {
     public final static int FLAG_LOOP=(1<<3);
     public final static int FLAG_REVERB=(1<<4);
     public final static int FLAG_AIRABSORPTION=(1<<5);
+    public final static int FLAG_MARKED_FOR_DISCONNECTION=(1<<6);
+    public final static int FLAG_HRTF=(1<<7);
 
     public static final byte FLAGS_fieldsize = 1;
     public static final byte NUM_CHANNELS_fieldsize = 1;
@@ -70,8 +72,8 @@ public class AUDIOSOURCE_LAYOUT {
     public static final byte VOLUME_fieldsize = 4;
     public static final byte PITCH_fieldsize = 4;
 
-    public static final byte STOPAT_filesize = 4;
 
+    
     public static final byte FLAGS = 0;
     public static final byte NUM_CHANNELS = FLAGS + FLAGS_fieldsize;
     public static final byte DIROCCMODE = NUM_CHANNELS + NUM_CHANNELS_fieldsize;
@@ -101,7 +103,6 @@ public class AUDIOSOURCE_LAYOUT {
     public static final byte VOLUME = DIPOLEPOWER + DIPOLEPOWER_fieldsize;
     
     public static final byte PITCH = VOLUME+VOLUME_fieldsize;
-    public static final byte STOPAT = PITCH+PITCH_fieldsize;
 
-    public static final byte SIZE = STOPAT+STOPAT_filesize;
+    public static final byte SIZE = PITCH+PITCH_fieldsize;
 } 

@@ -40,11 +40,7 @@ public class PhononJavaExecutor extends Thread implements PhononExecutor {
 
     @Override
     public void run() {
-		do {
-			try {
-				Thread.sleep(1);
-			} catch (Exception e) { }
-
+		do {		
             updater.phononUpdate();
             firstLoop=true;
 		} while (UPDATE_FLAG);

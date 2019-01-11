@@ -39,5 +39,8 @@ public class JavaSoundPhononSettings extends PhononSettings{
     public JavaSoundPhononSettings(){
         super(new JavaSoundSystem());
     }
+
+    public int playerBuffer=2;
+    public boolean playerStartWhenBufferIsFull=true;
    
 }

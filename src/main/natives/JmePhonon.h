@@ -70,5 +70,7 @@ void phDestroySource(struct GlobalSettings *settings,struct AudioSource *audioSo
 void phDisconnectSource(struct GlobalSettings *settings,struct AudioSource *audioSource);
 
 
-void phMixOutputBuffers(jfloat **input, jint numInputs, jfloat *output);
+void phMixOutputBuffers(jfloat **input,jint offset, jint numInputs, jfloat *output);
+
+void phCalculateListenerCentricReverb(struct GlobalSettings *settings, struct Listener *listener, jfloat *frame);
 #endif

@@ -81,26 +81,10 @@ void olFinalizeDisconnection(struct GlobalSettings *settings, struct OutputLine 
  * Politely ask the engine to disconnect the source.
  */
 void olDisconnectSource(struct GlobalSettings *settings, struct OutputLine *line,
-                        struct AudioSource *source, jint delayedToLineFrame);
-/**
- * Store index of the lastest processed frame in the output buffer.
- */
-void olSetLastProcessedFrameId(struct GlobalSettings *settings, struct OutputLine *line, jint v);
-
-
-/**
- * Retrieve the index of the latest processed frame from the output buffer
- */
-jint olGetLastProcessedFrameId(struct GlobalSettings *settings, struct OutputLine *line);
-
-/**
- * Retrieve the index of the latest played frame from the output buffer
- */
-jint olGetLastPlayedFrameId(struct GlobalSettings *settings, struct OutputLine *line);
+                        struct AudioSource *source);
 
 /**
 *   Write one frame to the output buffer
 */
-void olWriteFrame(struct GlobalSettings *settings, struct OutputLine *line, jint frameIndex, jfloat *frame, jint frameSize,jfloat volume);
-
+void olWriteFrame(struct GlobalSettings *settings, struct OutputLine *line, jfloat *frame, jint frameSize, jfloat volume);
 #endif

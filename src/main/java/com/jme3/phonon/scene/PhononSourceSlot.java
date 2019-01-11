@@ -35,6 +35,8 @@ import static com.jme3.phonon.memory_layout.AUDIOSOURCE_LAYOUT.*;
 
 import java.nio.ByteBuffer;
 
+import javax.swing.text.Position;
+
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.AudioSource.Status;
@@ -53,6 +55,7 @@ import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.util.BufferUtils;
 
 public class PhononSourceSlot extends CommitableMemoryObject{
+    private final int ID;
     private final ByteBuffer MEMORY;
     
     private final VVector3f POS = new VVector3f();
@@ -69,13 +72,10 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private final VFloat SRADIUS = new VFloat(); 
     private final VByte FLS=new VByte();
 
-    private volatile PhononOutputLine connectedLine;
     private volatile AudioSource source;
-    private volatile boolean isOver;
+    private volatile boolean markedForDisconnection;
     private volatile boolean instance;
-    private final int ID;
     private volatile boolean waitingForFinalization;
-
    
     public PhononSourceSlot(int id){
         ID=id;
@@ -92,18 +92,6 @@ public class PhononSourceSlot extends CommitableMemoryObject{
         return source!=null&&!waitingForFinalization;
     }
 
-    /**
-     * Check if source is playing
-     * @return true if source is playing or its status isn't finalized.
-     */
-    public boolean isPlaying() {
-        int status=FLS.x;
-        return (status&FLAG_PLAYING)==status;
-    }
-
-    public void setLine(PhononOutputLine line) {
-        connectedLine = line;
-    }
 
     public AudioSource getSource() {
         return source;
@@ -120,29 +108,10 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     }
 
     public void setSource(AudioSource src, boolean instance) {
-        isOver=false; // reset isOver status until next native update
-        // System.out.println(ID+" recycled");
-        // if(source!=null){
-            // if(getSource().getChannel()==ID){
-                
-            //     getSource().setStatus(Status.Stopped);
-
-            //     getSource().setChannel(-1);
-            //         System.out.println("Set "+source+" to stopped");
-                
-
-            // }
-            // else{
-                // assert this.instance;
-            // }
-        // }
         source=src;
-
         this.instance=false;
-
         if(src!=null){
             this.instance=instance;
-
             CHANNELS.setUpdateNeeded();
             FLS.setUpdateNeeded();
             POS.setUpdateNeeded();
@@ -158,27 +127,22 @@ public class PhononSourceSlot extends CommitableMemoryObject{
             DIROMODE.setUpdateNeeded();
             DIROMETHOD.setUpdateNeeded();
             SRADIUS.setUpdateNeeded();
-           
-            // if(!instance){
-            //     AudioSource.Status cs=src.getStatus();
-            //     src.setStatus(AudioSource.Status.Stopped);
-            //     src.setChannel(ID);
-            //     src.setStatus(cs);
-            // }
             update(0);        
         }else{
             FLS.setUpdateNeeded();
-            FLS.update((byte)(((int)FLS.x)&~(int)FLAG_PLAYING));
+            FLS.update((byte)0);
         }
-
-    
-        // System.out.println(ID+" attached");
-
+        markedForDisconnection=false; 
     }
     
-    public boolean isOver() {
-        // if(recycled)System.out.println("Recycled :"+recycled);
-        return isOver;
+    public boolean isMarkedForDisconnection() {
+        return markedForDisconnection;
+    }
+
+    public boolean  checkIfMarkedForDisconnection() {
+        int flags=MEMORY.getInt(FLAGS);
+        markedForDisconnection=((flags&FLAG_MARKED_FOR_DISCONNECTION)==FLAG_MARKED_FOR_DISCONNECTION);
+        return markedForDisconnection;
     }
 
     @Override
@@ -210,6 +174,9 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                     f |= FLAG_LOOP;
                 if (source.isReverbEnabled()) 
                     f|=FLAG_REVERB;
+                if(source instanceof PositionalSoundEmitterControl){
+                    if(((PositionalSoundEmitterControl)source).isBinaural()) f|=FLAG_HRTF;
+                }else f|=FLAG_HRTF;
                
                 if(source instanceof PositionalSoundEmitterControl) {
                     PositionalSoundEmitterControl emitter = (PositionalSoundEmitterControl) source;
@@ -228,32 +195,24 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                 PositionalSoundEmitterControl emitter = (PositionalSoundEmitterControl) source;
                 SRADIUS.update(emitter.getSourceRadius());
                 DIROMODE.update((byte)(int)emitter.getDirectOcclusionMode().ordinal());
-                DIROMETHOD.update((byte)(int)emitter.getDirectOcclusionMethod().ordinal());
-            }else if(source instanceof AudioNode){
-                AudioNode node = (AudioNode) source;
-                SRADIUS.update(Phonon.getAudioNodeSourceRadius(node));
-                DIROMODE.update(Phonon.getAudioNodeDirectOcclusionMode(node));
-                DIROMETHOD.update(Phonon.getAudioNodeDirectOcclusionMethod(node));
-            }
-
-            if(source instanceof DirectionalSoundEmitterControl) {
-                DirectionalSoundEmitterControl emitter = (DirectionalSoundEmitterControl) source;
+                DIROMETHOD.update((byte)(int)emitter.getDirectOcclusionMethod().ordinal());                
                 UP.update(emitter.getUp());
                 RIGHT.update(emitter.getRight());
                 DWEIGHT.update(emitter.getDipoleWeight());
                 DPOWER.update(emitter.getDipolePower());
                 AHEAD.update(emitter.getDirection());
-
-            } else if(source instanceof AudioNode) {
-                AudioNode node = (AudioNode) source;
+            }else if(source instanceof AudioNode){
+                AudioNode node=(AudioNode)source;
+                SRADIUS.update(Phonon.getAudioNodeSourceRadius(node));
+                DIROMODE.update(Phonon.getAudioNodeDirectOcclusionMode(node));
+                DIROMETHOD.update(Phonon.getAudioNodeDirectOcclusionMethod(node));
                 UP.update(node.getWorldRotation().getRotationColumn(1));
                 RIGHT.update(node.getWorldRotation().getRotationColumn(0).negate());
                 DWEIGHT.update(Phonon.getAudioNodeDipoleWeight(node));
                 DPOWER.update(Phonon.getAudioNodeDipolePower(node));
                 AHEAD.update(source.getDirection());
-            }else if(!(source instanceof SoundEmitterControl)){
-                AHEAD.update(source.getDirection());
-            }
+            }           
+
 
             VOL.update(source.getVolume());
             PIT.update(source.getPitch());
@@ -282,9 +241,11 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
         FLS.commit(MEMORY, FLAGS);
 
-        int stopAt=MEMORY.getInt(STOPAT);
-        isOver=stopAt!=-1&&connectedLine.getLastPlayedFrameId()>stopAt;
+
     }
+
+
+    
 
     public void setPosUpdateNeeded() {
         POS.setUpdateNeeded();

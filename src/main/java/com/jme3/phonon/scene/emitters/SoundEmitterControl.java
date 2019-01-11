@@ -57,11 +57,11 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
    
     public SoundEmitterControl(AssetManager am,String path){
         audioKey=new AudioKey(path);
-        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAsset(audioKey)),audioKey);
     }
 
     public SoundEmitterControl(AssetManager am,AudioKey audioKey){
-        init(null,F32leCachedConverter.toF32le(am.loadAudio(audioKey)),audioKey);
+        init(null,F32leCachedConverter.toF32le(am.loadAsset(audioKey)),audioKey);
     }
 
     public SoundEmitterControl(String name,F32leAudioData audioData,AudioKey audioKey){
@@ -378,9 +378,10 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
         }
     }
 
-    Vector3f p=Vector3f.ZERO.clone();
-    Vector3f d=Vector3f.UNIT_Z.clone();
-
+    private final Vector3f p=Vector3f.ZERO.clone();
+    private final Vector3f d=Vector3f.UNIT_Z.clone();
+    private final Vector3f up=Vector3f.UNIT_Y.clone();
+    private final Vector3f right=Vector3f.UNIT_X.negate();
     @Override
     public Vector3f getPosition() {
         return p;
@@ -395,6 +396,25 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
     public Vector3f getDirection() {
         return d;
     }
+
+
+    
+    public Vector3f getUp() {
+        return up;
+    }
+
+    public Vector3f getRight() {
+        return right;
+    }
+
+    public float getDipoleWeight() {
+        return 0;
+    }
+   
+    public float getDipolePower() {
+        return 0;
+    }
+
 
     @Override
     public boolean isPositional() {

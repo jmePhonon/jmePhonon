@@ -42,7 +42,6 @@ struct AudioSource* asNew(struct GlobalSettings *settings, jint n){
         slot->phononContext = NULL;
         slot->uNode = (struct UListNode*) malloc(sizeof(struct UListNode));
         slot->sceneData = NULL;
-        slot->waitingForFinalization = false;
         slot->id = i;
         ulistInitNode(slot->uNode, slot);
     }
@@ -58,9 +57,14 @@ void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source,
     source->sceneData = data;
 }
 
-jboolean asIsReady(struct AudioSource *source){
-    return !source->uNode->connected&&!source->waitingForFinalization;
+jboolean asIsReady(struct GlobalSettings *settings,struct AudioSource *source){
+    return source->data!=NULL&&!asHasFlag(settings,source,MARKED_FOR_DISCONNECTION);
 }
+
+jboolean asIsFree(struct GlobalSettings *settings,struct AudioSource *source){
+    return source->data==NULL&&!asHasFlag(settings,source,MARKED_FOR_DISCONNECTION);
+}
+
 
 /**
  * Read the next frame from the audio source, restart from the beginning when the end is reached
@@ -74,29 +78,23 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
     for (jint i = 0; i < frameSize; i++) {
         jint sampleIndex = frameSize * source->lastReadFrameIndex + i;
         sampleIndex *= asGetPitch(settings, source);
-
         jfloat v;
         if (sampleIndex >= sourceSamples) {  // Write 0s if the frame size exceed the remaining source's bytes
-            // printf("Phonon: trying to read sample n%d but source contains only %d samples. A zero sample will be returned instead.\n ", sampleIndex, sourceSamples);
-            v = 0;
+            v =0;
             hasReachedEnd = true;
-        } else {
-            v = data[sampleIndex];
-        }
+        } else v = data[sampleIndex];        
         v *= asGetVolume(settings, source);
-
-        store[i] = v ;
+        store[i] = v;
+    }    
+    if(!hasReachedEnd){      
+        source->lastReadFrameIndex++;
     }
-    source->lastReadFrameIndex++;
-
-    // Reset the frame index when the end is reached, useful if we intend to loop the sound
-    if(hasReachedEnd){
-        source->lastReadFrameIndex = 0;
-    }
-
     return hasReachedEnd;
 }
 
+void asResetForLoop(struct GlobalSettings *settings,struct AudioSource *source){
+    source->lastReadFrameIndex = 0;
+}
 
 jfloat asGetVolume(struct GlobalSettings *settings,struct AudioSource *source) {
     return source->sceneData[asSourceField(VOLUME)];
@@ -170,28 +168,21 @@ jint asGetNumChannels(struct GlobalSettings *settings,struct AudioSource *source
     return (jint) numChannels; 
 }
 
-void asSetStopAt(struct GlobalSettings *settings, struct AudioSource *source, jint index){
-    jint *data=(jint*)source->sceneData;
-    data[asSourceField(STOPAT)] = index;
-}
 
 void asConnect(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jfloat *data, jint samples,jint jumpToFrame){
     slot->data = data;
     slot->numSamples = samples;
     slot->lastReadFrameIndex = jumpToFrame;
-    asSetStopAt(settings, slot, -1); 
     ulistAdd(updateList,slot->uNode);  
 }
 
-void asScheduleDisconnection(struct GlobalSettings *settings,struct UList* updateList,struct AudioSource *slot,jint delayedToLineFrame){
-    asSetStopAt(settings, slot, delayedToLineFrame);
-    slot->waitingForFinalization = true;
+void asScheduleDisconnection(struct GlobalSettings *settings,struct UList* updateList,struct AudioSource *slot){
+    jint *data=(jint*)slot->sceneData;
+    data[asSourceField(FLAGS)] |= asFlag(MARKED_FOR_DISCONNECTION);
     ulistRemove(slot->uNode);
 }
 
 void asFinalizeDisconnection(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot){
     slot->data = NULL;
-    asSetStopAt(settings, slot, -1);
-    slot->waitingForFinalization = false;
     ulistRemove(slot->uNode);
 }
