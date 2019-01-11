@@ -86,7 +86,7 @@ function prepareWorkspace {
             echo "Download steam audio"
             wget "$STEAM_AUDIO_URL" -O tmp/cache/$STEAM_AUDIO_URL_HASH.zip
             
-            if [ "`compareSteamAudioHash`" != "" ];
+            if [ "`compareFileHash tmp/cache/$STEAM_AUDIO_URL_HASH.zip $STEAM_AUDIO_HASH`" != "" ];
             then
                 echo "Error. Steamaudio hash is wrong or the download is corrupted"
                 safeRm  tmp/cache/$STEAM_AUDIO_URL_HASH.zip
