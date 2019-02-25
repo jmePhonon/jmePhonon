@@ -79,7 +79,7 @@ jboolean asIsFree(struct GlobalSettings *settings,struct AudioSource *source);
  * Read the next frame from the audio source, restart from the beginning when the end is reached
  * @return true if the end of the source has been reached
  */
-jboolean asReadNextFrame(struct GlobalSettings *settings, struct AudioSource *source, jfloat *store);
+jboolean asReadNextFrame(struct GlobalSettings *settings, struct AudioSource *source, jfloat master_volume, jfloat *store);
 
 jfloat asGetVolume(struct GlobalSettings *settings, struct AudioSource *source);
 jint asGetDirectOcclusionMode(struct GlobalSettings *settings, struct AudioSource *source);

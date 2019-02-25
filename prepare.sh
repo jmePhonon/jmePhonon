@@ -11,8 +11,8 @@ source build.dep/findOs.sh
 # Get steam audio
 if [ "$STEAM_AUDIO_URL" = "" ];
 then
-    export STEAM_AUDIO_URL="https://github.com/ValveSoftware/steam-audio/releases/download/v2.0-beta.16/steamaudio_api_2.0-beta.16.zip"
-    export STEAM_AUDIO_HASH="f377956bf761a460bf2bb0b6a0c28a27aa94852664264118a3b8bca113ca6223"
+    export STEAM_AUDIO_URL="https://github.com/ValveSoftware/steam-audio/releases/download/v2.0-beta.17/steamaudio_api_2.0-beta.17.zip"
+    export STEAM_AUDIO_HASH="cef95d302fb2439da9c1661e8544ccc0f30871a01be7d9864e081a91f4cd229e"
 
     #Downgrade
     # export STEAM_AUDIO_URL="https://github.com/ValveSoftware/steam-audio/releases/download/v2.0-beta.15/steamaudio_api_2.0-beta.15.zip"

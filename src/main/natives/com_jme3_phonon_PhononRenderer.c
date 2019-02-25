@@ -207,6 +207,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
 
         jint mixerQueueIndex = 0;    
         jint skipEnvMixerQueueIndex = 0;    
+        jfloat *masterVolume = lsGetVolume(&SETTINGS, GLOBAL_LISTENER);
 
         struct UList *uList = line->uList;
         struct UListNode *uNode = uList->head->next;
@@ -220,7 +221,7 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                     jboolean loop = asHasFlag(&SETTINGS, audioSource, LOOP);
                     jint nchannels = asGetNumChannels(&SETTINGS, audioSource);
                     inFrame = nchannels == 1 ? Temp.monoFrame1 : Temp.tmpFrame;
-                    if (asReadNextFrame(&SETTINGS, audioSource, inFrame)) {
+                    if (asReadNextFrame(&SETTINGS, audioSource,  (*masterVolume), inFrame)) {
                         if (!loop) {                       
                             olDisconnectSource(&SETTINGS, OUTPUT_LINE, audioSource);
                         }else{
@@ -241,7 +242,6 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         }
 
   
-        jfloat *masterVolume = lsGetVolume(&SETTINGS, GLOBAL_LISTENER);
     
     
         jfloat *outFrame;
@@ -288,11 +288,11 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
             Temp.mixerQueue[1] = mixerQueue1;
             Temp.mixerQueue[2] = mixerQueue2;
             
-            olWriteFrame(&SETTINGS, line, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
+            olWriteFrame(&SETTINGS, line, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels,1.f);
         }else{
             phGetEnvFrame(&SETTINGS, GLOBAL_LISTENER, Temp.envframe);
             outFrame = Temp.envframe;
-            olWriteFrame(&SETTINGS, line, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels, (*masterVolume));
+            olWriteFrame(&SETTINGS, line, outFrame, SETTINGS.frameSize * SETTINGS.nOutputChannels,1.f);
         }
         // else{
         //     outFrame = Temp.zeroFill;

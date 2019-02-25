@@ -130,7 +130,7 @@ void phDisconnectSource(struct GlobalSettings *settings,struct AudioSource *audi
     }
     if(PhSharedContext.useBinauralRendererForSources)iplFlushBinauralEffect(context->binauralEffect);
     iplFlushPanningEffect(context->panningEffect);
-    iplFlushDirectSoundEffect(context->directSoundEffect);    
+    iplFlushDirectSoundEffect(context->directSoundEffect); 
 }
 
 
@@ -193,11 +193,11 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
 
     PhSharedContext.simulationSettings.bakingBatchSize = GET_SETTINGS_INT(jSettings, settingsClass, "bakingBatchSize");
     PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON;
-    // PhSharedContext.simulationSettings.numOcclusionSamples = 4; // ???
+    PhSharedContext.simulationSettings.numOcclusionSamples = 32; // TODO: add to configurations
+    PhSharedContext.simulationSettings.irradianceMinDistance=0.5; // TODO: add to configuration
 
 
     PhSharedContext.useBinauralRendererForSources=GET_SETTINGS_BOOL(jSettings, settingsClass, "useBinauralRendererForSources");
-
     //////////////////
 
   
@@ -510,9 +510,8 @@ void phGetEnvFrame(struct GlobalSettings *settings,struct Listener *listener,jfl
  * Mix multiple outputBuffers
  */
 void phMixOutputBuffers(jfloat **input,jint offset,jint numInputs,jfloat *output){
-    jint j = 0;
-    for (jint i = offset; i < offset + numInputs; i++) {
-        PhSharedContext.mixerQueue[j++].interleavedBuffer = input[i];
+    for (jint i = 0; i <  numInputs; i++) {
+        PhSharedContext.mixerQueue[i].interleavedBuffer = input[offset+i];
     }
     IPLAudioBuffer renderOut=(IPLAudioBuffer){PhSharedContext.stereoFormat, PhSharedContext.settings.frameSize, output,NULL};
     iplMixAudioBuffers(numInputs, PhSharedContext.mixerQueue, renderOut);

@@ -35,7 +35,6 @@ import com.jme3.phonon.scene.material.MaterialGenerator;
 import com.jme3.phonon.scene.material.SingleMaterialGenerator;
 import com.jme3.phonon.thread.PhononExecutor;
 import com.jme3.phonon.thread.PhononJavaExecutor;
-import com.jme3.phonon.thread.PhononNativeExecutor;
 /**
  * PhononEffects
  */
@@ -79,8 +78,8 @@ public class PhononSettings {
 
     public int sceneType = PhononSceneType.IPL_SCENETYPE_PHONON.ordinal(); 
     public int numRays = 1024;// typical values are in the range of 1024 to 131072
-    public int numDiffuseSamples = 64;//typical values are in the range of 32 to 4096. 
-    public int numBounces = 4;//typical values are in the range of 1 to 32. 
+    public int numDiffuseSamples = 32;//typical values are in the range of 32 to 4096. 
+    public int numBounces = 2;//typical values are in the range of 1 to 32. 
     public int numThreads = 4;//The performance improves linearly with the number of threads upto the number of physical cores available on the CPU.
     public float irDuration = 0.6f; // 0.5 to 4.0.
     public int ambisonicsOrder = 2;//Supported values are between 0 and 3.

@@ -61,7 +61,6 @@ import com.jme3.phonon.scene.emitters.SoundEmitterControl;
 import com.jme3.phonon.scene.material.PhononMaterial;
 import com.jme3.phonon.utils.DirectBufferUtils;
 import com.jme3.phonon.utils.F32leCachedConverter;
-import com.jme3.phonon.utils.JmeEnvToSndEnv;
 import com.jme3.system.NativeLibraryLoader;
 import com.jme3.system.Platform;
 import com.jme3.util.BufferUtils;
@@ -193,14 +192,19 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	}
 
 	/*Phonon loop*/
+	long avg_t_sum=0;
+	long avg_t_count=0;
+
 	@Override
 	public void phononUpdate() {
-		assert (phononThread!=null||(phononThread=Thread.currentThread())!=null);
+	
+		long t=System.currentTimeMillis();
+		// assert (phononThread!=null||(phononThread=Thread.currentThread())!=null);
 		if(!renderedInitialized){
 			initializePhonon();
 			renderedInitialized=true;
 		}
-
+				
 		PHONON_QUEUE.run();
 
 		PHONON_LISTENER.commit(0);
@@ -217,6 +221,13 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 		
 		PLAYER.play(OUTPUT_LINE.getFrame(),OUTPUT_LINE.getFrameSize(),OUTPUT_LINE.getChannels());
 		
+		long pavg_t=avg_t_count==0?0:avg_t_sum/avg_t_count;
+		avg_t_sum+=System.currentTimeMillis()-t;
+		avg_t_count++;
+		long cavg_t=avg_t_sum/avg_t_count;
+		if(pavg_t!=0&&cavg_t-pavg_t>10){
+			System.out.println("Phonon thread is slowing down. Last tick was "+cavg_t+"ms while avg is "+pavg_t+"ms ");
+		}
 	}
 
 	/* Game loop */
@@ -228,6 +239,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 
 		GAME_QUEUE.run();
 		PHONON_LISTENER.update(0);
+		
 		for(PhononSourceSlot sourceData:SOURCES){
 			if(!sourceData.isReady()) continue;
 			// Check if stopped & unpair
@@ -267,7 +279,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 
 		// You can't play a source twice unless it is an instance.
 		if(!instance&&src.getStatus()==AudioSource.Status.Playing){
-			System.out.println(src+" is already playing");
+			// System.out.println(src+" is already playing");
 			return;			 
 		}		
 

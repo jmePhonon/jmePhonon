@@ -44,7 +44,6 @@ import com.jme3.phonon.format.F32leStereoAudioLoader;
 import com.jme3.phonon.thread.PhononDummyExecutor;
 import com.jme3.phonon.thread.PhononExecutor;
 import com.jme3.phonon.thread.PhononJavaExecutor;
-import com.jme3.phonon.thread.PhononNativeExecutor;
 
 
 /**

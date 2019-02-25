@@ -70,7 +70,7 @@ jboolean asIsFree(struct GlobalSettings *settings,struct AudioSource *source){
  * Read the next frame from the audio source, restart from the beginning when the end is reached
  * @return true if the end of the source has been reached
  */
-jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *source,  jfloat *store) {
+jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *source,  jfloat master_volume,jfloat *store) {
     jint frameSize = settings->frameSize*asGetNumChannels(settings, source);
     jint sourceSamples = source->numSamples;
     jfloat *data = source->data;
@@ -84,6 +84,7 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
             hasReachedEnd = true;
         } else v = data[sampleIndex];        
         v *= asGetVolume(settings, source);
+        v *= master_volume;
         store[i] = v;
     }    
     if(!hasReachedEnd){      
