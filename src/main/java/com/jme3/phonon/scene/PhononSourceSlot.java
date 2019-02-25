@@ -43,6 +43,7 @@ import com.jme3.audio.AudioSource.Status;
 import com.jme3.math.Vector3f;
 import com.jme3.phonon.Phonon;
 import com.jme3.phonon.PhononOutputLine;
+import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMethod;
 import com.jme3.phonon.PhononSettings.PhononDirectOcclusionMode;
 import com.jme3.phonon.scene.emitters.DirectionalSoundEmitterControl;
 import com.jme3.phonon.scene.emitters.SoundEmitterControl;
@@ -184,8 +185,7 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                         f |= FLAG_AIRABSORPTION;
                 } else if(source instanceof AudioNode) {
                     AudioNode node = (AudioNode) source;
-                    if(Phonon.getAudioNodeApplyAirAbsorption(node))
-                        f |= FLAG_AIRABSORPTION;
+                    f |= FLAG_AIRABSORPTION;
                 }
 
                 FLS.update((byte) f);
@@ -203,13 +203,13 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                 AHEAD.update(emitter.getDirection());
             }else if(source instanceof AudioNode){
                 AudioNode node=(AudioNode)source;
-                SRADIUS.update(Phonon.getAudioNodeSourceRadius(node));
-                DIROMODE.update(Phonon.getAudioNodeDirectOcclusionMode(node));
-                DIROMETHOD.update(Phonon.getAudioNodeDirectOcclusionMethod(node));
+                SRADIUS.update(1f);
+                DIROMODE.update((byte)PhononDirectOcclusionMode.IPL_DIRECTOCCLUSION_NOTRANSMISSION.ordinal());
+                DIROMETHOD.update((byte)PhononDirectOcclusionMethod.IPL_DIRECTOCCLUSION_RAYCAST.ordinal());
                 UP.update(node.getWorldRotation().getRotationColumn(1));
                 RIGHT.update(node.getWorldRotation().getRotationColumn(0).negate());
-                DWEIGHT.update(Phonon.getAudioNodeDipoleWeight(node));
-                DPOWER.update(Phonon.getAudioNodeDipolePower(node));
+                DWEIGHT.update(0f);
+                DPOWER.update(0f);
                 AHEAD.update(source.getDirection());
             }           
 

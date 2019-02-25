@@ -15,6 +15,18 @@ def jmerepo='com.github.jMonkeyEngine.jmonkeyengine'
 def jmeversion='025b27c96d295e02c1471580980c7f4429be44b5'
 
 
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                def jre = entries.find { it.path.contains 'org.eclipse.jdt.launching.JRE_CONTAINER' }
+                jre.accessRules.add(new AccessRule('accessible', 'com/**'))
+                jre.accessRules.add(new AccessRule('accessible', '**'))
+                jre.accessRules.add(new AccessRule('accessible', 'sun/**'))           
+             }
+        }
+    }
+}
 
 
 

@@ -31,70 +31,53 @@
 */
 package com.jme3.phonon.desktop_javasound;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.BooleanControl;
-import javax.sound.sampled.Control;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.EnumControl;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.ReverbType;
 import javax.sound.sampled.SourceDataLine;
+
 import com.jme3.phonon.PhononOutputLine;
-import com.jme3.phonon.PhononSoundDevice;
 import com.jme3.phonon.PhononSoundPlayer;
-import com.jme3.phonon.PhononSoundSystem;
-import com.jme3.phonon.format.decoder.AudioDataDecoder;
-import com.jme3.phonon.format.decoder.AudioDataDecoderFactory;
-import com.jme3.phonon.utils.BitUtils;
+import com.sun.media.sound.AudioFloatConverter;
 
 class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundPhononSettings,JavaSoundSystem,JavaSoundDevice>{
 
+    private AudioFloatConverter converter;
 
- 
-    PhononOutputLine channel;
-    InputStream input;
-    SourceDataLine output;
-    AudioFormat audioFormat;
+    private SourceDataLine output;
+    private AudioFormat audioFormat;
 
-    boolean isRunning;
-    byte decodedFrame[];
-    byte encodedFrame[];
+    private byte decodedFrame[];
+    private float encodedFrame[];
 
-    AudioDataDecoder decoder;
-    JavaSoundPhononSettings settings;
-    @Override
-    public void init(
-        JavaSoundPhononSettings settings,
-        JavaSoundSystem system,
-        JavaSoundDevice device,
+    private boolean started=false;
     
-    PhononOutputLine chan, int sampleRate,
-            int channels, int frameSize, int sampleSize) throws Exception {
+    private FloatBuffer floatFrame;
+    private ByteBuffer frame;
+
+    private JavaSoundPhononSettings settings;
+
+    @Override
+    public void init(JavaSoundPhononSettings settings, JavaSoundSystem system, JavaSoundDevice device,
+
+            PhononOutputLine chan, int sampleRate, int channels, int frameSize, int sampleSize) throws Exception {
         this.settings=settings;
-        channel = chan;
 
+        int bytesPerSample=(sampleSize / 8);
+        int frameSizeInBytes=frameSize * bytesPerSample * channels;
 
-        decoder = AudioDataDecoderFactory.getAudioDataDecoder(sampleSize);
-
-        int bytesPerSample=(sampleSize/8);
-        int frameSizeInBytes=frameSize*bytesPerSample*channels;
-        
-        encodedFrame=new byte[frameSize*channels*4];
+        encodedFrame=new float[frameSize * channels];
         decodedFrame=new byte[frameSizeInBytes];
         audioFormat=new AudioFormat(sampleRate,sampleSize,channels,true,false);
-      
-        DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+        converter=com.sun.media.sound.AudioFloatConverter.getConverter(audioFormat);
+
+        DataLine.Info info=new DataLine.Info(SourceDataLine.class,audioFormat);
         output=(SourceDataLine)device.getMixer().getLine(info);
-        output.open(audioFormat,frameSizeInBytes*settings.playerBuffer);
+        output.open(audioFormat,frameSizeInBytes * settings.playerBuffer);
     }
 
-    boolean started=false;
     public void close() {
         output.flush();
         output.close();
@@ -103,15 +86,26 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundPhononSettings,JavaS
     @Override
     public void play(ByteBuffer frame, int framesize, int channels) {
         frame.rewind();
-        frame.get(encodedFrame);
+
+        if(floatFrame==null||this.frame!=frame){
+            this.frame=frame;
+            floatFrame=frame.asFloatBuffer();
+        }
+
+        floatFrame.rewind();
+
+        floatFrame.get(encodedFrame);
+
         frame.rewind();
-        decoder.decode(encodedFrame,decodedFrame);
+        floatFrame.rewind();
+
+        converter.toByteArray(encodedFrame,decodedFrame);
         output.write(decodedFrame,0,decodedFrame.length);
-        if(!started&&(!settings.playerStartWhenBufferIsFull||output.available()<decodedFrame.length)){
+        if(!started && (!settings.playerStartWhenBufferIsFull || output.available() < decodedFrame.length)){
             output.start();
             started=true;
         }
-     
+
     }
 
 }
