@@ -75,17 +75,36 @@ jboolean asReadNextFrame(struct GlobalSettings *settings,struct AudioSource *sou
     jint sourceSamples = source->numSamples;
     jfloat *data = source->data;
     jboolean hasReachedEnd = false;
-    for (jint i = 0; i < frameSize; i++) {
+
+    jfloat pitch=asGetPitch(settings, source);
+    jfloat volume=asGetVolume(settings, source);
+    jboolean loop=asHasFlag(settings ,source, LOOP);
+
+    jint read=0;
+    jint i=0;
+    while(read<frameSize){
         jint sampleIndex = frameSize * source->lastReadFrameIndex + i;
-        sampleIndex *= asGetPitch(settings, source);
+        sampleIndex *= pitch;
+    
         jfloat v;
-        if (sampleIndex >= sourceSamples) {  // Write 0s if the frame size exceed the remaining source's bytes
-            v =0;
-            hasReachedEnd = true;
-        } else v = data[sampleIndex];        
-        v *= asGetVolume(settings, source);
+
+        if (sampleIndex >= sourceSamples ) {
+            if(loop){ 
+                asResetForLoop(settings,source);
+                i=0;
+                continue;
+            }else{
+                v=0;
+                hasReachedEnd = true;
+            }
+        }else{
+            v = data[sampleIndex];   
+        }
+   
+        v *= volume;
         v *= master_volume;
-        store[i] = v;
+        store[read] = v;
+        read++; i++;
     }    
     if(!hasReachedEnd){      
         source->lastReadFrameIndex++;

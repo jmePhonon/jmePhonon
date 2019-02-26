@@ -218,15 +218,15 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
             if(asIsReady(&SETTINGS,audioSource)){
                 jboolean isPlaying = asHasFlag(&SETTINGS, audioSource, PLAYING);
                 if (isPlaying ) {
-                    jboolean loop = asHasFlag(&SETTINGS, audioSource, LOOP);
+                    // jboolean loop = asHasFlag(&SETTINGS, audioSource, LOOP);
                     jint nchannels = asGetNumChannels(&SETTINGS, audioSource);
                     inFrame = nchannels == 1 ? Temp.monoFrame1 : Temp.tmpFrame;
                     if (asReadNextFrame(&SETTINGS, audioSource,  (*masterVolume), inFrame)) {
-                        if (!loop) {                       
-                            olDisconnectSource(&SETTINGS, OUTPUT_LINE, audioSource);
-                        }else{
-                            asResetForLoop(&SETTINGS,audioSource);
-                        }
+                        // if (!loop) {                       
+                        olDisconnectSource(&SETTINGS, OUTPUT_LINE, audioSource);
+                        // }else{
+                        //     asResetForLoop(&SETTINGS,audioSource);
+                        // }
                     }    
 
                     jboolean isPositional = asHasFlag(&SETTINGS, audioSource, POSITIONAL);
