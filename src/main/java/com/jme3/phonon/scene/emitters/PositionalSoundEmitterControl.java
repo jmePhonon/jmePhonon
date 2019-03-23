@@ -174,11 +174,6 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     
 
 
-    @Override
-    public PositionalSoundEmitterControl clone() {
-        return (PositionalSoundEmitterControl) super.clone();
-    }
-
     /**
      *  Called internally by com.jme3.util.clone.Cloner.  Do not call directly.
      */

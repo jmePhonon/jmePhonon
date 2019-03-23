@@ -104,11 +104,6 @@ public class DirectionalSoundEmitterControl extends PositionalSoundEmitterContro
     }
 
 
-    @Override
-    public DirectionalSoundEmitterControl clone() {
-            return (DirectionalSoundEmitterControl) super.clone();
-      
-    }
 
     /**
      *  Called internally by com.jme3.util.clone.Cloner.  Do not call directly.

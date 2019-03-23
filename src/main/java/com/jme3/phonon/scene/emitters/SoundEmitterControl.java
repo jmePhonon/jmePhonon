@@ -42,9 +42,9 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
     private float pitch = 1;
     private float timeOffset = 0;
     private AudioKey audioKey;
-    private transient F32leAudioData data = null;
-    private transient volatile AudioSource.Status status = AudioSource.Status.Stopped;
-    private transient volatile int channel = -1;
+    private F32leAudioData data = null;
+    private volatile AudioSource.Status status = AudioSource.Status.Stopped;
+    private volatile int channel = -1;
     private String name;
 
 
@@ -301,27 +301,14 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
       
     }
 
-    @Override
-    public SoundEmitterControl clone() {
-        try {
-            return (SoundEmitterControl) super.clone();
-        } catch (CloneNotSupportedException e) {
-            System.err.println("Failed to clone AudioEmitterControl");
-            return null;
-        }
-    }
-
     /**
      *  Called internally by com.jme3.util.clone.Cloner.  Do not call directly.
      */
     @Override
     public void cloneFields( Cloner cloner, Object original ) {
         super.cloneFields(cloner,original);
-        this.channel=-1;
-        // if(this.getStatus()==Status.Playing){
-        //     this.play();
-        
-        // }
+        this.channel = -1;
+        this.status = AudioSource.Status.Stopped;
     }
 
     @Override
