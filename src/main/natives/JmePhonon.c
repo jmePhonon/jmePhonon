@@ -193,11 +193,9 @@ void phInit(struct GlobalSettings *settings,jint mixerQueueSize, jint nMaterials
 
     PhSharedContext.simulationSettings.bakingBatchSize = GET_SETTINGS_INT(jSettings, settingsClass, "bakingBatchSize");
     PhSharedContext.simulationSettings.sceneType = IPL_SCENETYPE_PHONON;
-    PhSharedContext.simulationSettings.numOcclusionSamples = 32; // TODO: add to configurations
-    PhSharedContext.simulationSettings.irradianceMinDistance=0.5; // TODO: add to configuration
-
-
     PhSharedContext.useBinauralRendererForSources=GET_SETTINGS_BOOL(jSettings, settingsClass, "useBinauralRendererForSources");
+    PhSharedContext.simulationSettings.numOcclusionSamples = GET_SETTINGS_INT(jSettings, settingsClass, "numOcclusionSamples");
+    PhSharedContext.simulationSettings.irradianceMinDistance=GET_SETTINGS_FLOAT(jSettings, settingsClass, "irradianceMinDistance");
     //////////////////
 
   

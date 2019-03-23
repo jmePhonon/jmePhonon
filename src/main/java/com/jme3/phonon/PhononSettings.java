@@ -87,7 +87,9 @@ public class PhononSettings {
     public int bakingBatchSize=1;// Only used by IPL_SCENETYPE_RADEONRAYS
     public boolean listenerCentricReverb=true;
     public boolean useBinauralRendererForSources=true;
-
+    public int numOcclusionSamples=32;
+    public float irradianceMinDistance=0.5f;
+    
     public PhononSettings(PhononSoundSystem ss){
         system=ss;
     }
