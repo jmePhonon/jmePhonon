@@ -103,7 +103,11 @@ public class PositionalSoundEmitterControl extends SoundEmitterControl{
     @Override
     public Vector3f getPosition() {
         if(spatial==null) return super.getPosition();
-        return pos.set(spatial.getWorldTranslation()).addLocal(offset);
+        pos.set(offset);
+        pos.multLocal(spatial.getWorldScale());
+        spatial.getWorldRotation().multLocal(pos);
+        pos.addLocal(spatial.getWorldTranslation());
+        return pos;
     }
 
     @Override
