@@ -78,6 +78,9 @@ public class PhononSourceSlot extends CommitableMemoryObject{
     private volatile boolean instance;
     private volatile boolean waitingForFinalization;
    
+
+    private final DirectSoundPath tmpSoundPath=new DirectSoundPath();
+
     public PhononSourceSlot(int id){
         ID=id;
         MEMORY=BufferUtils.createByteBuffer(SIZE);
@@ -178,6 +181,10 @@ public class PhononSourceSlot extends CommitableMemoryObject{
                 if(source instanceof PositionalSoundEmitterControl){
                     if(((PositionalSoundEmitterControl)source).isBinaural()) f|=FLAG_HRTF;
                 }else f|=FLAG_HRTF;
+
+                if(source instanceof PositionalSoundEmitterControl){
+                    if(((PositionalSoundEmitterControl)source).getCustomDirectSoundPathFunction()!=null) f|=FLAG_USE_DIRECTPATH_FUNCTION;
+                }
                
                 if(source instanceof PositionalSoundEmitterControl) {
                     PositionalSoundEmitterControl emitter = (PositionalSoundEmitterControl) source;
@@ -295,5 +302,15 @@ public class PhononSourceSlot extends CommitableMemoryObject{
 
     public long getDataAddress() {
         return DirectBufferUtils.getAddr(MEMORY);
+    }
+
+
+    public DirectSoundPath getDirectPath(){
+        tmpSoundPath.readFrom(MEMORY);
+        return tmpSoundPath;        
+    }
+
+    public void setDirectPath(DirectSoundPath path){
+        path.writeTo(MEMORY);
     }
 }

@@ -59,7 +59,11 @@ public final class Phonon{
         DirectOcclusionMode,
         DirectOcclusionMethod,
         SourceRadius,
-        Status;
+        Status,
+        BinauralStatus,
+        ReverbStatus,
+        DirectSoundPathFun
+        ;
 
         
     }

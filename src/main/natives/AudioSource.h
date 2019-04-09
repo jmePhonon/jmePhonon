@@ -97,6 +97,8 @@ drt *asGetSourceDirectivity(struct GlobalSettings *settings, struct AudioSource 
 void asSetSceneData(struct GlobalSettings *settings, struct AudioSource *source, jfloat *data);
 
 jint asGetNumChannels(struct GlobalSettings *settings, struct AudioSource *source);
+void asGetDirectPath(struct GlobalSettings *settings, struct AudioSource *source,drpath* directPathOut);
+void asSetDirectPath(struct GlobalSettings *settings, struct AudioSource *source,drpath* directPath);
 #define asHasFlag(settings, source, flag) (_asHasFlag(settings, source, asFlag(flag)))
 jboolean _asHasFlag(struct GlobalSettings *settings, struct AudioSource *source, jint flag);
 void asConnect(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jfloat *data, jint samples,jint jumpToFrame);

@@ -375,7 +375,7 @@ void phDestroy(struct GlobalSettings *settings){
     // free(PhSharedContext.materials);
 }
 
-void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame){
+void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,struct AudioSource *asource,jfloat *inFrame, jfloat *outFrame,void (*directPathFun)(struct GlobalSettings*,struct AudioSource*,drpath*)){
     struct PhContext *ctx=asource->phononContext;
 
     // Postponed initialization
@@ -444,6 +444,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                                                         directOcclusionMode,
                                                         directOcclusionMethod);
 
+        if(directPathFun!=NULL)  directPathFun(settings,asource,&path);        
+
         IPLAudioBuffer directSoundOut=(IPLAudioBuffer){PhSharedContext.monoFormat, PhSharedContext.settings.frameSize, PhSharedContext.auxMonoFrame,NULL};
 
         iplApplyDirectSoundEffect(ctx->directSoundEffect,
@@ -452,8 +454,8 @@ void phProcessFrame(struct GlobalSettings *settings,struct Listener *listener,st
                                 ctx->directSoundEffectOptions,
                                 directSoundOut);
 
+  
     
-
         if(asHasFlag(settings, asource, HRTF)&&PhSharedContext.useBinauralRendererForSources){
             iplApplyBinauralEffect(ctx->binauralEffect,PhSharedContext.binauralRenderer, 
                             directSoundOut, direction, 

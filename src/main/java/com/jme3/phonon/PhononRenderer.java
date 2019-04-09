@@ -52,11 +52,13 @@ import com.jme3.audio.ListenerParam;
 import com.jme3.phonon.Phonon.PhononAudioParam;
 import com.jme3.phonon.format.F32leAudioData;
 import com.jme3.phonon.manager.AudioManager;
+import com.jme3.phonon.scene.DirectSoundPath;
 import com.jme3.phonon.scene.PhononListener;
 import com.jme3.phonon.scene.PhononMesh;
 import com.jme3.phonon.thread.PhononExecutor;
 import com.jme3.phonon.thread.ThreadSafeQueue;
 import com.jme3.phonon.scene.PhononSourceSlot;
+import com.jme3.phonon.scene.emitters.PositionalSoundEmitterControl;
 import com.jme3.phonon.scene.emitters.SoundEmitterControl;
 import com.jme3.phonon.scene.material.PhononMaterial;
 import com.jme3.phonon.utils.DirectBufferUtils;
@@ -74,7 +76,6 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	// private final List<PhononPlayer> enqueuedPlayers = new LinkedList<>();
 
 	
-	// Mixer lines
 	private final PhononSettings SETTINGS;
 	private final PhononOutputLine OUTPUT_LINE;
 	private final PhononSourceSlot[] SOURCES;
@@ -90,7 +91,7 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	private final ThreadSafeQueue PHONON_QUEUE=new ThreadSafeQueue();
 
 	private AudioManager mng;
-
+	
 	public PhononRenderer(PhononSettings settings) throws Exception{
 		SETTINGS=settings;
 		settings.executor.setUpdater(this);
@@ -583,6 +584,15 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 			case SourceRadius:
 				psrc.setSourceRadiusUpdateNeeded();
 				break;
+			case DirectSoundPathFun:
+				psrc.setFlagsUpdateNeeded();
+				break;
+			case ReverbStatus:
+				psrc.setFlagsUpdateNeeded();
+				break;
+			case BinauralStatus:
+				psrc.setFlagsUpdateNeeded();
+				break;
 			default:
 				// System.err.println("Unrecognized Phonon param while updating audio source.");
 				// return;
@@ -660,6 +670,23 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	// void stopSourceRaw(long addr) {
 	// 	disconnectSourceNative(addr);
 	// }
+
+
+	/*** NATIVE CALLBACK ****/
+	private void _native_transformDirectSoundPath(int sourceSlot){
+		PhononSourceSlot slot=SOURCES[sourceSlot];
+		assert slot!=null;
+		AudioSource src=slot.getSource();
+		assert src!=null;
+		if(src instanceof PositionalSoundEmitterControl){
+			if(((PositionalSoundEmitterControl)src).getCustomDirectSoundPathFunction() != null){
+				DirectSoundPath path=slot.getDirectPath();
+				((PositionalSoundEmitterControl)src).getCustomDirectSoundPathFunction().apply(path);
+				slot.setDirectPath(path);
+			}
+		}
+
+	}
 
 
 	/**** NATIVE METHODS *****/

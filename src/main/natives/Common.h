@@ -80,6 +80,8 @@ typedef IPLVector3 vec3;
 // typedef IPLQuaternion qtr;
 typedef IPLDirectivity drt;
 
+typedef IPLDirectSoundPath drpath;
+
 /** Adapted from jmonkeyengine's Quaternion.java */
 // static inline void qtrRotateVec3(qtr *q, vec3 *v, vec3 *store) {
 //     jfloat vx = v->x, vy = v->y, vz = v->z;

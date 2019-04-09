@@ -188,6 +188,51 @@ jint asGetNumChannels(struct GlobalSettings *settings,struct AudioSource *source
     return (jint) numChannels; 
 }
 
+void asSetDirectPath(struct GlobalSettings *settings, struct AudioSource *source,drpath* directPath) {
+    source->sceneData[asSourceField(DIRPATH_DIRECTIONX)]=directPath->direction.x;
+    source->sceneData[asSourceField(DIRPATH_DIRECTIONY)]=directPath->direction.y;
+    source->sceneData[asSourceField(DIRPATH_DIRECTIONZ)]=directPath->direction.z;
+
+    source->sceneData[asSourceField(DIRPATH_DISTATT)]=directPath->distanceAttenuation;
+
+    source->sceneData[asSourceField(DIRPATH_AIRABSORP0)]=directPath->airAbsorption[0];
+    source->sceneData[asSourceField(DIRPATH_AIRABSORP1)]=directPath->airAbsorption[1];
+    source->sceneData[asSourceField(DIRPATH_AIRABSORP2)]=directPath->airAbsorption[2];
+
+    source->sceneData[asSourceField(DIRPATH_PROPDELAY)]=directPath->propagationDelay;
+
+    source->sceneData[asSourceField(DIRPATH_OCCFACT)]=directPath->occlusionFactor;
+
+    source->sceneData[asSourceField(DIRPATH_TRANSFACT0)]=directPath->transmissionFactor[0];
+    source->sceneData[asSourceField(DIRPATH_TRANSFACT1)]=directPath->transmissionFactor[1];
+    source->sceneData[asSourceField(DIRPATH_TRANSFACT2)]=directPath->transmissionFactor[2];
+
+    source->sceneData[asSourceField(DIRPATH_DIRFACT)]=directPath->directivityFactor;    
+}
+
+void asGetDirectPath(struct GlobalSettings *settings, struct AudioSource *source,drpath* directPathOut) {
+    directPathOut->direction.x=source->sceneData[asSourceField(DIRPATH_DIRECTIONX)];
+    directPathOut->direction.y=source->sceneData[asSourceField(DIRPATH_DIRECTIONY)];
+    directPathOut->direction.z=source->sceneData[asSourceField(DIRPATH_DIRECTIONZ)];
+
+    directPathOut->distanceAttenuation=source->sceneData[asSourceField(DIRPATH_DISTATT)];
+
+    directPathOut->airAbsorption[0]=source->sceneData[asSourceField(DIRPATH_AIRABSORP0)];
+    directPathOut->airAbsorption[1]=source->sceneData[asSourceField(DIRPATH_AIRABSORP1)];
+    directPathOut->airAbsorption[2]=source->sceneData[asSourceField(DIRPATH_AIRABSORP2)];
+
+    directPathOut->propagationDelay=source->sceneData[asSourceField(DIRPATH_PROPDELAY)];
+
+    directPathOut->occlusionFactor=source->sceneData[asSourceField(DIRPATH_OCCFACT)];
+
+    directPathOut->transmissionFactor[0]=source->sceneData[asSourceField(DIRPATH_TRANSFACT0)];
+    directPathOut->transmissionFactor[1]=source->sceneData[asSourceField(DIRPATH_TRANSFACT1)];
+    directPathOut->transmissionFactor[2]=source->sceneData[asSourceField(DIRPATH_TRANSFACT2)];
+
+    directPathOut->directivityFactor=source->sceneData[asSourceField(DIRPATH_DIRFACT)];    
+}
+
+
 
 void asConnect(struct GlobalSettings *settings,struct UList *updateList,struct AudioSource *slot, jfloat *data, jint samples,jint jumpToFrame){
     slot->data = data;

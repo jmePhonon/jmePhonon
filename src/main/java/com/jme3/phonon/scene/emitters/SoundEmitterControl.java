@@ -420,5 +420,5 @@ public class SoundEmitterControl  extends AbstractControl implements AudioSource
     @Override
     public String toString() {
         return getName();
-    }
+    }  
 }

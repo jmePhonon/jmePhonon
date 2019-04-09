@@ -46,7 +46,7 @@ void phDestroySceneMesh(struct GlobalSettings *settings);
 void phSaveSceneMeshAsObj(struct GlobalSettings *settings,  jbyte *path);
 
 void phInit(struct GlobalSettings *settings, jint mixerQueueSize, jint nMaterials, jfloat *materials, JNIEnv*, jobject);
-void phProcessFrame(struct GlobalSettings *settings, struct Listener *listener, struct AudioSource *source, jfloat *inFrame, jfloat *outFrame);
+void phProcessFrame(struct GlobalSettings *settings, struct Listener *listener, struct AudioSource *source, jfloat *inFrame, jfloat *outFrame,void (*directPathFun)(struct GlobalSettings*,struct AudioSource*,drpath*));
 void phGetEnvFrame(struct GlobalSettings *settings,struct Listener *listener,jfloat *outFrame);
 void phDestroy(struct GlobalSettings *settings);
  

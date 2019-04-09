@@ -42,6 +42,7 @@ public class AUDIOSOURCE_LAYOUT {
     public final static int FLAG_AIRABSORPTION=(1<<5);
     public final static int FLAG_MARKED_FOR_DISCONNECTION=(1<<6);
     public final static int FLAG_HRTF=(1<<7);
+    public final static int FLAG_USE_DIRECTPATH_FUNCTION=(1<<8);
 
     public static final byte FLAGS_fieldsize = 1;
     public static final byte NUM_CHANNELS_fieldsize = 1;
@@ -73,7 +74,28 @@ public class AUDIOSOURCE_LAYOUT {
     public static final byte PITCH_fieldsize = 4;
 
 
-    
+    // Direct path mem
+    public static final byte DIRPATH_DIRECTIONX_fieldsize = 4;
+    public static final byte DIRPATH_DIRECTIONY_fieldsize = 4;
+    public static final byte DIRPATH_DIRECTIONZ_fieldsize = 4;
+
+    public static final byte DIRPATH_DISTATT_fieldsize = 4;
+
+    public static final byte DIRPATH_AIRABSORP0_fieldsize = 4;
+    public static final byte DIRPATH_AIRABSORP1_fieldsize = 4;
+    public static final byte DIRPATH_AIRABSORP2_fieldsize = 4;
+
+    public static final byte DIRPATH_PROPDELAY_fieldsize = 4;
+
+    public static final byte DIRPATH_OCCFACT_fieldsize = 4;
+
+    public static final byte DIRPATH_TRANSFACT0_fieldsize = 4;
+    public static final byte DIRPATH_TRANSFACT1_fieldsize = 4;
+    public static final byte DIRPATH_TRANSFACT2_fieldsize = 4;
+
+    public static final byte DIRPATH_DIRFACT_fieldsize = 4;
+    //// 
+        
     public static final byte FLAGS = 0;
     public static final byte NUM_CHANNELS = FLAGS + FLAGS_fieldsize;
     public static final byte DIROCCMODE = NUM_CHANNELS + NUM_CHANNELS_fieldsize;
@@ -104,5 +126,28 @@ public class AUDIOSOURCE_LAYOUT {
     
     public static final byte PITCH = VOLUME+VOLUME_fieldsize;
 
-    public static final byte SIZE = PITCH+PITCH_fieldsize;
+
+    // Dir path
+    public static final byte DIRPATH_DIRECTIONX = PITCH+PITCH_fieldsize;
+    public static final byte DIRPATH_DIRECTIONY = DIRPATH_DIRECTIONX+DIRPATH_DIRECTIONX_fieldsize;
+    public static final byte DIRPATH_DIRECTIONZ = DIRPATH_DIRECTIONY+DIRPATH_DIRECTIONY_fieldsize;
+
+    public static final byte DIRPATH_DISTATT = DIRPATH_DIRECTIONZ+DIRPATH_DIRECTIONZ_fieldsize;
+
+    public static final byte DIRPATH_AIRABSORP0 = DIRPATH_DISTATT+DIRPATH_DISTATT_fieldsize;
+    public static final byte DIRPATH_AIRABSORP1 = DIRPATH_AIRABSORP0+DIRPATH_AIRABSORP0_fieldsize;
+    public static final byte DIRPATH_AIRABSORP2 = DIRPATH_AIRABSORP1+DIRPATH_AIRABSORP1_fieldsize;
+
+    public static final byte DIRPATH_PROPDELAY = DIRPATH_AIRABSORP2+DIRPATH_AIRABSORP2_fieldsize;
+
+    public static final byte DIRPATH_OCCFACT = DIRPATH_PROPDELAY+DIRPATH_PROPDELAY_fieldsize;
+
+    public static final byte DIRPATH_TRANSFACT0 = DIRPATH_OCCFACT+DIRPATH_OCCFACT_fieldsize;
+    public static final byte DIRPATH_TRANSFACT1 = DIRPATH_TRANSFACT0+DIRPATH_TRANSFACT0_fieldsize;
+    public static final byte DIRPATH_TRANSFACT2 = DIRPATH_TRANSFACT1+DIRPATH_TRANSFACT1_fieldsize;
+
+    public static final byte DIRPATH_DIRFACT = DIRPATH_TRANSFACT2+DIRPATH_TRANSFACT2_fieldsize;
+    //// 
+
+    public static final byte SIZE = DIRPATH_DIRFACT+DIRPATH_DIRFACT_fieldsize;
 } 

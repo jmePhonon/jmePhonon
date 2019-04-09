@@ -58,12 +58,19 @@ struct {
     jfloat **mixerQueue;
     jfloat *envframe;
 
+    JNIEnv *javaEnv;
+    jobject renderer;
+    jmethodID transformDirectSoundCallbackId;
 } Temp;
 
-
+void _java_computeDirectPath(struct GlobalSettings *settings, struct AudioSource *source,drpath* directPath) { 
+    asSetDirectPath(settings,source,directPath);
+    (*Temp.javaEnv)->CallVoidMethod(Temp.javaEnv, Temp.renderer, Temp.transformDirectSoundCallbackId, source->id);
+    asGetDirectPath(settings,source,directPath);
+}
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *env,
-                                                                      jobject obj,
+                                                                 jobject renderer,
 
                                                                       jlong listenerDataPointer,
                                                                       jlongArray audioSourcesSceneDataArrayPointer,
@@ -73,6 +80,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
                                                                       jlong outputLineAddr,
 
                                                                       jobject jSettings) {
+
+    // Store env & renderer                                                                          
+    Temp.javaEnv=env;
+    Temp.renderer=(*env)->NewWeakGlobalRef(env,renderer);
 
     // Collect settings from java                                                                          
     jclass settingsClass = (*env)->GetObjectClass(env, jSettings);
@@ -116,9 +127,19 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_initNative(JNIEnv *en
         asSetSceneData(&SETTINGS, &OUTPUT_LINE->sourcesSlots[j], audioSourceSceneData);           
         phInitializeSource(&SETTINGS, &OUTPUT_LINE->sourcesSlots[j]);
     }
+
+    // Callbacks
+    jclass clazz = (*env)->GetObjectClass(env, renderer);
+    Temp.transformDirectSoundCallbackId = (*env)->GetMethodID(env, clazz, "_native_transformDirectSoundPath", "(I)V");
+    if(Temp.transformDirectSoundCallbackId==0){
+        printf("Error! Can't obtain _native_transformDirectSoundPath method id.\n");
+        exit(1);
+    }
 }
 
 JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_destroyNative(JNIEnv *env, jobject obj) {
+    (*env)->DeleteWeakGlobalRef(env,Temp.renderer);
+
     // Destroy the sources
     for (jint j = 0; j < SETTINGS.nSourcesPerLine; j++) {
         phDestroySource(&SETTINGS, &OUTPUT_LINE->sourcesSlots[j]);
@@ -233,8 +254,10 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
                     if(!isPositional){
                         jint nchannels = asGetNumChannels(&SETTINGS, audioSource);
                         passThrough(&SETTINGS, inFrame, Temp.mixerQueue[(SETTINGS.nSourcesPerLine ) - (++skipEnvMixerQueueIndex)  ], nchannels);
-                    } else { // Positionals are always mono                 
-                        phProcessFrame(&SETTINGS, GLOBAL_LISTENER, audioSource, inFrame,Temp.mixerQueue[mixerQueueIndex++]);
+                    } else { // Positionals are always mono                    
+                        void (*directPathFun)(struct GlobalSettings*,struct AudioSource*,drpath*)=NULL;
+                        if(asHasFlag(&SETTINGS,audioSource,USE_DIRECTPATH_FUNCTION)) directPathFun=&_java_computeDirectPath;                  
+                        phProcessFrame(&SETTINGS, GLOBAL_LISTENER, audioSource, inFrame,Temp.mixerQueue[mixerQueueIndex++],directPathFun);
                     }
                 }
             }            
@@ -300,3 +323,4 @@ JNIEXPORT void JNICALL Java_com_jme3_phonon_PhononRenderer_updateNative(JNIEnv *
         // }
     
 }
+
