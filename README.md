@@ -8,6 +8,18 @@
 - OSX (64bit)
 - Windows 64bit
 
+
+## Binaries
+On [Bintray](https://bintray.com/jmephonon/jmePhonon/jmePhonon)
+```gradle
+repositories { 
+    maven { url "https://dl.bintray.com/jmephonon/jmePhonon" }
+}
+dependencies{
+    compile(group: 'com.jme3.phonon', name: 'jmePhonon', version: VERSION, ext: 'jar', classifier: '')
+}
+```
+
 ## Documentation
 
 - I want to use jmePhonon
