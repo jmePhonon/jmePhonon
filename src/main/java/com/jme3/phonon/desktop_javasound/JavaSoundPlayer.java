@@ -50,10 +50,13 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundPhononSettings,JavaS
     private AudioFormat audioFormat;
 
     private byte decodedFrame[];
+    private byte emptyDecodedFrame[];
+    private volatile boolean decodedFrameReady=false;
+
     private float encodedFrame[];
 
     private boolean started=false;
-    
+
     private FloatBuffer floatFrame;
     private ByteBuffer frame;
 
@@ -70,12 +73,38 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundPhononSettings,JavaS
 
         encodedFrame=new float[frameSize * channels];
         decodedFrame=new byte[frameSizeInBytes];
+        emptyDecodedFrame=new byte[frameSizeInBytes];
         audioFormat=new AudioFormat(sampleRate,sampleSize,channels,true,false);
         converter=com.sun.media.sound.AudioFloatConverter.getConverter(audioFormat);
 
-        DataLine.Info info=new DataLine.Info(SourceDataLine.class,audioFormat);
-        output=(SourceDataLine)device.getMixer().getLine(info);
-        output.open(audioFormat,frameSizeInBytes * settings.playerBuffer);
+        /*
+        * Q/A
+        * Why is there a dedicated thread with the only purpose of writing into the javamixer couldn't this be done in the play() method? 
+        *      Long story short, it seems that when a delay in you app causes the buffer to empty, some systems
+        *      internally might decide to shut off the line and this triggers a chain reaction of weirdness 
+        *      that causes screeching and broken sound that last for some seconds. A thread that always write, even when the data is not
+        *      available, seems to solve the issue. (if the data is not available we write empty frames).
+        */
+    
+        Thread t=new Thread(() -> {      
+            try{
+                DataLine.Info info=new DataLine.Info(SourceDataLine.class,audioFormat);
+                output=(SourceDataLine)device.getMixer().getLine(info);
+                output.open(audioFormat,frameSizeInBytes*settings.playerBuffer );
+        
+              
+                while(true){
+                    jmixPlay();
+                }
+
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        });
+        t.setName("JavaMixer Writer");
+        t.setPriority(Thread.MAX_PRIORITY);
+        t.setDaemon(true);
+        t.start();
     }
 
     public void close() {
@@ -83,11 +112,33 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundPhononSettings,JavaS
         output.close();
     }
 
+ 
+    private void jmixPlay() {        
+        if(decodedFrameReady){
+            // if we have a frame, we write it and we let the other thread continue
+            synchronized(decodedFrame){
+                // This will automatically pause the thread if the buffer is full
+                output.write(decodedFrame,0,decodedFrame.length); 
+                decodedFrameReady=false;
+                decodedFrame.notify();
+            }
+        }else if(output.available()>=emptyDecodedFrame.length*settings.playerBuffer){
+            // If the buffer is empty and we don't have a frame, we resort to write empty bytes
+            output.write(emptyDecodedFrame,0,emptyDecodedFrame.length);
+        }
+
+        if(!started && (!settings.playerStartWhenBufferIsFull || output.available() < emptyDecodedFrame.length)){
+            output.start();
+            started=true;
+        }
+    }
+
     @Override
     public void play(ByteBuffer frame, int framesize, int channels) {
+
         frame.rewind();
 
-        if(floatFrame==null||this.frame!=frame){
+        if(floatFrame == null || this.frame != frame){
             this.frame=frame;
             floatFrame=frame.asFloatBuffer();
         }
@@ -99,12 +150,18 @@ class JavaSoundPlayer implements PhononSoundPlayer<JavaSoundPhononSettings,JavaS
         frame.rewind();
         floatFrame.rewind();
 
-        converter.toByteArray(encodedFrame,decodedFrame);
-        output.write(decodedFrame,0,decodedFrame.length);
-        if(!started && (!settings.playerStartWhenBufferIsFull || output.available() < decodedFrame.length)){
-            output.start();
-            started=true;
-        }
+        // We convert the new frame and wait for it to be played (or buffered)
+        synchronized(decodedFrame){
+            converter.toByteArray(encodedFrame,decodedFrame);
+            decodedFrameReady=true;
+            do{
+                try{
+                    decodedFrame.wait();
+                }catch(InterruptedException e){
+                    e.printStackTrace();
+                }
+            }while(decodedFrameReady);
+        }        
 
     }
 
