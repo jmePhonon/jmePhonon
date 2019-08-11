@@ -15,3 +15,4 @@ src/test/resources/inputaudio.raw
 *.log
 deploy/
 src/ext
+build.cache

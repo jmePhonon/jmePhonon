@@ -211,7 +211,7 @@ function buildNatives {
     find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
 
     platform="Linux"
-    platform2="?"
+    platform2="none"
     arch="x86_64"
     platform_libprefix="lib"
     platform_libsuffix=".so"

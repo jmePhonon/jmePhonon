@@ -5,7 +5,7 @@ services:
 git:
   lfs_skip_smudge: true
 script:
-- ./make.sh TRAVIS_COMMIT,TRAVIS_TAG,TRAVIS_PULL_REQUEST,TRAVIS_BRANCH,BINTRAY_USER,BINTRAY_KEY,OS_LINUX=1,OS_WINDOWS=1,OS_OSX=1,NO_CACHE=1 clean downloadResources updateJNIHeaders packageSource build buildStandaloneTests deploy -Pin_version=""
+- ./make.sh TRAVIS_COMMIT,TRAVIS_TAG,TRAVIS_PULL_REQUEST,TRAVIS_BRANCH,BINTRAY_USER,BINTRAY_KEY,OS_LINUX=1,OS_WINDOWS=1,NO_CACHE=1 clean downloadResources updateJNIHeaders packageSource build buildStandaloneTests deploy -Pin_version=""
 deploy:
   provider: releases
   skip_cleanup: true
