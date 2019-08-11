@@ -55,10 +55,10 @@ repositories {
 }
 
 dependencies {
-    compile jmerepo + ':jme3-core:' + jmeversion
-    compile jmerepo + ':jme3-desktop:' + jmeversion
-    compile jmerepo + ':jme3-lwjgl:' + jmeversion
-    compile jmerepo + ':jme3-jogg:' + jmeversion
+    compileOnly jmerepo + ':jme3-core:' + jmeversion
+    compileOnly jmerepo + ':jme3-desktop:' + jmeversion
+    compileOnly jmerepo + ':jme3-lwjgl:' + jmeversion
+    compileOnly jmerepo + ':jme3-jogg:' + jmeversion
     testCompile 'junit:junit:4.11'
  }
 
