@@ -675,9 +675,11 @@ public class PhononRenderer implements AudioRenderer, PhononUpdater {
 	/*** NATIVE CALLBACK ****/
 	private void _native_transformDirectSoundPath(int sourceSlot){
 		PhononSourceSlot slot=SOURCES[sourceSlot];
-		assert slot!=null;
+		if(slot==null)return;
+		// assert slot!=null;
 		AudioSource src=slot.getSource();
-		assert src!=null;
+		if(src==null)return;
+
 		if(src instanceof PositionalSoundEmitterControl){
 			if(((PositionalSoundEmitterControl)src).getCustomDirectSoundPathFunction() != null){
 				DirectSoundPath path=slot.getDirectPath();
