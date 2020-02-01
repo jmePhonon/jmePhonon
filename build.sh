@@ -6,6 +6,9 @@ mkdir -p build/natives
 source build.dep/safeRm.sh
 source build.dep/findJava.sh
 source build.dep/findOs.sh
+source build.dep/uploadToMaven.sh
+
+    set -e
 
 
 # Get steam audio
@@ -25,11 +28,16 @@ export STEAM_AUDIO_URL_HASH="`echo "$STEAM_AUDIO_URL" | sha256sum | cut -d' ' -f
 
 #compareFileHash FILE HASH
 function compareFileHash {
-    if [ "`cat $1 | sha256sum | cut -d' ' -f1`" != "$2" ];
+    if [ ! -f "$1" ];
     then
         echo "fail"
     else
-        echo ""
+        if [ "`cat $1 | sha256sum | cut -d' ' -f1`" != "$2" ];
+        then
+            echo "fail"
+        else
+            echo ""
+        fi
     fi
 }
 
@@ -208,7 +216,7 @@ function buildNatives {
 
 
     echo "" > tmp/ext_cpplist.txt
-    find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt
+    find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt || true
 
     platform="Linux"
     platform2="none"
@@ -323,36 +331,20 @@ function deploy {
     VERSION=$TRAVIS_COMMIT
     if [ "$TRAVIS_PULL_REQUEST" == "false" -a "$TRAVIS_TAG" != "" ];
     then
-        echo "Deploy for $TRAVIS_TAG."
+        echo "Deploy for $TRAVIS_TAG from $PWD."
         VERSION=$TRAVIS_TAG
         DEPLOY="1"        
     fi
 
-    if [ "$DEPLOY" = "" -a "$TRAVIS_PULL_REQUEST" == "false" -a  "$TRAVIS_BRANCH" == "master" ];
+
+
+    if [ "$DEPLOY" == "1" -a "$BINTRAY_USER" != "" -a "$BINTRAY_KEY" != "" ];
     then
-        echo "Deploy for $TRAVIS_BRANCH."
-        VERSION="-SNAPSHOT"
-        DEPLOY="1"        
+        uploadAllToMaven deploy \
+        https://api.bintray.com/maven/jmephonon/jmePhonon/ \
+        $BINTRAY_USER $BINTRAY_KEY "https://github.com/jmePhonon/jmePhonon" "BSD 3-Clause"
     fi
 
-    safeRm "deploy"
-    mkdir -p deploy
-    cp build/libs/*.jar deploy/
-    for f in deploy/*.jar;
-    do
-        filename="`basename $f`"
-        filename="${filename%.*}"
-        echo "$filename ( $f ) ready for deploy"
-        
-        echo "Deploy on $BINTRAY_USER."
-        if [ "$DEPLOY" == "1" -a "$BINTRAY_USER" != "" -a "$BINTRAY_KEY" != "" ];
-        then
-            echo "Deploy $filename ( $f ) to bintray"
-            curl -X PUT  -T $f -u$BINTRAY_USER:$BINTRAY_KEY\
-            "https://api.bintray.com/content/jmephonon/jmePhonon/jmePhonon/$VERSION/com/jme3/phonon/jmePhonon/$VERSION/$filename-$VERSION.jar?publish=1&override=1"
-        fi
-
-    done
 
 }
 

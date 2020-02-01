@@ -25,7 +25,7 @@ function safeRm {
             fi
             mkdir -p "$trashpath"
             echo "safeRm: Move $1 to Trash $trashpath"   
-            mv "$1" "$trashpath"
+            mv "$1" "$trashpath" || true
         fi
     fi
 }

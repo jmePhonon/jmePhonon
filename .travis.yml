@@ -5,14 +5,14 @@ services:
 git:
   lfs_skip_smudge: true
 script:
-- ./make.sh TRAVIS_COMMIT,TRAVIS_TAG,TRAVIS_PULL_REQUEST,TRAVIS_BRANCH,BINTRAY_USER,BINTRAY_KEY,OS_LINUX=1,OS_WINDOWS=1,NO_CACHE=1 clean downloadResources updateJNIHeaders packageSource build buildStandaloneTests deploy -Pin_version=""
+- ./make.sh TRAVIS_COMMIT,TRAVIS_TAG,TRAVIS_PULL_REQUEST,TRAVIS_BRANCH,BINTRAY_USER,BINTRAY_KEY,OS_LINUX=1,OS_WINDOWS=1,NO_CACHE=1 clean downloadResources updateJNIHeaders build buildStandaloneTests install deploy -Dmaven.repo.local="deploy" -Pin_version="$TRAVIS_TAG"
 deploy:
   provider: releases
   skip_cleanup: true
   file_glob: true
   api_key:
     secure: NA/FGqL4chP0tA/QX+8sBQK5QF3zjlPqXtARXyTZvpqIF55UDv8i6ujZ6xgTIAXyBMoydWY7yVCyqUB6pPwwWtnxyEnOeAMbYF5YDF1w/tcROR/1CIq6hgyzePJUNCY9dVLmHRvG9s1UoJ1CAkggQjKIYqkK2+O03s4YTG4l9OfOUlpg651ohM4PpXV/z2N605zjECSJdCTB09fEgk9Vk+F6Wr/m9IlRRjPcKhlDogIAO7OtpjyWwXylEelVdbwAlZEk5L7sc18xuA3Hq7z9OIfuiov7tw/T3gIgVFqturNiDCnS1GbWYm87nl5V26txx0RnYPJhpxW9MsYPl6Qfi/3rr8ciYH9Hpt5ILsqNSTFijQL1znGen01bijZ8QeEGKgWLHTg0/cMvjZytx8qJ2w21f1vMP+osDIhhm2mGUwDbfL29VFNtyG+J0zG0nIu2N8Qyg1261j6q6imkOgGnxM4zxWWN91YOwVvkJ5Jb2cq/NlF32LU6tFKcPI2y8xfpdK8MFXnPmpxfxDsCTuEo+QAqtZkSjil60zNAFU20xZALF5yhdhW/N/CXesm3ElihlzTa8nnICD7FzxTs9LMf+PyaVxTfjXzgjLBDm4W4i5dEYt9joSASsxm6Igk13hsvIo9kUxjkqrqRChjB5WVhbwVR/iPe8VsP2+WaEWh+OEE=
-  file: deploy/*
+  file: build/libs/*
   on:
     repo: jmePhonon/jmePhonon
     tags: true

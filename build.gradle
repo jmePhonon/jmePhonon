@@ -130,3 +130,8 @@ deepClean.dependsOn(clean);
 clean.finalizedBy(cleanEclipse)
 processResources.dependsOn(buildNatives)
 deploy.dependsOn(build);
+
+
+artifacts {
+    archives packageSource
+}

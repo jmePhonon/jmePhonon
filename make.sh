@@ -79,16 +79,19 @@ else
     RUN_AS="" # bash task is run as root
 fi
 
+RUNTIME="sudo docker"
+if [ "`which podman`" != "" ];then   RUNTIME="podman"; fi
+
 # Run build for each target
-docker pull $USE_IMAGE
+$RUNTIME pull $USE_IMAGE
 
 # Run build for each target
 OIFS="$IFS"
 IFS=',' 
 for triplet in $MULTI_BUILD;
 do
-    echo "Run for $triplet"
-    cmd="docker run -v\"$PWD:/workdir\" -eGRADLE_USER_HOME=/workdir/build.cache -w /workdir $triplet $DENVS $RUN_AS --rm -it $USE_IMAGE $TASKS"
+    echo "Run for $triplet $TASKS"
+    cmd="$RUNTIME run -v\"$PWD:/workdir\" -eGRADLE_USER_HOME=/workdir/build.cache -w /workdir $triplet $DENVS $RUN_AS --rm -it $USE_IMAGE $TASKS"
     echo $cmd
     eval $cmd
 done
