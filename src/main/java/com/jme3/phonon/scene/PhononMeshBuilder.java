@@ -102,7 +102,7 @@ public class PhononMeshBuilder{
             Integer triangle[]=new Integer[3];
             do{
                 for(int t=0;t<3;t++){
-                    int index=(int)ibuf.getElementComponent(element,component);
+                    int index=((Number)ibuf.getElementComponent(element,component)).intValue();
                     triangle[t]=index;
                     indices.add(baseIndex+index);
                     component++;
