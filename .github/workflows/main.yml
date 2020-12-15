@@ -53,7 +53,7 @@ jobs:
         if:  matrix.osName  == 'mac'
         run: |
           brew install coreutils
-          OS_OSX=1 NO_CACHE=1 ./build.sh clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          OS_OSX=1 NO_CACHE=1 GRADLE_USER_HOME=$PWD/build.cache ./build.sh gradle clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
       - uses: actions/upload-artifact@v2
         with:
