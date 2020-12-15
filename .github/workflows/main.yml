@@ -1,1 +1,67 @@
-
+name: Build jmePhonon
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+  
+jobs:
+  
+  # Build the natives
+  BuildNatives:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest,windows-latest,macOS-latest] 
+        jdk: [8.x.x]
+        include:
+          - os: ubuntu-latest
+            osName: linux
+          - os: windows-latest
+            osName: windows
+          - os: macOS-latest
+            osName: mac
+              
+    name: Build for ${{ matrix.osName }}
+    runs-on: ${{ matrix.os }}    
+    steps:    
+    
+      - name: Clone the repo
+        uses: actions/checkout@v2     
+        with:
+          fetch-depth: 1
+           
+      - name: Prepare java environment
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.jdk }}
+          architecture: x64
+     
+      - name: Build on Linux
+        if: ${{ matrix.osName }} == "linux"
+        run: |
+          ./make.sh \
+            OS_LINUX=1,NO_CACHE=1 clean downloadResources \
+            updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+            
+          
+      - name: Build on Windows
+        if: ${{ matrix.osName }} == "windows"
+        run: |
+          ./make.sh \
+            OS_WINDOWS=1,NO_CACHE=1 clean downloadResources \
+            updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+            
+          
+      - name: Build on Mac
+        if: ${{ matrix.osName }} == "mac"
+        run: |
+          ./build.sh \
+            OS_OSX=1,NO_CACHE=1 clean downloadResources \
+            updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+            
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.osName }}-maven
+          path: deploy/
+            
