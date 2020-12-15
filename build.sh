@@ -236,7 +236,7 @@ function buildNatives {
 
     if [ "$CROSS_TRIPLE" == "" ];
     then
-        CROSS_TRIPLE="x86_64-"
+        CROSS_TRIPLE="x86_64"
         if [ "$OS_LINUX" != "" ];
         then
             CROSS_TRIPLE="$CROSS_TRIPLE-linux-gnu"
