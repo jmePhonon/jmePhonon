@@ -38,19 +38,19 @@ jobs:
           architecture: x64
      
       - name: Build on Linux
-        if:  matrix.osName  == "linux"
+        if:  matrix.osName  == 'linux'
         run: |
           ./make.sh OS_LINUX=1,NO_CACHE=1 clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
           
       - name: Build on Windows
-        if:  matrix.osName  == "windows"
+        if:  matrix.osName  == 'windows'
         run: |
           ./make.sh OS_WINDOWS=1,NO_CACHE=1 clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
           
       - name: Build on Mac
-        if:  matrix.osName  == "mac"
+        if:  matrix.osName  == 'mac'
         run: |
           ./build.sh  OS_OSX=1,NO_CACHE=1 clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
