@@ -163,20 +163,21 @@ export -f removeEmptyJNIh
 
 ## build natives
 function genJNI {
-    classpath="$1"
-    rootDir="$2"
-    output="$3"
-    file="$4"
-    file="${file#$rootDir/}"
-    file="${file//\//.}"
-    file="${file%.class}"
-    echo "Gen JNI header for $file in $output" 
-    mkdir -p "$output"
-    javah -jni -d "$output" -classpath "$classpath" "$file"
-    # jnih="${file//./_}"
-    # jnih="$output/${jnih//\$/_}.h"
-    # echo "Check $jnih"
-    find "$output" -name "*.h" -exec   bash -c "removeEmptyJNIh {}" \;
+echo "A"
+#     classpath="$1"
+#     rootDir="$2"
+#     output="$3"
+#     file="$4"
+#     file="${file#$rootDir/}"
+#     file="${file//\//.}"
+#     file="${file%.class}"
+#     echo "Gen JNI header for $file in $output" 
+#     mkdir -p "$output"
+#     javah -jni -d "$output" -classpath "$classpath" "$file"
+#     # jnih="${file//./_}"
+#     # jnih="$output/${jnih//\$/_}.h"
+#     # echo "Check $jnih"
+#     find "$output" -name "*.h" -exec   bash -c "removeEmptyJNIh {}" \;
 
     # if ! grep -q "JNIEXPORT" "$jnih" ;
     # then
