@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "`dirname $0`"
 
-set -e
+set +e
 
 # Initialize various optional settings
 if [ "$USE_IMAGE" = "" ];then export USE_IMAGE="riccardoblb/buildenv-14all"; fi
