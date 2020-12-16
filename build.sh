@@ -193,7 +193,7 @@ function updateJNIHeaders {
     rootDir=$2
     output=$3
     echo "Search $rootDir for class files"
-    find "$rootDir" -name "*.class" -exec bash -c "genJNI \"$classpath\" \"$rootDir\" \"$output\" {} " \;
+#     find "$rootDir" -name "*.class" -exec bash -c "genJNI \"$classpath\" \"$rootDir\" \"$output\" {} " \;
 }
 
 
