@@ -51,6 +51,7 @@ jobs:
           
       - name: Build on Mac
         if:  matrix.osName  == 'mac'
+        shell: bash
         run: |
           brew install coreutils
           TRASH=notrash OS_OSX=1 NO_CACHE=1 GRADLE_USER_HOME=$PWD/build.cache ./build.sh gradle   --debug  clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
