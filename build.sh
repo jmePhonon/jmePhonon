@@ -163,15 +163,15 @@ export -f removeEmptyJNIh
 
 ## build natives
 function genJNI {
-    classpath="$1"
-    rootDir="$2"
-    output="$3"
-    file="$4"
-    file="${file#$rootDir/}"
-    file="${file//\//.}"
-    file="${file%.class}"
-    echo "Gen JNI header for $file in $output" 
-    mkdir -p "$output"
+#     classpath="$1"
+#     rootDir="$2"
+#     output="$3"
+#     file="$4"
+#     file="${file#$rootDir/}"
+#     file="${file//\//.}"
+#     file="${file%.class}"
+#     echo "Gen JNI header for $file in $output" 
+#     mkdir -p "$output"
 #     javah -jni -d "$output" -classpath "$classpath" "$file"
     # jnih="${file//./_}"
     # jnih="$output/${jnih//\$/_}.h"
@@ -215,8 +215,8 @@ function buildNatives {
     find -L src/main/natives -type f -name '*.c' >> tmp/build_cpplist.txt
 
 
-    echo "" > tmp/ext_cpplist.txt
-    find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt || true
+#     echo "" > tmp/ext_cpplist.txt
+#     find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt || true
 
     platform="Linux"
     platform2="none"
@@ -316,7 +316,6 @@ function buildNatives {
     -Isrc/main/natives/include
     -Isrc/main/natives
     $(cat  tmp/build_cpplist.txt) 
-    $(cat  tmp/ext_cpplist.txt) 
     ${largs}  -o$liboutfolder/${platform_libprefix}jmephonon${platform_libsuffix}
     $largs2 -lphonon ${BUILD_ARGS}"
     cp "src/steamaudio/lib/$platform/$arch/${platform_libprefix}phonon${platform_libsuffix}" "$liboutfolder/"
