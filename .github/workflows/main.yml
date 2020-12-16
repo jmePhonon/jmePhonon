@@ -54,7 +54,14 @@ jobs:
         shell: bash
         run: |
           brew install coreutils
-          TRASH=notrash OS_OSX=1 NO_CACHE=1 GRADLE_USER_HOME=$PWD/build.cache ./build.sh gradle clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          export TRASH=notrash 
+          export OS_OSX=1 
+          export NO_CACHE=1 
+          export GRADLE_USER_HOME=$PWD/build.cache 
+          ./build.sh downloadResources
+          ./build.sh updateJNIHeaders 
+          ./build.sh buildNatives 
+          gradle build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
       - uses: actions/upload-artifact@v2
         with:
