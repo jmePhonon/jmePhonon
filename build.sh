@@ -269,7 +269,7 @@ function buildNatives {
             largs="-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon${platform_libsuffix}"
         elif [ "$platform" = "apple" ];
         then
-            compiler="cc"
+            compiler="gcc"
             platform="OSX"
             args="$args -dynamiclib  -flat_namespace -undefined suppress "
             args2="-static"
