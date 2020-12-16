@@ -58,6 +58,8 @@ jobs:
           export OS_OSX=1 
           export NO_CACHE=1 
           export GRADLE_USER_HOME=$PWD/build.cache 
+          export PATH=$(brew --prefix)/opt/findutils/libexec/gnubin:$PATH
+          which find
           ./build.sh downloadResources
           ./build.sh updateJNIHeaders 
           ./build.sh buildNatives 
