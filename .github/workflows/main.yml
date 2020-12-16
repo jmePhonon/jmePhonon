@@ -40,20 +40,20 @@ jobs:
       - name: Build on Linux
         if:  matrix.osName  == 'linux'
         run: |
-          ./make.sh TRASH=notrash,OS_LINUX=1,NO_CACHE=1 --stacktrace --debug clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          ./make.sh TRASH=notrash,OS_LINUX=1,NO_CACHE=1  --debug clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
           
       - name: Build on Windows
         if:  matrix.osName  == 'windows'
         run: |
-          ./make.sh TRASH=notrash,OS_WINDOWS=1,NO_CACHE=1  --stacktrace --debug clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          ./make.sh TRASH=notrash,OS_WINDOWS=1,NO_CACHE=1  --debug clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
           
       - name: Build on Mac
         if:  matrix.osName  == 'mac'
         run: |
           brew install coreutils
-          TRASH=notrash OS_OSX=1 NO_CACHE=1 GRADLE_USER_HOME=$PWD/build.cache ./build.sh gradle  --stacktrace --debug  clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          TRASH=notrash OS_OSX=1 NO_CACHE=1 GRADLE_USER_HOME=$PWD/build.cache ./build.sh gradle   --debug  clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
             
       - uses: actions/upload-artifact@v2
         with:
