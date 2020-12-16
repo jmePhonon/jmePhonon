@@ -163,6 +163,7 @@ export -f removeEmptyJNIh
 
 ## build natives
 function genJNI {
+echo "gen"
 #     classpath="$1"
 #     rootDir="$2"
 #     output="$3"
