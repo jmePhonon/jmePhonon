@@ -53,7 +53,7 @@ jobs:
         if:  matrix.osName  == 'mac'
         shell: bash
         run: |
-          brew install coreutils
+          brew install coreutils findutils
           export TRASH=notrash 
           export OS_OSX=1 
           export NO_CACHE=1 
