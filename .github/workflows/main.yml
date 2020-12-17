@@ -58,6 +58,8 @@ jobs:
             echo "Build for mac"
             export OS_OSX=1 
             brew install coreutils findutils
+            export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+            export PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
           elif [ "$OS_NAME" = "windows" ]; 
           then
             echo "Build for windows"
@@ -68,7 +70,8 @@ jobs:
           fi
           ./build.sh prepareWorkspace
           ./build.sh downloadResources
-          gradle --info updateJNIHeaders buildNatives
+          gradle --info updateJNIHeaders 
+          gradle --info buildNatives
                      
       - name: Upload native artifacts
         uses: actions/upload-artifact@v2
