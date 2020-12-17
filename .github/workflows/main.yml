@@ -58,8 +58,10 @@ jobs:
           export OS_OSX=1 
           export NO_CACHE=1 
           export GRADLE_USER_HOME=$PWD/build.cache 
-          export PATH=$(brew --prefix)/opt/findutils/libexec/gnubin:$PATH
-          which find
+          export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+          export PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
+          echo "Find: `which find`"
+          find --version
           ./build.sh downloadResources
           ./build.sh updateJNIHeaders 
           ./build.sh buildNatives 
