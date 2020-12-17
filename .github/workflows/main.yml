@@ -49,7 +49,7 @@ jobs:
         env: 
           OS_NAME: ${{matrix.osName}}
         run: |
-          echo "Build on $OS_NAME
+          echo "Build on $OS_NAME"
           export TRASH=notrash 
           export NO_CACHE=1 
           export GRADLE_USER_HOME=$PWD/build.cache 
