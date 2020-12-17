@@ -47,7 +47,7 @@ jobs:
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         shell: bash
         env: 
-          OS:  ${{matrix.osName}
+          OS:  ${{matrix.osName}}
         run: |
           export TRASH=notrash 
           export NO_CACHE=1 
