@@ -7,7 +7,7 @@ then
     export READ_LINK="greadlink"  
 fi
 
-export JDK_ROOT=$JAVA_HOME
+export JDK_ROOT="$JAVA_HOME"
 if [ ! -f "$JDK_ROOT/Headers/jni.h"  -a  ! -f "$JDK_ROOT/include/jni.h" ];
 then
     export JDK_ROOT="$($READ_LINK -f `which java` | sed "s:/Commands/java::")"
