@@ -1,4 +1,7 @@
 #/bin/sh
+set -e
+set -o xtrace
+
 mkdir -p tmp/tools
 mkdir -p tmp/cache
 mkdir -p build/natives
@@ -8,8 +11,7 @@ source build.dep/findJava.sh
 source build.dep/findOs.sh
 source build.dep/uploadToMaven.sh
 
-set -e
-set -o xtrace
+
 
 # Get steam audio
 if [ "$STEAM_AUDIO_URL" = "" ];
