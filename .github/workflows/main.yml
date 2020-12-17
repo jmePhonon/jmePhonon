@@ -70,8 +70,7 @@ jobs:
           fi
           ./build.sh prepareWorkspace
           ./build.sh downloadResources
-          gradle --info updateJNIHeaders 
-          gradle --info buildNatives
+          gradle --debug --stacktrace --scan updateJNIHeaders  buildNatives
                      
       - name: Upload native artifacts
         uses: actions/upload-artifact@v2
