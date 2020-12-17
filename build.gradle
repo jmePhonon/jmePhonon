@@ -91,7 +91,8 @@ task prepareWorkspace(type:Exec){
 
 task updateJNIHeaders(type:Exec) {
     def javapth=project.sourceSets.main.java.outputDir
-    def classpath = configurations.compileOnly.join(":")+ ":"+javapth;
+    def sep= java.io.File.pathSeparatorChar;
+    def classpath = configurations.compileOnly.join(sep)+ sep+javapth;
     commandLine 'bash','build.sh',"updateJNIHeaders",classpath,javapth,"src/main/natives/include"
 }
 
