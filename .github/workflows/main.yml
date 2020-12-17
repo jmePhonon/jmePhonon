@@ -18,7 +18,7 @@ jobs:
           - osName: linux
             os: ubuntu-latest
           - osName: windows
-            os: ubuntu-latest
+            os: windows-latest
           - osName: mac
             os: macos-latest
               
@@ -36,18 +36,30 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
           architecture: x64
+          
+
      
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
+        shell: bash
         if:  matrix.osName  == 'linux'
         run: |
-          ./make.sh TRASH=notrash,OS_LINUX=1,NO_CACHE=1 clean downloadResources updateJNIHeaders buildNatives
+          export TRASH=notrash 
+          export OS_LINUX=1 
+          export NO_CACHE=1 
+          export GRADLE_USER_HOME=$PWD/build.cache 
+          gradle downloadResources updateJNIHeaders buildNatives
             
           
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
+        shell: bash
         if:  matrix.osName  == 'windows'
         run: |
-          ./make.sh TRASH=notrash,OS_WINDOWS=1,NO_CACHE=1  clean downloadResources updateJNIHeaders buildNatives
-            
+          export TRASH=notrash 
+          export OS_WINDOWS=1 
+          export NO_CACHE=1 
+          export GRADLE_USER_HOME=$PWD/build.cache 
+          gradle downloadResources updateJNIHeaders buildNatives
+           
           
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         if:  matrix.osName  == 'mac'
