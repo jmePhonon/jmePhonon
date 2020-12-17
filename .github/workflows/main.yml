@@ -37,7 +37,11 @@ jobs:
           java-version: ${{ matrix.jdk }}
           architecture: x64
           
-
+      - name: Prepare Windows
+        if:  matrix.osName  == 'windows'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with:
+          args: findutils curl
      
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         shell: bash
@@ -47,7 +51,7 @@ jobs:
           export OS_LINUX=1 
           export NO_CACHE=1 
           export GRADLE_USER_HOME=$PWD/build.cache 
-          gradle downloadResources updateJNIHeaders buildNatives
+          gradle --debug downloadResources updateJNIHeaders buildNatives
             
           
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
@@ -58,7 +62,7 @@ jobs:
           export OS_WINDOWS=1 
           export NO_CACHE=1 
           export GRADLE_USER_HOME=$PWD/build.cache 
-          gradle downloadResources updateJNIHeaders buildNatives
+          gradle --debug downloadResources updateJNIHeaders buildNatives
            
           
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
@@ -72,7 +76,7 @@ jobs:
           export GRADLE_USER_HOME=$PWD/build.cache 
           export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           export PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
-          gradle downloadResources updateJNIHeaders buildNatives
+          gradle --debug  downloadResources updateJNIHeaders buildNatives
             
       - name: Upload native artifacts
         uses: actions/upload-artifact@v2
