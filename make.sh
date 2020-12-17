@@ -4,7 +4,7 @@ cd "`dirname $0`"
 set +e
 
 # Initialize various optional settings
-if [ "$USE_IMAGE" = "" ];then export USE_IMAGE="riccardoblb/buildenv-14all"; fi
+if [ "$USE_IMAGE" = "" ];then export USE_IMAGE="riccardoblb/buildenvs:javacross"; fi
 
 DENVS="" #environment variables
 RUN_AS="" #user used inside the docker container
