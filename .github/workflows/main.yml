@@ -20,7 +20,7 @@ jobs:
           - osName: windows
             os: ubuntu-latest
           - osName: mac
-            os: macos-11.0
+            os: macos-latest
               
     name: Build natives for ${{ matrix.osName }} on ${{ matrix.os }}    
     runs-on: ${{ matrix.os }}    
@@ -37,19 +37,19 @@ jobs:
           java-version: ${{ matrix.jdk }}
           architecture: x64
      
-      - name: Build natives on ${{ matrix.osName }}
+      - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         if:  matrix.osName  == 'linux'
         run: |
           ./make.sh TRASH=notrash,OS_LINUX=1,NO_CACHE=1 clean downloadResources updateJNIHeaders buildNatives
             
           
-      - name: Crossbuild windows natives on ${{ matrix.osName }}
+      - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         if:  matrix.osName  == 'windows'
         run: |
           ./make.sh TRASH=notrash,OS_WINDOWS=1,NO_CACHE=1  clean downloadResources updateJNIHeaders buildNatives
             
           
-      - name: Build natives on ${{ matrix.osName }}
+      - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         if:  matrix.osName  == 'mac'
         shell: bash
         run: |
@@ -62,8 +62,54 @@ jobs:
           export PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
           gradle downloadResources updateJNIHeaders buildNatives
             
-      - uses: actions/upload-artifact@v2
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.osName }}-natives
           path: tmp/natives/
-            
+    
+  BuildLibrary:
+    needs: [BuildNatives]
+    name: Build library
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone the repo
+        uses: actions/checkout@v2     
+        with:
+          fetch-depth: 1
+      
+      - name: Prepare java environment
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.jdk }}
+          architecture: x64  
+    
+      - name: Download Linux native artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: linux-natives
+          path: tmp/natives/
+           
+      - name: Download Mac native artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: mac-natives
+          path: tmp/natives/ 
+          
+      - name: Download Windows native artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: windows-natives
+          path: tmp/natives/   
+          
+      - name: Build Library
+        run: |
+          mkdir -p dist
+          gradle downloadResources updateJNIHeaders build buildStandaloneTests install -Dmaven.repo.local="dist" -Pin_version="-SNAPSHOT"
+          
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: maven
+          path: dist
+          
