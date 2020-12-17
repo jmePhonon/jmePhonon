@@ -120,16 +120,12 @@ task buildStandaloneTests(type: Jar) {
       with jar 
 }
 
-task deploy (type :Exec) {
-        commandLine 'bash','build.sh',"deploy"
-}
+
 
 downloadResources.dependsOn(prepareWorkspace)
 updateJNIHeaders.dependsOn(classes)
 deepClean.dependsOn(clean);
 clean.finalizedBy(cleanEclipse)
-processResources.dependsOn(buildNatives)
-deploy.dependsOn(build);
 
 
 artifacts {
