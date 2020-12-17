@@ -47,21 +47,25 @@ jobs:
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         shell: bash
         env: 
-          OS:  ${{matrix.osName}}
+          OS_NAME: ${{matrix.osName}}
         run: |
+          echo "Build on $OS_NAME
           export TRASH=notrash 
           export NO_CACHE=1 
           export GRADLE_USER_HOME=$PWD/build.cache 
           ./build.sh prepareWorkspace
           ./build.sh downloadResources
-          if [ "$OS" = "mac" ];
+          if [ "$OS_NAME" = "mac" ];
           then
+            echo "Build for mac"
             export OS_OSX=1 
             brew install coreutils findutils
-          elif [ "$OS" = "windows" ]; 
+          elif [ "$OS_NAME" = "windows" ]; 
           then
+            echo "Build for windows"
             export OS_WINDOWS=1 
           else
+            echo "Build for linux"
             export OS_LINUX=1
           fi
           gradle --info updateJNIHeaders buildNatives
