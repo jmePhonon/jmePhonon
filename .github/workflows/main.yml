@@ -41,7 +41,7 @@ jobs:
         if:  matrix.osName  == 'windows'
         uses: crazy-max/ghaction-chocolatey@v1.4.0
         with:
-          args: install findutils curl
+          args: install findutils curl wget 
      
       - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
         shell: bash
