@@ -22,7 +22,7 @@ jobs:
           - osName: mac
             os: macos-11.0
               
-    name: Build for ${{ matrix.osName }}
+    name: Build natives for ${{ matrix.osName }} on ${{ matrix.os }}    
     runs-on: ${{ matrix.os }}    
     steps:    
     
@@ -37,19 +37,19 @@ jobs:
           java-version: ${{ matrix.jdk }}
           architecture: x64
      
-      - name: Build on Linux
+      - name: Build natives on ${{ matrix.osName }}
         if:  matrix.osName  == 'linux'
         run: |
-          ./make.sh TRASH=notrash,OS_LINUX=1,NO_CACHE=1 clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          ./make.sh TRASH=notrash,OS_LINUX=1,NO_CACHE=1 clean downloadResources updateJNIHeaders buildNatives
             
           
-      - name: Build on Windows
+      - name: Crossbuild windows natives on ${{ matrix.osName }}
         if:  matrix.osName  == 'windows'
         run: |
-          ./make.sh TRASH=notrash,OS_WINDOWS=1,NO_CACHE=1  clean downloadResources  updateJNIHeaders build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          ./make.sh TRASH=notrash,OS_WINDOWS=1,NO_CACHE=1  clean downloadResources updateJNIHeaders buildNatives
             
           
-      - name: Build on Mac
+      - name: Build natives on ${{ matrix.osName }}
         if:  matrix.osName  == 'mac'
         shell: bash
         run: |
@@ -60,10 +60,10 @@ jobs:
           export GRADLE_USER_HOME=$PWD/build.cache 
           export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
           export PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
-          gradle downloadResources updateJNIHeaders buildNatives build buildStandaloneTests install  -Dmaven.repo.local="deploy" -Pin_version="-SNAPSHOT"
+          gradle downloadResources updateJNIHeaders buildNatives
             
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.osName }}-maven
-          path: deploy/
+          name: ${{ matrix.osName }}-natives
+          path: tmp/natives/
             
