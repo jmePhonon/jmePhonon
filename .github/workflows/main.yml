@@ -53,8 +53,6 @@ jobs:
           export TRASH=notrash 
           export NO_CACHE=1 
           export GRADLE_USER_HOME=$PWD/build.cache 
-          ./build.sh prepareWorkspace
-          ./build.sh downloadResources
           if [ "$OS_NAME" = "mac" ];
           then
             echo "Build for mac"
@@ -68,6 +66,8 @@ jobs:
             echo "Build for linux"
             export OS_LINUX=1
           fi
+          ./build.sh prepareWorkspace
+          ./build.sh downloadResources
           gradle --info updateJNIHeaders buildNatives
                      
       - name: Upload native artifacts
