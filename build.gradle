@@ -93,6 +93,7 @@ task updateJNIHeaders(type:Exec) {
     def javapth=project.sourceSets.main.java.outputDir
     def sep= ""+java.io.File.pathSeparatorChar;
     def classpath = configurations.compileOnly.join(sep)+ sep+javapth;
+    print('bash '+' build.sh'+" updateJNIHeaders "+classpath+" "+javapth+" src/main/natives/include")
     commandLine 'bash','build.sh',"updateJNIHeaders",classpath,javapth,"src/main/natives/include"
 }
 
