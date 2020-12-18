@@ -16,9 +16,13 @@ def jmerepo='com.github.jMonkeyEngine.jmonkeyengine'
 def jmeversion='025b27c96d295e02c1471580980c7f4429be44b5'
 def bash="bash"
 
-if (OperatingSystem.current().isWindows()) {
+if(project.hasProperty('bash_path') ){
+    bash=project.getProperty('bash_path')
+}else if (OperatingSystem.current().isWindows()) {
     bash="bash.exe"
-} 
+}
+
+
 
 
 eclipse {
