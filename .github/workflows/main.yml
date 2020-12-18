@@ -70,7 +70,7 @@ jobs:
           fi
           ./build.sh prepareWorkspace
           ./build.sh downloadResources
-          bash_path=`echo $0`
+          bash_path=`which bash`
           echo "Bash path: $bash_path"
           gradle updateJNIHeaders  buildNatives -Pbash_path="$bash_path"
                      
