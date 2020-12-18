@@ -1,0 +1,163 @@
+name: Build jmePhonon
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+  
+jobs:
+  
+  # Build the natives
+  BuildNatives:
+    strategy:
+      fail-fast: true
+      matrix:
+        osName: [linux,windows,mac] 
+        jdk: [8.x.x]
+        include:
+          - osName: linux
+            os: ubuntu-latest
+          - osName: windows
+            os: windows-latest
+          - osName: mac
+            os: macos-latest
+              
+    name: Build natives for ${{ matrix.osName }} on ${{ matrix.os }}    
+    runs-on: ${{ matrix.os }}    
+    steps:    
+    
+      - name: Clone the repo
+        uses: actions/checkout@v2     
+        with:
+          fetch-depth: 1
+           
+      - name: Prepare java environment
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.jdk }}
+          architecture: x64
+          
+      - name: Prepare Windows
+        if:  matrix.osName  == 'windows'
+        uses: crazy-max/ghaction-chocolatey@v1.4.0
+        with:
+          args: install findutils curl wget 
+     
+ 
+      - name: Build ${{ matrix.osName }} natives on ${{ matrix.os }}
+        shell: bash
+        env: 
+          OS_NAME: ${{matrix.osName}}
+        run: |
+          echo "Build on $OS_NAME"
+          export TRASH=notrash 
+          export NO_CACHE=1 
+          export GRADLE_USER_HOME="$PWD/build.cache"
+          mkdir -p "$GRADLE_USER_HOME"
+          
+          if [ "$OS_NAME" = "mac" ];
+          then
+            echo "Build for mac"
+            export OS_OSX=1 
+            brew install coreutils findutils
+            export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+            export PATH="/usr/local/opt/findutils/libexec/gnubin:$PATH"
+          elif [ "$OS_NAME" = "windows" ]; 
+          then
+            echo "Build for windows"
+            export OS_WINDOWS=1 
+          else
+            echo "Build for linux"
+            export OS_LINUX=1
+          fi
+          
+          bash_path=`which bash`
+          echo "Bash path: $bash_path"
+          gradle prepareWorkspace downloadResources updateJNIHeaders buildNatives -Pbash_path="$bash_path"
+                     
+      - name: Upload native artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.osName }}-natives
+          path: tmp/natives/
+    
+  BuildLibrary:
+    needs: [BuildNatives]
+    name: Build library
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone the repo
+        uses: actions/checkout@v2     
+        with:
+          fetch-depth: 1
+      
+      - name: Prepare java environment
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8.x.x
+          architecture: x64  
+    
+      - name: Download Linux native artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: linux-natives
+          path: tmp/natives/
+           
+      - name: Download Mac native artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: mac-natives
+          path: tmp/natives/ 
+          
+      - name: Download Windows native artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: windows-natives
+          path: tmp/natives/   
+          
+      - name: Build Library
+        run: |
+          export VERSION="`if [[ $GITHUB_REF == refs\/tags* ]]; then echo ${GITHUB_REF//refs\/tags\//}; fi`"
+          if [ "$VERSION" = "" ];
+          then
+            branch="`if [[ $GITHUB_REF == refs\/heads* ]]; then echo ${GITHUB_REF//refs\/heads\//}; fi`"
+            export VERSION="$branch-SNAPSHOT"
+          fi
+          mkdir -p dist/maven
+          gradle downloadResources updateJNIHeaders build buildStandaloneTests install -Dmaven.repo.local="dist/maven" -Pin_version="$VERSION"
+          
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: maven-artifacts
+          path: dist/maven
+          
+                
+      - name: Deploy to bintray
+        if: github.event_name == 'release'
+        run: |
+            source .github/actions/tools/uploadToMaven.sh
+            if [ "${{ secrets.BINTRAY_MAVEN_REPO }}" = "" ];
+            then
+              echo "Configure the following secrets to enable bintray deployment"
+              echo "BINTRAY_MAVEN_REPO, BINTRAY_USER, BINTRAY_APIKEY"
+            else
+              uploadAllToMaven dist/maven/ https://api.bintray.com/maven/${{ secrets.BINTRAY_MAVEN_REPO }} ${{ secrets.BINTRAY_USER }} ${{ secrets.BINTRAY_APIKEY }} "https://github.com/${GITHUB_REPOSITORY}" "${{ secrets.BINTRAY_LICENSE }}"
+            fi
+          
+      - name: Deploy to Github Releases
+        if: github.event_name == 'release'
+        run: |
+          cd build/libs
+          releaseId=$(jq --raw-output '.release.id' ${GITHUB_EVENT_PATH})
+          echo "Upload to release $releaseId"
+          for filename in *.jar;
+          do
+            url="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/$releaseId/assets?name=$(basename $filename)"
+            echo "Upload $filename to $url"
+            curl -L \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/binary" \
+            --data-binary @"$filename" \
+            "$url"
+          done

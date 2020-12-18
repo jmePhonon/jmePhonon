@@ -1,4 +1,7 @@
 #/bin/sh
+set -e
+set -o xtrace
+
 mkdir -p tmp/tools
 mkdir -p tmp/cache
 mkdir -p build/natives
@@ -8,7 +11,6 @@ source build.dep/findJava.sh
 source build.dep/findOs.sh
 source build.dep/uploadToMaven.sh
 
-    set -e
 
 
 # Get steam audio
@@ -215,8 +217,8 @@ function buildNatives {
     find -L src/main/natives -type f -name '*.c' >> tmp/build_cpplist.txt
 
 
-    echo "" > tmp/ext_cpplist.txt
-    find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt || true
+#     echo "" > tmp/ext_cpplist.txt
+#     find -L src/ext -type f -name '*.c' >> tmp/ext_cpplist.txt || true
 
     platform="Linux"
     platform2="none"
@@ -236,7 +238,7 @@ function buildNatives {
 
     if [ "$CROSS_TRIPLE" == "" ];
     then
-        CROSS_TRIPLE="x86_64-"
+        CROSS_TRIPLE="x86_64"
         if [ "$OS_LINUX" != "" ];
         then
             CROSS_TRIPLE="$CROSS_TRIPLE-linux-gnu"
@@ -268,7 +270,7 @@ function buildNatives {
             largs="-Wl,--exclude-all-symbols,--add-stdcall-alias,--kill-at,-soname,jmephonon${platform_libsuffix}"
         elif [ "$platform" = "apple" ];
         then
-            compiler="cc"
+            compiler="gcc"
             platform="OSX"
             args="$args -dynamiclib  -flat_namespace -undefined suppress "
             args2="-static"
@@ -316,7 +318,6 @@ function buildNatives {
     -Isrc/main/natives/include
     -Isrc/main/natives
     $(cat  tmp/build_cpplist.txt) 
-    $(cat  tmp/ext_cpplist.txt) 
     ${largs}  -o$liboutfolder/${platform_libprefix}jmephonon${platform_libsuffix}
     $largs2 -lphonon ${BUILD_ARGS}"
     cp "src/steamaudio/lib/$platform/$arch/${platform_libprefix}phonon${platform_libsuffix}" "$liboutfolder/"
