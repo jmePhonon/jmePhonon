@@ -52,7 +52,9 @@ jobs:
           echo "Build on $OS_NAME"
           export TRASH=notrash 
           export NO_CACHE=1 
-          export GRADLE_USER_HOME=$PWD/build.cache 
+          export GRADLE_USER_HOME="$PWD/build.cache"
+          mkdir -p "$GRADLE_USER_HOME"
+          
           if [ "$OS_NAME" = "mac" ];
           then
             echo "Build for mac"
@@ -68,11 +70,10 @@ jobs:
             echo "Build for linux"
             export OS_LINUX=1
           fi
-          ./build.sh prepareWorkspace
-          ./build.sh downloadResources
+          
           bash_path=`which bash`
           echo "Bash path: $bash_path"
-          gradle updateJNIHeaders  buildNatives -Pbash_path="$bash_path"
+          gradle prepareWorkspace downloadResources updateJNIHeaders buildNatives -Pbash_path="$bash_path"
                      
       - name: Upload native artifacts
         uses: actions/upload-artifact@v2
@@ -116,12 +117,47 @@ jobs:
           
       - name: Build Library
         run: |
-          mkdir -p dist
-          gradle downloadResources updateJNIHeaders build buildStandaloneTests install -Dmaven.repo.local="dist" -Pin_version="-SNAPSHOT"
+          export VERSION="`if [[ $GITHUB_REF == refs\/tags* ]]; then echo ${GITHUB_REF//refs\/tags\//}; fi`"
+          if [ "$VERSION" = "" ];
+          then
+            branch="`if [[ $GITHUB_REF == refs\/heads* ]]; then echo ${GITHUB_REF//refs\/heads\//}; fi`"
+            export VERSION="$branch-SNAPSHOT"
+          fi
+          mkdir -p dist/maven
+          gradle downloadResources updateJNIHeaders build buildStandaloneTests install -Dmaven.repo.local="dist/maven" -Pin_version="$VERSION"
           
       - name: Upload dist artifact
         uses: actions/upload-artifact@v2
         with:
-          name: maven
-          path: dist
+          name: maven-artifacts
+          path: dist/maven
           
+                
+      - name: Deploy to bintray
+        if: github.event_name == 'release'
+        run: |
+            source .github/actions/tools/uploadToMaven.sh
+            if [ "${{ secrets.BINTRAY_MAVEN_REPO }}" = "" ];
+            then
+              echo "Configure the following secrets to enable bintray deployment"
+              echo "BINTRAY_MAVEN_REPO, BINTRAY_USER, BINTRAY_APIKEY"
+            else
+              uploadAllToMaven dist/maven/ https://api.bintray.com/maven/${{ secrets.BINTRAY_MAVEN_REPO }} ${{ secrets.BINTRAY_USER }} ${{ secrets.BINTRAY_APIKEY }} "https://github.com/${GITHUB_REPOSITORY}" "${{ secrets.BINTRAY_LICENSE }}"
+            fi
+          
+      - name: Deploy to Github Releases
+        if: github.event_name == 'release'
+        run: |
+          cd build/libs
+          releaseId=$(jq --raw-output '.release.id' ${GITHUB_EVENT_PATH})
+          echo "Upload to release $releaseId"
+          for filename in *.jar;
+          do
+            url="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/$releaseId/assets?name=$(basename $filename)"
+            echo "Upload $filename to $url"
+            curl -L \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/binary" \
+            --data-binary @"$filename" \
+            "$url"
+          done
