@@ -1,4 +1,5 @@
 import org.gradle.plugins.ide.eclipse.model.AccessRule
+import org.gradle.internal.os.OperatingSystem;
 
 apply plugin : 'java' 
 apply plugin: 'eclipse'
@@ -13,6 +14,11 @@ sourceCompatibility = '1.8'
 
 def jmerepo='com.github.jMonkeyEngine.jmonkeyengine'
 def jmeversion='025b27c96d295e02c1471580980c7f4429be44b5'
+def bash="bash"
+
+if (OperatingSystem.current().isWindows()) {
+    bash="bash.exe"
+} 
 
 
 eclipse {
@@ -80,11 +86,11 @@ sourceSets{
 }
 
 task downloadResources(type: Exec){
-    commandLine 'bash','build.sh',"downloadResources"
+    commandLine bash,'build.sh',"downloadResources"
 }    
 
 task prepareWorkspace(type:Exec){
-    commandLine 'bash','build.sh','prepareWorkspace'
+    commandLine bash,'build.sh','prepareWorkspace'
 }
 
 
@@ -93,17 +99,17 @@ task updateJNIHeaders(type:Exec) {
     def javapth=project.sourceSets.main.java.outputDir.getAbsolutePath().replace("\\","/");
     def sep= ""+java.io.File.pathSeparatorChar;
     def classpath = configurations.compileOnly.join(sep).replace("\\","/")+ sep+javapth;
-    print('bash '+' build.sh'+" updateJNIHeaders "+classpath+" "+javapth+" src/main/natives/include")
-    commandLine 'bash','build.sh',"updateJNIHeaders",classpath,javapth,"src/main/natives/include"
+    print(bash+' build.sh'+" updateJNIHeaders "+classpath+" "+javapth+" src/main/natives/include")
+    commandLine bash,'build.sh',"updateJNIHeaders",classpath,javapth,"src/main/natives/include"
 }
 
 task deepClean(type:Exec){
-    commandLine 'bash','build.sh',"deepClean"
+    commandLine bash,'build.sh',"deepClean"
 }
 
 
 task buildNatives(type :Exec){
-    commandLine 'bash','build.sh',"buildNatives"
+    commandLine bash,'build.sh',"buildNatives"
 }
 
 
