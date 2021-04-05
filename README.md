@@ -16,7 +16,7 @@ plugins {
     id "io.github.0ffz.github-packages" version "1.2.1"
 }
 repositories { 
-    maven githubPackage.invoke("riccardobl")
+    maven githubPackage.invoke("jmePhonon")
 }
 dependencies{
     compile(group: 'com.jme3.phonon', name: 'jme_phonon', version: VERSION, ext: 'jar', classifier: '')
