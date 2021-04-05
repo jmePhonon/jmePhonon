@@ -12,8 +12,8 @@ version= project.hasProperty('in_version') ? project.getProperty('in_version') :
 targetCompatibility = '1.8'
 sourceCompatibility = '1.8'
 
-def jmerepo='com.github.jMonkeyEngine.jmonkeyengine'
-def jmeversion='025b27c96d295e02c1471580980c7f4429be44b5'
+def jmerepo="org.jmonkeyengine"
+def jmeversion="3.3.2-stable"
 def bash="bash"
 
 if(project.hasProperty('bash_path') ){

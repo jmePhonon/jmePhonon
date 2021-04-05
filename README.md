@@ -10,13 +10,16 @@
 
 
 ## Binaries
-On [Bintray](https://bintray.com/jmephonon/jmePhonon/jmePhonon)
+
 ```gradle
+plugins {
+    id "io.github.0ffz.github-packages" version "1.2.1"
+}
 repositories { 
-    maven { url "https://dl.bintray.com/jmephonon/jmePhonon" }
+    maven githubPackage.invoke("riccardobl")
 }
 dependencies{
-    compile(group: 'com.jme3.phonon', name: 'jmePhonon', version: VERSION, ext: 'jar', classifier: '')
+    compile(group: 'com.jme3.phonon', name: 'jme_phonon', version: VERSION, ext: 'jar', classifier: '')
 }
 ```
 
