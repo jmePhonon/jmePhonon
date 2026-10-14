@@ -49,9 +49,7 @@ public class DirectBufferUtils {
             m.setAccessible(true);
             return (long)m.invoke(directBuffer);
         }catch(Exception e){
-            e.printStackTrace();
-            System.exit(1);
-            return -1;
+            throw new IllegalStateException("Unable to access the direct buffer native address", e);
         }
     }
     
